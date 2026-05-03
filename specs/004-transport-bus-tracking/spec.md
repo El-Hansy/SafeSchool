@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "Read PLAN.md and create a specification for phase 3: Transport & Bus Tracking ONLY."
 
+## Clarifications
+
+### Session 2026-05-04
+
+- Q: What live tracking source should Phase 3 treat as authoritative for active bus location? → A: Authorized staff or vehicle mobile device during active trip.
+- Q: How should Phase 3 handle boarding or drop scans for a student without an active assignment or on the wrong route or stop? → A: Record as needs-review anomaly and withhold normal status until reviewer approval.
+- Q: How long should Phase 3 retain detailed active-trip location history? → A: 30 days, then summaries and audit evidence under school policy.
+- Q: What active-trip overlap rule should Phase 3 enforce? → A: Multiple active trips per route allowed; one active trip per bus and tracking device.
+- Q: What live-location visibility should guardians receive for a linked student's active trip? → A: Pickup ETA before boarding, exact live bus location after boarding, and drop status after drop-off.
+
 ## Constitution Alignment *(mandatory)*
 
 - **Implementation Phase**: Phase 3: Transport & Bus Tracking
@@ -13,7 +23,7 @@
 - **Feature Flag(s)**: Bus assignment, route and stop management, live tracking, boarding and drop scans, ETA calculation, and transport notifications must respect each school account's enabled capabilities before users can access or automate the related workflow.
 - **Security/Roles**: Platform owners, school administrators, transport managers, bus supervisors, drivers, attendants, authorized staff, guardians, students, and reviewers must have explicit permissions for each Phase 3 action. Guardians can see only transport visibility and notifications for students linked to them through an approved active guardian relationship.
 - **Offline/NFC Impact**: Boarding and drop scans using NFC or QR identity evidence must continue when connectivity is unavailable where transport continuity depends on scanning. Offline scans must preserve identity evidence, route, trip, stop, direction, actor or device source, local time, later received time, and reconciliation outcome so duplicate or conflicting scans do not create duplicate transport events.
-- **Observability**: The system must emit reviewable evidence for route and stop changes, bus assignments, student transport assignments, trip start and end actions, location update acceptance or suppression, boarding and drop scans, ETA changes, notification attempts or suppression, anomaly detection, manual review, correction, and access denial.
+- **Observability**: The system must emit reviewable evidence for route and stop changes, bus assignments, student transport assignments, trip start and end actions, authorized mobile location update acceptance or suppression, boarding and drop scans, ETA changes, notification attempts or suppression, anomaly detection, manual review, correction, and access denial.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -61,7 +71,8 @@ As a bus attendant or authorized transport staff member, I need to record studen
 
 1. **Given** boarding and drop scans are enabled, a trip is active, and the staff member is authorized for that trip, **When** a student presents an active NFC or QR identity credential for boarding, **Then** the system records an accepted boarding event with the student, route, trip, stop, direction, time evidence, and source.
 2. **Given** a student presents an expired, suspended, revoked, replaced, unknown, duplicated, or cross-school credential, **When** transport staff scan it, **Then** the system denies or flags the scan, prevents it from becoming a normal transport event, and records the reason for review.
-3. **Given** connectivity is unavailable during the trip, **When** authorized staff record boarding or drop scans, **Then** the scans remain usable for transport continuity and are later reconciled without losing source, time, or identity evidence.
+3. **Given** a student has no active assignment for the trip or is scanned on the wrong route or stop, **When** transport staff record the boarding or drop scan, **Then** the system records a needs-review anomaly, withholds normal transport status and guardian notification, and requires reviewer approval before the event can be treated as accepted.
+4. **Given** connectivity is unavailable during the trip, **When** authorized staff record boarding or drop scans, **Then** the scans remain usable for transport continuity and are later reconciled without losing source, time, or identity evidence.
 
 ---
 
@@ -77,7 +88,11 @@ As a transport manager or eligible guardian, I need visibility into active bus t
 
 1. **Given** live tracking is enabled and a trip is active, **When** current location updates are received from an authorized transport source, **Then** the system shows the trip's latest accepted progress to authorized viewers within their school account scope.
 2. **Given** location updates are stale, outside the active trip, from an untrusted source, or outside the authorized school account, **When** a user requests trip progress, **Then** the system suppresses or marks the location as unavailable and records the reason.
-3. **Given** a guardian is linked to one student on an active trip, **When** the guardian views transport progress, **Then** the guardian sees only the permitted visibility for that student's trip and not other students or unrelated routes.
+3. **Given** a route already has an active trip, **When** an authorized transport user starts another trip for the same route with a different bus and tracking device, **Then** the system allows the second trip and keeps scan, location, ETA, notification, and anomaly evidence tied to the correct trip.
+4. **Given** a bus or tracking device is already associated with an active trip, **When** a user attempts to start another active trip with the same bus or device, **Then** the system blocks the new trip and records the reason.
+5. **Given** a guardian is linked to one student assigned to an active trip, **When** the student has not yet boarded, **Then** the guardian sees pickup ETA and trip status without exact live bus location.
+6. **Given** the linked student has an accepted boarding event and no accepted or reviewed drop event, **When** the guardian views transport progress, **Then** the guardian sees the exact live bus location for that student's active trip and not other students or unrelated routes.
+7. **Given** the linked student has an accepted or reviewed drop event, **When** the guardian views transport progress, **Then** the guardian sees drop status and no longer sees exact live bus location.
 
 ---
 
@@ -137,25 +152,29 @@ As a guardian, I need transport notifications for my linked student's boarding, 
 - **FR-002**: The system MUST allow authorized users to create, view, update, deactivate, and review buses or transport vehicles within a school account when bus assignment is enabled.
 - **FR-003**: The system MUST allow authorized users to assign active students to approved routes, buses or planned trips, pickup stops, drop stops, service direction, visibility state, and validity dates.
 - **FR-004**: The system MUST validate student profile status, guardian link status, identity credential status, route status, school account scope, actor permission, and feature availability before activating assignments, accepting scans, showing live tracking, calculating ETA, or creating transport notification records.
-- **FR-005**: The system MUST allow authorized transport staff to start, update, and end active trips for an approved route, service direction, planned stops, assigned bus, and assigned staff.
-- **FR-006**: Each boarding or drop scan MUST capture the school account, student identity evidence, credential type, trip, route, stop, direction, actor or device source, time evidence, scan decision, and review status.
-- **FR-007**: The system MUST support offline boarding and drop scan capture where continuity is required, then reconcile delayed scans while preserving source evidence and preventing duplicate transport outcomes.
-- **FR-008**: The system MUST deny or flag scans from expired, suspended, revoked, replaced, unknown, duplicated, or cross-school credentials and prevent them from creating normal boarding or drop outcomes without review.
-- **FR-009**: The system MUST accept active-trip location updates only for authorized school accounts, active trips, and trusted transport sources.
-- **FR-010**: The system MUST suppress or mark as unavailable any location visibility that is stale, untrusted, outside the active trip, outside the authorized school account, or inconsistent with the trip's review state.
-- **FR-011**: The system MUST calculate or update ETA records for upcoming route stops and linked-student transport visibility when ETA calculation is enabled and sufficient trusted trip progress exists.
-- **FR-012**: ETA records MUST show the trip, route, stop, affected students when applicable, estimated arrival state, freshness, confidence, and review status.
-- **FR-013**: The system MUST create transport notification records for eligible guardians when transport notifications are enabled and an accepted or reviewed transport event qualifies under school account rules.
-- **FR-014**: The system MUST suppress guardian transport notifications when guardian access is inactive, outside scope, disabled by school account settings, based on a denied or unresolved event, or based on stale or untrusted tracking evidence, and it MUST record the suppression reason.
-- **FR-015**: The system MUST detect transport anomalies, including missed boarding, missed drop, wrong route, wrong stop, duplicate scan, invalid credential, out-of-order scan, delayed offline conflict, route deviation, stale location, delayed trip, and manual-review-required events.
-- **FR-016**: Each transport anomaly MUST include the affected student when applicable, school account, related route, trip, stop, scan or location evidence, anomaly type, severity, status, reviewer assignment when applicable, resolution reason, and resolution history.
-- **FR-017**: Authorized reviewers MUST be able to correct boarding, drop, trip, ETA, anomaly, and notification outcomes, record a reason, and preserve both the original evidence and corrected outcome.
-- **FR-018**: The system MUST allow each school account to configure Phase 3 rule settings for assignment eligibility, pickup and drop windows, route deviation thresholds, location staleness, ETA change thresholds, notification eligibility, anomaly detection, scan clock drift tolerance, and retry handling, with tenant scope, permissions, and audit evidence.
-- **FR-019**: The system MUST respect school account feature configuration independently for bus assignment, route and stop management, live tracking, boarding and drop scans, ETA calculation, and transport notifications.
-- **FR-020**: The system MUST keep all Phase 3 records scoped to the school account and prevent cross-school visibility or action unless an explicit platform-level review role permits it.
-- **FR-021**: The system MUST record audit evidence for route and stop changes, bus changes, assignment changes, trip lifecycle actions, scan capture, denied or flagged scans, offline reconciliation, location update acceptance or suppression, ETA changes, notification eligibility or suppression, anomaly creation, manual review, correction, and access denial.
-- **FR-022**: The system MUST provide transport review summaries by student, route, bus, trip, stop, scan status, location status, ETA state, notification status, and anomaly status without exposing records outside the user's authorized school account or guardian link scope.
-- **FR-023**: The system MUST explicitly exclude campus attendance generation, campus entry or exit decisions, wallet transactions, learning engagement, outings and early leave requests, medical workflows, complaints, general messaging, broadcasts, document management, search, broad admin dashboards, and physical vehicle control from Phase 3 deliverable scope.
+- **FR-005**: The system MUST allow authorized transport staff to start, update, and end active trips for an approved route, service direction, planned stops, assigned bus, assigned staff, and authorized mobile tracking device.
+- **FR-006**: The system MUST allow multiple active trips for the same route only when each active trip has a different assigned bus and authorized mobile tracking device, and it MUST block overlapping active trips that reuse the same bus or tracking device.
+- **FR-007**: Each boarding or drop scan MUST capture the school account, student identity evidence, credential type, trip, route, stop, direction, actor or device source, time evidence, scan decision, and review status.
+- **FR-008**: The system MUST support offline boarding and drop scan capture where continuity is required, then reconcile delayed scans while preserving source evidence and preventing duplicate transport outcomes.
+- **FR-009**: The system MUST deny or flag scans from expired, suspended, revoked, replaced, unknown, duplicated, or cross-school credentials and prevent them from creating normal boarding or drop outcomes without review.
+- **FR-010**: The system MUST record scans for students without an active assignment or with a route or stop mismatch as needs-review transport anomalies, and it MUST withhold normal boarding or drop status and guardian notifications until reviewer approval.
+- **FR-011**: The system MUST accept active-trip location updates only from an authorized staff or vehicle mobile device associated with the active trip and only for authorized school accounts and active trips.
+- **FR-012**: The system MUST suppress or mark as unavailable any location visibility that is stale, untrusted, outside the active trip, outside the authorized school account, or inconsistent with the trip's review state.
+- **FR-013**: Guardian-facing live-location visibility MUST be limited to pickup ETA and trip status before the linked student's accepted boarding event, exact live bus location after accepted boarding and before accepted or reviewed drop, and drop status after accepted or reviewed drop.
+- **FR-014**: The system MUST calculate or update ETA records for upcoming route stops and linked-student transport visibility when ETA calculation is enabled and sufficient trusted trip progress exists.
+- **FR-015**: ETA records MUST show the trip, route, stop, affected students when applicable, estimated arrival state, freshness, confidence, and review status.
+- **FR-016**: The system MUST create transport notification records for eligible guardians when transport notifications are enabled and an accepted or reviewed transport event qualifies under school account rules.
+- **FR-017**: The system MUST suppress guardian transport notifications when guardian access is inactive, outside scope, disabled by school account settings, based on a denied or unresolved event, or based on stale or untrusted tracking evidence, and it MUST record the suppression reason.
+- **FR-018**: The system MUST detect transport anomalies, including missed boarding, missed drop, wrong route, wrong stop, duplicate scan, invalid credential, out-of-order scan, delayed offline conflict, route deviation, stale location, delayed trip, and manual-review-required events.
+- **FR-019**: Each transport anomaly MUST include the affected student when applicable, school account, related route, trip, stop, scan or location evidence, anomaly type, severity, status, reviewer assignment when applicable, resolution reason, and resolution history.
+- **FR-020**: Authorized reviewers MUST be able to correct boarding, drop, trip, ETA, anomaly, and notification outcomes, record a reason, and preserve both the original evidence and corrected outcome.
+- **FR-021**: The system MUST allow each school account to configure Phase 3 rule settings for assignment eligibility, pickup and drop windows, route deviation thresholds, location staleness, ETA change thresholds, notification eligibility, anomaly detection, scan clock drift tolerance, and retry handling, with tenant scope, permissions, and audit evidence.
+- **FR-022**: The system MUST respect school account feature configuration independently for bus assignment, route and stop management, live tracking, boarding and drop scans, ETA calculation, and transport notifications.
+- **FR-023**: The system MUST keep all Phase 3 records scoped to the school account and prevent cross-school visibility or action unless an explicit platform-level review role permits it.
+- **FR-024**: The system MUST record audit evidence for route and stop changes, bus changes, assignment changes, trip lifecycle actions, scan capture, denied or flagged scans, offline reconciliation, location update acceptance or suppression, ETA changes, notification eligibility or suppression, anomaly creation, manual review, correction, and access denial.
+- **FR-025**: The system MUST provide transport review summaries by student, route, bus, trip, stop, scan status, location status, ETA state, notification status, and anomaly status without exposing records outside the user's authorized school account or guardian link scope.
+- **FR-026**: The system MUST retain detailed active-trip location history for 30 days, then keep only trip summaries and audit evidence according to school account policy.
+- **FR-027**: The system MUST explicitly exclude campus attendance generation, campus entry or exit decisions, wallet transactions, learning engagement, outings and early leave requests, medical workflows, complaints, general messaging, broadcasts, document management, search, broad admin dashboards, and physical vehicle control from Phase 3 deliverable scope.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -164,9 +183,9 @@ As a guardian, I need transport notifications for my linked student's boarding, 
 - **Transport Stop**: A pickup or drop location that can be included in one or more route plans within the school account.
 - **Route Stop Sequence**: The ordered stop plan for a route and direction, including planned timing and active status.
 - **Student Transport Assignment**: The relationship between a student and a route, bus or planned trip, pickup stop, drop stop, visibility state, and validity period.
-- **Transport Trip**: A dated run of a route with assigned bus, assigned staff, planned stops, live state, start and end evidence, and review status.
+- **Transport Trip**: A dated run of a route with assigned bus, assigned staff, authorized mobile tracking device, planned stops, live state, start and end evidence, and review status.
 - **Boarding/Drop Scan Event**: Captured NFC or QR identity evidence for a student boarding or dropping from a trip, including decision, source, timing, offline status, and review status.
-- **Transport Location Update**: Accepted or suppressed trip progress evidence tied to an active trip and trusted transport source.
+- **Transport Location Update**: Accepted or suppressed trip progress evidence tied to an active trip and an authorized staff or vehicle mobile device, with guardian-facing exact location limited to the interval after accepted boarding and before accepted or reviewed drop for the linked student.
 - **ETA Record**: An estimated arrival state for a trip stop or linked-student transport view, including freshness, confidence, and review status.
 - **Transport Notification Record**: A guardian-facing notification event or suppression record tied to an eligible transport event.
 - **Transport Anomaly**: A reviewable issue involving missing, duplicate, invalid, conflicting, delayed, stale, deviated, or manual-review-required transport evidence.
@@ -185,11 +204,13 @@ As a guardian, I need transport notifications for my linked student's boarding, 
 - **SC-005**: 100% of sampled duplicate, retried, and delayed offline boarding or drop scans are reconciled without creating duplicate transport outcomes.
 - **SC-006**: 95% of accepted boarding and drop scan events are visible to authorized reviewers and eligible guardians within 2 minutes of scan availability.
 - **SC-007**: 95% of accepted active-trip location updates are visible or reflected as current progress to authorized viewers within 30 seconds of update availability, while stale or untrusted updates are marked unavailable or suppressed.
-- **SC-008**: 95% of eligible active trips with approved routes and current trusted progress have ETA records available for upcoming stops within 60 seconds of trip progress availability.
+- **SC-008**: 95% of eligible active trips with approved routes, non-overlapping bus and tracking device assignment, and current trusted progress have ETA records available for upcoming stops within 60 seconds of trip progress availability.
 - **SC-009**: 95% of eligible guardian transport notification records are created or made visible within 2 minutes of the accepted or reviewed transport event.
 - **SC-010**: 100% of sampled transport anomaly records show anomaly type, affected student or trip, related evidence, status, reviewer action when required, and resolution history.
 - **SC-011**: Reviewers can trace a sampled active trip to its route, stops, student assignments, boarding and drop scan events, location visibility, ETA records, notification records, anomaly records, and correction history in under 60 seconds.
 - **SC-012**: 100% of sampled Phase 3 records are visible only within the authorized school account scope or approved guardian link scope unless an explicit platform-level review role permits access.
+- **SC-013**: 100% of sampled guardian transport views show no exact live bus location before accepted boarding or after accepted or reviewed drop for the linked student.
+- **SC-014**: 100% of sampled active-trip location records older than 30 days retain only trip summaries and audit evidence unless school account policy requires a longer approved review hold.
 
 ## Assumptions
 
@@ -197,8 +218,9 @@ As a guardian, I need transport notifications for my linked student's boarding, 
 - The school account is the default ownership boundary for buses, routes, stops, assignments, trips, scans, location evidence, ETAs, notifications, anomalies, and review actions.
 - School administrators and transport managers configure buses, routes, stops, assignments, transport rules, and guardian transport visibility unless the school account grants specific staff permissions.
 - NFC credentials are the primary scan method for boarding and drop evidence, and QR fallback may be used only when the school account enables it and the credential is valid under Phase 1 rules.
-- Live tracking depends on a school-authorized transport source associated with an active trip; physical vehicle control is outside Phase 3.
+- Live tracking depends on an authorized staff or vehicle mobile device associated with an active trip; dedicated bus hardware and physical vehicle control are outside Phase 3.
 - ETA is calculated only for active trips with an approved route, planned stops, and sufficiently current trusted trip progress; otherwise ETA is unavailable or marked for review.
+- Guardian-facing exact live bus location is available only between the linked student's accepted boarding event and accepted or reviewed drop event; before boarding, guardians see pickup ETA and trip status, and after drop-off, guardians see drop status.
 - Transport notifications in Phase 3 are limited to route, trip, boarding, drop, delay, ETA, and reviewed transport outcomes for linked guardians; general messaging and broadcasts belong to the later communication phase.
 - Manual transport correction is allowed only for authorized reviewers and must preserve the original evidence.
 - Reference frames under `docs/references/frames/` are contextual inspiration only and do not define Phase 3 requirements.
