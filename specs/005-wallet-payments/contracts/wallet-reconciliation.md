@@ -8,6 +8,7 @@ for Phase 4.
 ## Capabilities and Permissions
 
 - Required capabilities:
+  - `wallet.reconciliation`
   - Related wallet capabilities for records included in the reconciliation.
 - Common permissions:
   - `wallet.reconciliation.read`
@@ -114,11 +115,11 @@ client_request_id: "request-unique-to-caller"
 
 ## Acceptance Rules
 
-- Reconciliation reads require tenant access and
-  `wallet.reconciliation.read`.
+- Reconciliation reads require tenant access, enabled `wallet.reconciliation`,
+  and `wallet.reconciliation.read`.
 - Reconciliation runs, closes, and reopens require tenant access,
-  `wallet.reconciliation.manage`, idempotent request identity, and audit
-  evidence.
+  enabled `wallet.reconciliation`, `wallet.reconciliation.manage`, idempotent
+  request identity, and audit evidence.
 - Reconciliation must compare wallet ledger totals to top-up confirmations, POS
   batches, purchase records, refunds, reversals, chargebacks, and settlement
   references for the selected scope.

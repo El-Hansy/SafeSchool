@@ -259,6 +259,80 @@ wallet purchases.
 - Suspended -> Active when restored.
 - Active or Suspended -> Retired when no longer used.
 
+## Canteen Item Category
+
+**Purpose**: A tenant-owned item grouping used by canteen POS eligibility,
+guardian transaction summaries, and spending limit evaluation.
+
+**Fields**:
+- `canteen_item_category_id`: Stable identifier.
+- `tenant_id`: Owning school account.
+- `category_code`: School-unique category code.
+- `category_name`: Human-readable category name.
+- `guardian_summary_label`: Safe guardian-facing label.
+- `category_status`: Draft, Active, Suspended, Retired.
+- `created_by`: Actor that created the category.
+- `updated_by`: Actor that last changed the category.
+- `created_at`: Creation time.
+- `updated_at`: Last update time.
+
+**Relationships**:
+- Belongs to one School Account.
+- May be referenced by Purchase Eligibility Rules, Canteen Purchase
+  Transactions, Spending Limits, Wallet Review Summaries, and Audit Events.
+
+**Validation rules**:
+- `category_code` must be unique within the school account while active.
+- Purchases cannot use suspended, retired, or cross-school categories for normal
+  wallet debits.
+- Guardian-facing labels must not expose staff-only POS or settlement detail.
+
+**State transitions**:
+- Draft -> Active when category details pass validation.
+- Active -> Suspended during temporary hold.
+- Suspended -> Active when restored.
+- Active or Suspended -> Retired when no longer used.
+
+## Purchase Eligibility Rule
+
+**Purpose**: A baseline tenant-owned merchant/category rule evaluated before
+normal canteen wallet debits.
+
+**Fields**:
+- `purchase_eligibility_rule_id`: Stable identifier.
+- `tenant_id`: Owning school account.
+- `canteen_merchant_id`: Merchant scope.
+- `category_code`: Item category scope.
+- `eligibility_action`: Allow, Deny, Hold for Review.
+- `rule_status`: Draft, Active, Suspended, Superseded, Expired.
+- `valid_from`: First effective time.
+- `valid_to`: Optional last effective time.
+- `change_reason`: Required reason for rule changes.
+- `created_by`: Actor that created the rule.
+- `updated_by`: Actor that last changed the rule.
+- `created_at`: Creation time.
+- `updated_at`: Last update time.
+
+**Relationships**:
+- Belongs to one School Account.
+- References one Canteen Merchant and one Canteen Item Category.
+- May be snapshotted by Canteen Purchase Transactions and referenced by Wallet
+  Anomalies, Manual Wallet Reviews, and Audit Events.
+
+**Validation rules**:
+- Active rules require active merchant and active item category within the same
+  school account.
+- Purchase authorization evaluates active merchant/category eligibility before
+  creating a normal wallet debit.
+- Deny or hold rules preserve reviewable reasons without silently changing
+  balances.
+
+**State transitions**:
+- Draft -> Active when merchant, category, dates, and permissions pass.
+- Active -> Suspended during temporary hold.
+- Active -> Superseded when a new version replaces it.
+- Active or Suspended -> Expired when `valid_to` passes.
+
 ## POS Terminal
 
 **Purpose**: A school-authorized purchase source associated with a canteen

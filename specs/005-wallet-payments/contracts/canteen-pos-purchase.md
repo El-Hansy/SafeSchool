@@ -26,6 +26,10 @@ debits when a POS terminal retries the same physical purchase.
 |--------|------|---------|
 | POST | `/api/v1/schools/{schoolAccountId}/wallet/canteen/merchants` | Create a canteen merchant |
 | PATCH | `/api/v1/schools/{schoolAccountId}/wallet/canteen/merchants/{merchantId}` | Update merchant details or status |
+| POST | `/api/v1/schools/{schoolAccountId}/wallet/canteen/item-categories` | Create a canteen item category for POS eligibility and guardian summaries |
+| PATCH | `/api/v1/schools/{schoolAccountId}/wallet/canteen/item-categories/{itemCategoryId}` | Update item category details or status |
+| POST | `/api/v1/schools/{schoolAccountId}/wallet/canteen/purchase-eligibility-rules` | Create a baseline merchant/category purchase eligibility rule |
+| PATCH | `/api/v1/schools/{schoolAccountId}/wallet/canteen/purchase-eligibility-rules/{purchaseEligibilityRuleId}` | Update purchase eligibility rule details or status |
 | POST | `/api/v1/schools/{schoolAccountId}/wallet/canteen/terminals` | Create a POS terminal |
 | PATCH | `/api/v1/schools/{schoolAccountId}/wallet/canteen/terminals/{terminalId}` | Update terminal details or status |
 | POST | `/api/v1/schools/{schoolAccountId}/wallet/canteen/purchases` | Record an online canteen wallet purchase attempt |
@@ -44,6 +48,29 @@ allowed_category_codes:
   - "meal"
   - "snack"
 merchant_status: "Active"
+client_request_id: "request-unique-to-caller"
+```
+
+## Item Category Request
+
+```yaml
+category_code: "meal"
+category_name: "Meals"
+category_status: "Active"
+guardian_summary_label: "Meal"
+client_request_id: "request-unique-to-caller"
+```
+
+## Purchase Eligibility Rule Request
+
+```yaml
+canteen_merchant_id: "merchant-reference"
+category_code: "meal"
+rule_status: "Active"
+eligibility_action: "Allow"
+valid_from: "YYYY-MM-DDTHH:MM:SSZ"
+valid_to: null
+change_reason: "Main canteen may sell meal items through wallet POS."
 client_request_id: "request-unique-to-caller"
 ```
 
@@ -156,13 +183,19 @@ client_request_id: "request-unique-to-caller"
 
 ## Acceptance Rules
 
-- Merchant and terminal management require tenant access, enabled
-  `wallet.canteen_pos`, management permission, idempotent request identity, and
-  audit evidence.
+- Merchant, item category, purchase eligibility rule, and terminal management
+  require tenant access, enabled `wallet.canteen_pos`, management permission,
+  idempotent request identity, and audit evidence.
+- Item categories must be tenant-owned, status-controlled, and safe for guardian
+  item/category summaries.
+- Purchase eligibility rules must be active, tenant-owned, merchant/category
+  scoped, and evaluated before a normal purchase debit is posted.
 - Online purchase approval requires active wallet, active credential, active
-  merchant, active terminal, authorized actor or device, sufficient available
-  balance, active spending limit satisfaction, enabled `wallet.canteen_pos`,
-  enabled `wallet.ledger`, idempotent `client_purchase_id`, and audit evidence.
+  merchant, active item category, active purchase eligibility rule when one is
+  required for the merchant/category pair, active terminal, authorized actor or
+  device, sufficient available balance, active spending limit satisfaction,
+  enabled `wallet.canteen_pos`, enabled `wallet.ledger`, idempotent
+  `client_purchase_id`, and audit evidence.
 - Insufficient balance, invalid credential, unauthorized merchant, suspended
   terminal, disabled capability, spending limit violation, and cross-school
   wallet attempts are denied or held without creating a normal debit.
@@ -190,6 +223,8 @@ client_request_id: "request-unique-to-caller"
 | Actor lacks tenant access | Deny without exposing school account data |
 | Actor or device lacks purchase permission | Deny and record required permission |
 | Merchant inactive or cross-school | Reject purchase without exposing cross-tenant existence |
+| Item category inactive or cross-school | Reject purchase without exposing cross-tenant existence |
+| Purchase eligibility rule denies merchant/category | Deny or hold purchase with rule reason |
 | Terminal inactive, suspended, or cross-school | Reject or hold purchase with terminal reason |
 | Wallet inactive, restricted, or cross-school | Deny or hold according to wallet status |
 | Credential invalid, revoked, replaced, duplicated, or cross-school | Deny or hold without normal wallet debit |

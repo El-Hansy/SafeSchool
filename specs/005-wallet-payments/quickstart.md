@@ -28,10 +28,11 @@ before generating tasks or starting implementation.
 1. Confirm [research.md](./research.md) resolves all planning decisions without
    unresolved clarification markers.
 2. Confirm [data-model.md](./data-model.md) includes student wallets, ledger
-   entries, top-ups, payment confirmations, canteen merchants, POS terminals,
-   offline POS sync batches, purchase transactions, spending limits, refunds or
-   reversals, settlement references, anomalies, manual reviews, rule settings,
-   feature settings, and review summaries.
+   entries, top-ups, payment confirmations, canteen merchants, canteen item
+   categories, purchase eligibility rules, POS terminals, offline POS sync
+   batches, purchase transactions, spending limits, refunds or reversals,
+   settlement references, anomalies, manual reviews, rule settings, feature
+   settings, and review summaries.
 3. Confirm [contracts/wallet-ledger.md](./contracts/wallet-ledger.md) covers
    wallet lifecycle, append-only ledger behavior, wallet restrictions, balance
    traceability, and audit expectations.
@@ -74,8 +75,9 @@ before generating tasks or starting implementation.
    outcomes.
 5. Create authorized cashier top-up behavior with cashier source evidence,
    amount threshold rules, ledger credit posting, and audit history.
-6. Create canteen merchant and POS terminal management with terminal/device
-   authorization and optional offline reserve configuration.
+6. Create canteen merchant, item category, purchase eligibility rule, and POS
+   terminal management with terminal/device authorization and optional offline
+   reserve configuration.
 7. Create online POS purchase authorization for active wallet, active
    credential, active merchant, active terminal, sufficient funds, active
    spending limits, and duplicate purchase prevention.
@@ -156,7 +158,9 @@ before generating tasks or starting implementation.
 - Create an active merchant and active POS terminal for one school account.
 - Record an online NFC or QR purchase for an active student credential with
   sufficient funds and valid limits, and confirm one debit posts in under 8
-  seconds during normal operating conditions.
+  seconds using a seeded active wallet, active credential, active merchant,
+  active POS terminal, warm database, local API test environment, and no
+  external payment-provider call in the purchase path.
 - Attempt purchases with insufficient funds, invalid credentials, disabled POS
   capability, unauthorized merchant, suspended terminal, spending limit
   violation, and cross-school wallet references and confirm each is denied or

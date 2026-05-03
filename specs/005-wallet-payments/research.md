@@ -114,12 +114,13 @@ offline POS.
 - `wallet.ledger`
 - `wallet.top_up`
 - `wallet.payment_processing`
+- `wallet.canteen_pos`
 - `wallet.spending_limits`
 - `wallet.transaction_history`
-- `wallet.canteen_pos`
+- `wallet.reconciliation`
 
-Supporting review, reconciliation, anomaly, and rule-setting behavior is
-governed by the relevant wallet workflow capabilities and permissions.
+Supporting review, anomaly, and rule-setting behavior is governed by the
+relevant wallet workflow capabilities and permissions.
 
 **Alternatives considered**:
 - One `wallet` flag for every workflow: rejected because schools may phase in
@@ -241,17 +242,18 @@ purchases that already occurred.
 - School absorbs the chargeback without restriction: rejected because recovery
   and review would be lost.
 
-## Decision: Authorize canteen POS purchases against active wallet, credential, merchant, terminal, limits, and balance
+## Decision: Authorize canteen POS purchases against active wallet, credential, merchant, category, eligibility rules, terminal, limits, and balance
 
 **Rationale**: A wallet debit is allowed only when the wallet is active, the
-student credential is valid, the merchant and POS terminal are authorized, the
-purchase satisfies active spending limits, the actor or device is permitted,
-and sufficient available funds exist. Denied attempts preserve reason evidence
-without creating a normal debit.
+student credential is valid, the merchant, item category, purchase eligibility
+rule, and POS terminal are authorized, the purchase satisfies active spending
+limits, the actor or device is permitted, and sufficient available funds exist.
+Denied attempts preserve reason evidence without creating a normal debit.
 
 **Alternatives considered**:
 - Debit based only on card tap and amount: rejected because it ignores tenant,
-  credential, merchant, terminal, limit, and balance rules.
+  credential, merchant, category, eligibility, terminal, limit, and balance
+  rules.
 - Deny without recording failed attempts: rejected because invalid credentials,
   retries, and repeated suspicious attempts are operational evidence.
 

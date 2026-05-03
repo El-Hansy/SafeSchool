@@ -35,16 +35,17 @@ top-ups, Next.js App Router, TanStack Query or typed server-driven data access,
 Flutter NFC/QR platform integrations, mobile SQLite offline queues, and Spec
 Kit planning artifacts.
 **Storage**: Single PostgreSQL database for tenant-owned student wallets,
-ledger entries, top-ups, payment confirmations, canteen merchants, POS
-terminals, purchase transactions, offline POS sync batches, spending limits,
-refunds, reversals, settlement references, reconciliation summaries, wallet
-anomalies, manual wallet reviews, wallet rule settings, feature settings, and
-audit evidence. Every tenant-owned table includes `tenant_id`, `created_at`,
-and `updated_at`, with indexes for tenant boundaries, student wallet lookup,
-guardian visibility, top-up idempotency, payment confirmation idempotency,
-purchase idempotency, POS terminal and merchant lookup, offline reserve
-reconciliation, spending limit evaluation, settlement matching, anomaly status,
-review state, retention jobs, and audit traceability.
+ledger entries, top-ups, payment confirmations, canteen merchants, canteen item
+categories, purchase eligibility rules, POS terminals, purchase transactions,
+offline POS sync batches, spending limits, refunds, reversals, settlement
+references, reconciliation summaries, wallet anomalies, manual wallet reviews,
+wallet rule settings, feature settings, and audit evidence. Every tenant-owned
+table includes `tenant_id`, `created_at`, and `updated_at`, with indexes for
+tenant boundaries, student wallet lookup, guardian visibility, top-up
+idempotency, payment confirmation idempotency, purchase idempotency, POS
+terminal and merchant lookup, item category lookup, purchase eligibility lookup,
+offline reserve reconciliation, spending limit evaluation, settlement matching,
+anomaly status, review state, retention jobs, and audit traceability.
 **Testing**: Backend unit tests for wallet lifecycle, ledger posting,
 idempotent top-up confirmation, chargeback recovery, POS purchase validation,
 offline POS reconciliation, spending limit precedence, transaction visibility,
@@ -64,11 +65,13 @@ organized by feature modules.
 wallets for 30 active students in under 10 minutes, reflect 95% of confirmed
 guardian top-ups as spendable credits within 2 minutes of confirmation
 availability, complete approved canteen POS purchases in under 8 seconds during
-normal operating conditions, enforce spending limit changes for eligible future
-purchases within 1 minute, find wallet transactions from the last 90 days in
-under 30 seconds, trace a sampled wallet balance in under 60 seconds, and
-reconcile duplicate/retried/offline POS submissions without duplicate or
-unauthorized wallet debits.
+review testing with a seeded active wallet, active credential, active merchant,
+active POS terminal, warm database, local API test environment, and no external
+payment-provider call in the purchase path, enforce spending limit changes for
+eligible future purchases within 1 minute, find wallet transactions from the
+last 90 days in under 30 seconds, trace a sampled wallet balance in under 60
+seconds, and reconcile duplicate/retried/offline POS submissions without
+duplicate or unauthorized wallet debits.
 **Constraints**: Phase 4 only. Guardian online top-ups use an approved external
 payment provider and authorized cashier top-ups use school-approved workflows.
 The platform must not store or display full external payment credentials.
@@ -87,7 +90,8 @@ entry/exit decisions, transport outcomes, and physical cash drawer hardware.
 Top-Up, Payment Processing, Spending Limits, Transaction History, and Canteen
 POS Integration. Supporting anomaly review, manual correction, rule settings,
 reconciliation, audit, and retention behavior are included only where required
-by the Phase 4 spec.
+by the Phase 4 spec. Reconciliation is exposed as its own workflow capability
+when finance users run, close, reopen, or review reconciliation results.
 
 ## Constitution Check
 
@@ -101,8 +105,9 @@ by the Phase 4 spec.
   Processing, Spending Limits, Transaction History, and Canteen POS
   Integration.
 - **Multi-tenancy and feature flags**: PASS. Tenant resolution, tenant-owned
-  wallet records, capability keys, backend feature enforcement, and web/mobile
-  feature gates are required before Phase 4 workflows execute.
+  wallet records, workflow capability keys including reconciliation, backend
+  feature enforcement, and web/mobile feature gates are required before Phase 4
+  workflows execute.
 - **Security and authorization**: PASS. JWT authentication, tenant access, role
   assignments, permission checks, guardian-link funding and visibility checks,
   cashier authorization, finance review authorization, POS operator or device
