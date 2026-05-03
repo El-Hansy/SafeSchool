@@ -82,11 +82,11 @@ As a transport manager or eligible guardian, I need visibility into active bus t
 
 **Why this priority**: Live tracking provides operational and guardian value after routes, assignments, and scan evidence are established.
 
-**Independent Test**: Start a trip for an active route, accept current location updates from an authorized transport source, and confirm authorized staff see trip progress while guardians see only linked-student transport visibility.
+**Independent Test**: Start a trip for an active route, accept current location updates from an authorized mobile tracking device, and confirm authorized staff see trip progress while guardians see only linked-student transport visibility.
 
 **Acceptance Scenarios**:
 
-1. **Given** live tracking is enabled and a trip is active, **When** current location updates are received from an authorized transport source, **Then** the system shows the trip's latest accepted progress to authorized viewers within their school account scope.
+1. **Given** live tracking is enabled and a trip is active, **When** current location updates are received from an authorized mobile tracking device, **Then** the system shows the trip's latest accepted progress to authorized viewers within their school account scope.
 2. **Given** location updates are stale, outside the active trip, from an untrusted source, or outside the authorized school account, **When** a user requests trip progress, **Then** the system suppresses or marks the location as unavailable and records the reason.
 3. **Given** a route already has an active trip, **When** an authorized transport user starts another trip for the same route with a different bus and tracking device, **Then** the system allows the second trip and keeps scan, location, ETA, notification, and anomaly evidence tied to the correct trip.
 4. **Given** a bus or tracking device is already associated with an active trip, **When** a user attempts to start another active trip with the same bus or device, **Then** the system blocks the new trip and records the reason.
