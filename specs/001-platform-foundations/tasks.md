@@ -27,8 +27,8 @@ small, explicit, and easy to verify.
 - [ ] T002 [P] Create `specs/001-platform-foundations/foundation-areas.md` with empty sections for System Architecture, Multi-Tenant Architecture, Identity & Access Model, NFC & QR Integration, Event & Audit Logging, and Feature Flag / Tenant Configuration
 - [ ] T003 [P] Create `specs/001-platform-foundations/tenant-access-boundaries.md` with empty sections for School Account Boundary, Tenant-Owned Records, Actor Categories, Permission Rules, Configuration Change Approval, and Edge Cases
 - [ ] T004 [P] Create `specs/001-platform-foundations/scan-audit-accountability.md` with empty sections for Identity Evidence, NFC Capture, QR Fallback, Offline Sync, Duplicate and Conflict Review, and Audit Event Categories
-- [ ] T005 [P] Create `specs/001-platform-foundations/traceability-matrix.md` with a table header for Later Phase Requirement, Foundation Area, Tenant Boundary, Actor/Permission Rule, Feature Capability, Scan/Audit Evidence, and Source Link
-- [ ] T006 [P] Create `specs/001-platform-foundations/review-log.md` with table columns for Review Item, Source File, Reviewer Role, Status, Evidence, and Follow-Up
+- [ ] T005 [P] Create `specs/001-platform-foundations/traceability-matrix.md` with a table header for Later Phase Requirement, Implementation Phase, Feature Module, Foundation Area, Tenant Boundary, Actor/Permission Rule, Feature Capability, Scan/Audit Evidence, Observability Expectation, and Source Link
+- [ ] T006 [P] Create `specs/001-platform-foundations/review-log.md` with table columns for Review Item, Source File, Reviewer Role, Status, Evidence, and Follow-Up, then update the Documentation tree in `specs/001-platform-foundations/plan.md` to include `README.md`, `foundation-areas.md`, `tenant-access-boundaries.md`, `scan-audit-accountability.md`, `traceability-matrix.md`, and `review-log.md`
 
 ---
 
@@ -45,7 +45,7 @@ by all user-story phases.
 - [ ] T010 Add Foundation Decision ID rules to `specs/001-platform-foundations/foundation-areas.md` using `FD-001` through `FD-006`, one ID per Phase 0 foundation area
 - [ ] T011 Add Actor Category ID rules to `specs/001-platform-foundations/tenant-access-boundaries.md` using stable IDs for Platform Owner, School Administrator, Staff Member, Guardian, Student, and Reviewer
 - [ ] T012 Add Scan and Audit ID rules to `specs/001-platform-foundations/scan-audit-accountability.md` using prefixes `IE-`, `SE-`, `AE-`, and `TC-` for identity evidence, scan event, audit event, and configuration change examples
-- [ ] T013 Add row guidance to `specs/001-platform-foundations/traceability-matrix.md` explaining how each later-phase sample maps to a foundation area, tenant boundary, actor/permission rule, feature capability, and scan/audit evidence
+- [ ] T013 Add row guidance to `specs/001-platform-foundations/traceability-matrix.md` explaining how each later-phase sample maps to implementation phase, feature module, foundation area, tenant boundary, actor/permission rule, feature capability, scan/audit evidence, observability expectation, and source link
 - [ ] T014 Add a "Task Execution Order" section to `specs/001-platform-foundations/quickstart.md` stating that Phase 1 and Phase 2 tasks must finish before US1, US2, or US3 tasks begin
 
 **Checkpoint**: Shared documentation scaffolding is ready and user-story work can
@@ -103,8 +103,8 @@ who can view, change, or approve access and what evidence must be retained.
 - [ ] T031 [US2] Define Permission Rule matrix in `specs/001-platform-foundations/tenant-access-boundaries.md` with allowed action, boundary type, approval requirement, and review evidence columns
 - [ ] T032 [US2] Define Configuration Change Approval flow in `specs/001-platform-foundations/tenant-access-boundaries.md` from requested to approved, rejected, applied, or rolled back
 - [ ] T033 [US2] Add Edge Case handling to `specs/001-platform-foundations/tenant-access-boundaries.md` for multiple campuses, multi-role users, disabled capabilities, and later-phase conflicts
-- [ ] T034 [P] [US2] Add concrete validation examples to the School Account and Feature Capability sections in `specs/001-platform-foundations/data-model.md`
-- [ ] T035 [P] [US2] Add allowed boundary values and sensitive-action examples to the Actor Category and Permission Rule sections in `specs/001-platform-foundations/data-model.md`
+- [ ] T034 [US2] Add concrete validation examples to the School Account and Feature Capability sections in `specs/001-platform-foundations/data-model.md`
+- [ ] T035 [US2] Add allowed boundary values and sensitive-action examples to the Actor Category and Permission Rule sections in `specs/001-platform-foundations/data-model.md`
 - [ ] T036 [P] [US2] Add approved, rejected, applied, and rolled-back YAML examples to `specs/001-platform-foundations/contracts/tenant-configuration.md`
 - [ ] T037 [US2] Add tenant and access sample rows to `specs/001-platform-foundations/traceability-matrix.md` for guardian linking, permission enforcement, tenant feature configuration, and admin review samples from `PLAN.md`
 - [ ] T038 [US2] Add a "Tenant and Access Boundary Review" section to `specs/001-platform-foundations/quickstart.md` with reviewer steps for actor categories, permission rules, and configuration changes
@@ -134,8 +134,8 @@ review, and audit categories have required evidence and review outcomes.
 - [ ] T043 [US3] Define offline scan sync states in `specs/001-platform-foundations/scan-audit-accountability.md`, including Pending, Synced, Duplicate, Conflict, Rejected, and Deferred meanings
 - [ ] T044 [US3] Define duplicate and conflict review outcomes in `specs/001-platform-foundations/scan-audit-accountability.md`, including accepted, rejected, needs review, and deferred outcomes
 - [ ] T045 [US3] Define Audit Event categories in `specs/001-platform-foundations/scan-audit-accountability.md` for Identity, Access, Tenant Configuration, Feature Availability, Scan Capture, Scan Reconciliation, and Administrative Review
-- [ ] T046 [P] [US3] Add state transition examples to the Identity Evidence and Scan Event sections in `specs/001-platform-foundations/data-model.md`
-- [ ] T047 [P] [US3] Add review evidence examples to the Audit Event and Configuration Change sections in `specs/001-platform-foundations/data-model.md`
+- [ ] T046 [US3] Add state transition examples to the Identity Evidence and Scan Event sections in `specs/001-platform-foundations/data-model.md`
+- [ ] T047 [US3] Add review evidence examples to the Audit Event and Configuration Change sections in `specs/001-platform-foundations/data-model.md`
 - [ ] T048 [P] [US3] Add offline NFC, QR fallback, duplicate scan, and conflict review YAML examples to `specs/001-platform-foundations/contracts/scan-audit-event.md`
 - [ ] T049 [US3] Add scan and audit sample rows to `specs/001-platform-foundations/traceability-matrix.md` for gate scans, QR identity fallback, bus boarding scans, and audit trail samples from `PLAN.md`
 - [ ] T050 [US3] Add a "Scan and Audit Accountability Review" section to `specs/001-platform-foundations/quickstart.md` with reviewer steps for NFC, QR fallback, offline sync, duplicates, conflicts, and audit records
@@ -152,15 +152,14 @@ review outcome.
 **Purpose**: Ensure all generated foundation documentation is coherent,
 traceable, and ready for review.
 
-- [ ] T052 [P] Search all Markdown files under `specs/001-platform-foundations/` for unresolved clarification markers and record the result in `specs/001-platform-foundations/review-log.md`
-- [ ] T053 [P] Verify every file created by tasks T001-T006 is linked from `specs/001-platform-foundations/README.md`
-- [ ] T054 [P] Verify `specs/001-platform-foundations/traceability-matrix.md` contains at least five later-phase sample requirements and at least 95% of samples map to one or more Phase 0 foundation decisions
-- [ ] T055 [P] Compare entity names in `specs/001-platform-foundations/data-model.md` with contract names in `specs/001-platform-foundations/contracts/foundation-decision.md`, `specs/001-platform-foundations/contracts/tenant-configuration.md`, and `specs/001-platform-foundations/contracts/scan-audit-event.md`
-- [ ] T056 Update the Documentation tree in `specs/001-platform-foundations/plan.md` to include `README.md`, `foundation-areas.md`, `tenant-access-boundaries.md`, `scan-audit-accountability.md`, `traceability-matrix.md`, and `review-log.md`
-- [ ] T057 Update `specs/001-platform-foundations/quickstart.md` with a final "Ready for Review" checklist covering US1, US2, US3, traceability, contracts, and unresolved clarifications
-- [ ] T058 Verify `specs/001-platform-foundations/foundation-areas.md` links each foundation area to at least one source in `specs/001-platform-foundations/spec.md`, `specs/001-platform-foundations/research.md`, `specs/001-platform-foundations/data-model.md`, or `specs/001-platform-foundations/contracts/`
-- [ ] T059 Run a Markdown formatting review and record pass/fail notes in `specs/001-platform-foundations/review-log.md`
-- [ ] T060 Mark final readiness status for US1, US2, and US3 in `specs/001-platform-foundations/review-log.md`
+- [ ] T052 Search all Markdown files under `specs/001-platform-foundations/` for unresolved clarification markers and record the result in `specs/001-platform-foundations/review-log.md`
+- [ ] T053 Verify every file created by tasks T001-T006 is linked from `specs/001-platform-foundations/README.md` and record pass/fail evidence in `specs/001-platform-foundations/review-log.md`
+- [ ] T054 Verify `specs/001-platform-foundations/traceability-matrix.md` contains one row for every Phase 1 candidate spec from `PLAN.md` and at least five later-phase samples, with 100% of Phase 1 rows mapped to Phase 0 foundation decisions and at least 95% of all samples mapped
+- [ ] T055 Compare entity names in `specs/001-platform-foundations/data-model.md` with contract names in `specs/001-platform-foundations/contracts/foundation-decision.md`, `specs/001-platform-foundations/contracts/tenant-configuration.md`, and `specs/001-platform-foundations/contracts/scan-audit-event.md`, then record mismatches or pass evidence in `specs/001-platform-foundations/review-log.md`
+- [ ] T056 Update `specs/001-platform-foundations/quickstart.md` with a final "Ready for Review" checklist covering US1, US2, US3, traceability, contracts, unresolved clarifications, and a 60-minute review dry-run
+- [ ] T057 Verify `specs/001-platform-foundations/foundation-areas.md` links each foundation area to at least one source in `specs/001-platform-foundations/spec.md`, `specs/001-platform-foundations/research.md`, `specs/001-platform-foundations/data-model.md`, or `specs/001-platform-foundations/contracts/`, then record pass/fail evidence in `specs/001-platform-foundations/review-log.md`
+- [ ] T058 Run a Markdown formatting review and record pass/fail notes in `specs/001-platform-foundations/review-log.md`
+- [ ] T059 Mark final readiness status for US1, US2, and US3 in `specs/001-platform-foundations/review-log.md`, including reviewer start time, end time, duration, and whether the 60-minute target passed
 
 ---
 
@@ -173,7 +172,7 @@ traceable, and ready for review.
 - **US1 (Phase 3)**: T015-T027 depend on T001-T014.
 - **US2 (Phase 4)**: T028-T039 depend on T001-T014; US2 can run in parallel with US1 after Phase 2, but reviewing US2 is easier after US1.
 - **US3 (Phase 5)**: T040-T051 depend on T001-T014; US3 can run in parallel with US1 or US2 after Phase 2.
-- **Polish (Phase 6)**: T052-T060 depend on all desired user stories being complete.
+- **Polish (Phase 6)**: T052-T059 depend on all desired user stories being complete.
 
 ### User Story Dependencies
 
@@ -194,9 +193,8 @@ traceable, and ready for review.
 - T002-T006 can run in parallel after T001 is understood.
 - T009-T013 can run in parallel after T007-T008 if different files are edited.
 - T023 and T024 can run in parallel with T015-T022.
-- T034-T036 can run in parallel with T028-T033.
-- T046-T048 can run in parallel with T040-T045.
-- T052-T055 can run in parallel during polish because they record or verify different files.
+- T036 can run in parallel with T028-T033 because it edits only `contracts/tenant-configuration.md`.
+- T048 can run in parallel with T040-T045 because it edits only `contracts/scan-audit-event.md`.
 
 ## Parallel Example: User Story 1
 
@@ -208,14 +206,12 @@ Task: "T024 [P] [US1] Add six concrete YAML examples to specs/001-platform-found
 ## Parallel Example: User Story 2
 
 ```text
-Task: "T034 [P] [US2] Add concrete validation examples to specs/001-platform-foundations/data-model.md"
 Task: "T036 [P] [US2] Add approved, rejected, applied, and rolled-back YAML examples to specs/001-platform-foundations/contracts/tenant-configuration.md"
 ```
 
 ## Parallel Example: User Story 3
 
 ```text
-Task: "T046 [P] [US3] Add state transition examples to specs/001-platform-foundations/data-model.md"
 Task: "T048 [P] [US3] Add offline NFC, QR fallback, duplicate scan, and conflict review YAML examples to specs/001-platform-foundations/contracts/scan-audit-event.md"
 ```
 
