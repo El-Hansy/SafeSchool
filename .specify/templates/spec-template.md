@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
+## Constitution Alignment *(mandatory)*
+
+- **Implementation Phase**: [PLAN.md phase, e.g., Phase 2: Attendance & Campus Access]
+- **Feature Module(s)**: [Identity, Transport, Wallet, Attendance, etc.]
+- **Tenant Scope**: [Tenant-owned data/actions or N/A with rationale]
+- **Feature Flag(s)**: [Tenant configuration flags required or N/A with rationale]
+- **Security/Roles**: [Roles, permissions, and backend enforcement points]
+- **Offline/NFC Impact**: [NFC/QR/offline scan behavior or N/A with rationale]
+- **Observability**: [Audit events, logs, metrics, and error tracking expectations]
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -84,16 +94,18 @@
 
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-001**: System MUST [specific capability, e.g., "allow guardians to view attendance events"]
+- **FR-002**: System MUST enforce tenant resolution for [tenant-owned capability or N/A with rationale]
+- **FR-003**: System MUST gate [capability] by [feature flag name or N/A with rationale]
+- **FR-004**: System MUST validate [roles/permissions] on the backend before [sensitive action]
+- **FR-005**: System MUST persist [data requirement] with required tenant and audit metadata
+- **FR-006**: System MUST expose or consume [API/data contract] using DTOs, versioned routes, and documented errors
+- **FR-007**: System MUST emit [audit/log/metric/error event] for [important operation]
 
 *Example of marking unclear requirements:*
 
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+- **FR-008**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - JWT session, SSO, OAuth?]
+- **FR-009**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
 ### Key Entities *(include if feature involves data)*
 

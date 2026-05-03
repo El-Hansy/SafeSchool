@@ -31,7 +31,26 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Spec-first delivery**: Plan references an approved spec with user stories,
+  acceptance criteria, data/entities, API contracts, edge cases, assumptions,
+  and validation approach.
+- **Phase and module mapping**: Feature is assigned to a `PLAN.md`
+  implementation phase and one or more feature/domain modules.
+- **Multi-tenancy and feature flags**: Tenant resolution, tenant-owned data,
+  backend feature flag enforcement, and UI feature gates are documented.
+- **Security and authorization**: JWT/RBAC/permission checks are defined, and
+  backend validation covers tenant access, feature availability, and user role.
+- **Data and API contracts**: PostgreSQL/EF Core migrations, DTOs, `/api/v1/`
+  contracts, pagination, indexes, and idempotency are planned where applicable.
+- **Offline NFC integrity**: NFC, QR, attendance, campus access, or transport
+  scan flows define SQLite queues, sync behavior, timestamp conflict handling,
+  idempotent APIs, and audit events.
+- **Observability and testing**: Structured logs, audit events, metrics/error
+  tracking, unit tests, API integration or contract tests, authorization tests,
+  and critical UI flow tests are scoped.
+- **Simplicity and cost**: Modular monolith, single PostgreSQL database, and
+  low-cost managed services remain the default; microservices, queues, CQRS, or
+  extra infrastructure require Complexity Tracking.
 
 ## Project Structure
 
