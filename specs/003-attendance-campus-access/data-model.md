@@ -461,3 +461,44 @@ Phase 2 workflows.
   permission.
 - Capability decisions must be recorded for sensitive denials.
 - Feature settings do not grant permissions by themselves.
+
+## Attendance Access Rule Setting
+
+**Purpose**: School account configuration for attendance, notification,
+anomaly, scan clock drift, and retry behavior used by Phase 2 workflows.
+
+**Fields**:
+- `attendance_access_rule_setting_id`: Stable identifier.
+- `tenant_id`: Owning school account.
+- `rule_set_name`: Human-readable rule set name.
+- `rule_set_status`: Draft, Active, Suspended, Archived.
+- `effective_from`: When the rule set begins.
+- `effective_until`: Optional end time.
+- `attendance_window_rules`: Entry window, late threshold, early-exit threshold,
+  and expected session defaults.
+- `notification_rules`: Eligibility timing, suppression behavior, corrected
+  scan visibility behavior, and guardian-visible time policy.
+- `anomaly_rules`: Enabled anomaly types, severity thresholds, escalation
+  triggers, and duplicate scan matching window.
+- `clock_drift_tolerance`: Maximum tolerated difference between local scan time
+  and school account time before review is required.
+- `retry_rules`: Idempotency retention, duplicate handling, and retry conflict
+  behavior.
+- `changed_by`: Actor that changed the setting.
+- `change_reason`: Business reason.
+- `created_at`: Creation time.
+- `updated_at`: Last update time.
+
+**Relationships**:
+- Belongs to one School Account.
+- Is referenced by Gate Scan Events, Attendance Sessions, Notification Records,
+  and Attendance Anomalies when rule decisions are made.
+- Produces Audit Events when created, activated, suspended, or archived.
+
+**Validation rules**:
+- Only one active rule setting can apply to the same school account and
+  effective period.
+- Active rule settings require tenant scope, feature availability, permission
+  checks, and audit evidence.
+- Attendance, notification, anomaly, clock drift, and retry services must record
+  the rule version or rule setting used for reviewable decisions.

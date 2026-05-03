@@ -136,6 +136,7 @@ apps/
 │   └── tests/SafeSchool.Api.Tests/Features/AttendanceAccess/
 ├── admin-web/
 │   ├── src/app/(school)/attendance-access/
+│   ├── src/app/(guardian)/entry-exit/
 │   ├── src/features/attendance-access/
 │   └── tests/attendance-access/
 └── mobile/
@@ -150,10 +151,11 @@ tests/
 **Structure Decision**: Use the constitution's modular monolith baseline.
 Backend feature folders own scan validation, attendance rules, notification
 eligibility, anomaly detection, review actions, persistence, and audit events.
-Web code owns school administration and reviewer workflows. Mobile code is
-limited to NFC/QR gate scanning, offline scan storage, and sync behavior. The
-current repository contains planning artifacts only, so these source paths are
-the implementation target for the later `/speckit.tasks` output.
+Web code owns school administration, reviewer workflows, and guardian-facing
+entry/exit visibility. Mobile code is limited to NFC/QR gate scanning, offline
+scan storage, and sync behavior. The current repository contains planning
+artifacts only, so these source paths are the implementation target for the
+later `/speckit.tasks` output.
 
 ## Complexity Tracking
 

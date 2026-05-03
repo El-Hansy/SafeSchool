@@ -141,6 +141,7 @@ created with reviewer workflow and resolution history.
 - **FR-018**: The system MUST record audit evidence for scan capture, denied or flagged access, offline reconciliation, attendance generation, notification eligibility or suppression, anomaly creation, manual review, correction, and access denial.
 - **FR-019**: The system MUST provide attendance and scan review summaries by student, group, gate, attendance day, and anomaly status without exposing data outside the user's authorized school account scope.
 - **FR-020**: The system MUST explicitly exclude bus boarding, route tracking, wallet transactions, learning engagement, outings and early leave requests, medical workflows, complaints, general messaging, broadcasts, document management, search, and broad admin dashboards from Phase 2 deliverable scope.
+- **FR-021**: The system MUST allow each school account to configure Phase 2 rule settings for attendance windows, late and early-exit thresholds, notification eligibility timing, anomaly detection thresholds, scan clock drift tolerance, and retry handling, with tenant scope, permissions, and audit evidence.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -153,6 +154,7 @@ created with reviewer workflow and resolution history.
 - **Entry/Exit Notification Record**: A guardian-facing notification event or suppression record tied to an accepted or reviewed entry or exit outcome.
 - **Attendance Anomaly**: A reviewable issue involving missing, duplicate, conflicting, invalid, late, early, or delayed scan and attendance evidence.
 - **Manual Review**: A reviewer action that resolves, dismisses, or corrects scan, attendance, notification, or anomaly outcomes with a reason and history.
+- **Attendance Access Rule Setting**: A school account configuration record that defines attendance, notification, anomaly, clock drift, and retry rules used by Phase 2 workflows.
 - **School Account Feature Setting**: A school account capability setting that determines whether Phase 2 workflows are available.
 
 ## Success Criteria *(mandatory)*
