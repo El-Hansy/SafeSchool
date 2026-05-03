@@ -602,6 +602,45 @@ notification, anomaly, clock drift, retry, and retention behavior.
 - Active -> Suspended during policy hold.
 - Suspended -> Active when restored.
 
+## Transport Review Summary
+
+**Purpose**: Tenant-scoped read model for reviewers to inspect Phase 3 status
+across students, routes, buses, trips, stops, scans, location progress, ETAs,
+notifications, anomalies, manual reviews, and audit traces.
+
+**Fields**:
+- `school_account_id`: Owning school account scope.
+- `summary_scope`: Student, Route, Bus, Trip, Stop, or School Account.
+- `scope_reference`: Identifier for the selected summary scope.
+- `student_profile_id`: Optional student reference when the summary is student-scoped.
+- `transport_route_id`: Optional route reference.
+- `transport_vehicle_id`: Optional bus or vehicle reference.
+- `transport_trip_id`: Optional trip reference.
+- `route_stop_sequence_id`: Optional stop sequence reference.
+- `scan_status_counts`: Counts by boarding/drop scan decision and review status.
+- `location_status_counts`: Counts by current, stale, suppressed, or unavailable location state.
+- `eta_state_counts`: Counts by ETA freshness, confidence, unavailable, or needs-review state.
+- `notification_status_counts`: Counts by eligible, visible, suppressed, withdrawn, or failed state.
+- `anomaly_status_counts`: Counts by anomaly type, severity, and status.
+- `latest_evidence_at`: Most recent source evidence timestamp included in the summary.
+- `trace_reference`: Link set for drill-down to source records and audit evidence.
+
+**Relationships**:
+- Computed from tenant-owned Transport Routes, Vehicles, Assignments, Trips,
+  Scan Events, Location Updates, ETA Records, Notification Records, Anomalies,
+  Manual Reviews, and Audit Events.
+- May be cached only if the cache includes `tenant_id`, freshness metadata, and
+  invalidation rules.
+
+**Validation rules**:
+- Staff summaries require tenant access and `transport.review.read`.
+- Guardian-facing summaries are limited to linked-student transport visibility
+  and must not expose unrelated route, bus, trip, or student records.
+- Filters must preserve tenant scope and must not reveal cross-school existence.
+
+**State transitions**:
+- Not a mutable business record; regenerated or refreshed from source evidence.
+
 ## School Account Feature Setting
 
 **Purpose**: School account capability setting that determines whether Phase 3

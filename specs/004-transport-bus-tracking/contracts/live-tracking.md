@@ -20,7 +20,10 @@ location retention for Phase 3.
 
 Live tracking uses an authorized staff or vehicle mobile device associated with
 the active trip. Dedicated bus hardware and physical vehicle control are out of
-Phase 3 scope.
+Phase 3 scope. Live tracking may share the TransportTripLifecycleService with
+the scan-ready trip lifecycle from the Boarding/Drop Scan contract, but this
+contract adds the full tracking route surface, location submission, progress
+visibility, guardian live-location windows, and retention.
 
 ## Endpoints
 

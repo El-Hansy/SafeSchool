@@ -14,10 +14,10 @@ platform. The implementation approach adds a Transport feature area for bus and
 vehicle records, route and stop plans, student transport assignments, active
 trip lifecycle, NFC/QR boarding and drop scans, offline mobile scan queues,
 authorized mobile live tracking, ETA calculation, linked-guardian transport
-notification records, anomaly review, and transport rule settings. All behavior
-is scoped to a school account, gated by tenant feature configuration, protected
-by RBAC and permission checks, backed by PostgreSQL persistence, and observable
-through audit evidence.
+notification records, anomaly review, transport rule settings, and review
+summaries. All behavior is scoped to a school account, gated by tenant feature
+configuration, protected by RBAC and permission checks, backed by PostgreSQL
+persistence, and observable through audit evidence.
 
 ## Technical Context
 
@@ -210,10 +210,11 @@ implementation structure.
 Generated [data-model.md](./data-model.md), [quickstart.md](./quickstart.md),
 and contracts under [contracts/](./contracts/) for route and stop management,
 bus assignment, boarding/drop scan capture and sync, live tracking, ETA
-calculation, transport notification records, and anomaly review. These
-artifacts define entities, state transitions, validation rules, `/api/v1/`
-interface behavior, idempotency requirements, guardian visibility boundaries,
-retention behavior, audit evidence, and verification steps.
+calculation, transport notification records, anomaly review, transport rule
+settings, and review summaries. These artifacts define entities, state
+transitions, validation rules, `/api/v1/` interface behavior, idempotency
+requirements, guardian visibility boundaries, retention behavior, audit
+evidence, and verification steps.
 
 ## Planning Readiness
 

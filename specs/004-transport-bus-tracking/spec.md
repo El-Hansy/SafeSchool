@@ -191,6 +191,7 @@ As a guardian, I need transport notifications for my linked student's boarding, 
 - **Transport Anomaly**: A reviewable issue involving missing, duplicate, invalid, conflicting, delayed, stale, deviated, or manual-review-required transport evidence.
 - **Manual Transport Review**: A reviewer action that resolves, dismisses, or corrects transport scan, trip, ETA, notification, or anomaly outcomes with a reason and history.
 - **Transport Rule Setting**: A school account configuration record that defines Phase 3 assignment, scan, tracking, ETA, notification, anomaly, clock drift, and retry rules.
+- **Transport Review Summary**: A permission-scoped read model that summarizes Phase 3 status by student, route, bus, trip, stop, scan status, location status, ETA state, notification status, and anomaly status without exposing cross-school or unlinked guardian records.
 - **School Account Feature Setting**: A school account capability setting that determines whether Phase 3 workflows are available.
 
 ## Success Criteria *(mandatory)*
