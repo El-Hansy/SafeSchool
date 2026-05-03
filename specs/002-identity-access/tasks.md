@@ -21,7 +21,7 @@
 - [ ] T002 [P] Create API project manifest with ASP.NET Core, EF Core, Npgsql, authentication, validation, and OpenAPI dependencies in apps/api/src/SafeSchool.Api/SafeSchool.Api.csproj
 - [ ] T003 [P] Create API test project manifest with xUnit, FluentAssertions, WebApplicationFactory, EF test helpers, and coverage dependencies in apps/api/tests/SafeSchool.Api.Tests/SafeSchool.Api.Tests.csproj
 - [ ] T004 [P] Create admin web package and TypeScript manifests with Next.js, React, TanStack Query, lint, and test dependencies in apps/admin-web/package.json and apps/admin-web/tsconfig.json
-- [ ] T005 [P] Create mobile package manifest with Flutter test and NFC/QR integration placeholders in apps/mobile/pubspec.yaml
+- [ ] T005 [P] Create mobile package manifest with Flutter test, SQLite local storage, and NFC/QR integration placeholders in apps/mobile/pubspec.yaml
 - [ ] T006 [P] Create repository coding defaults and generated-file ignores in .editorconfig and .gitignore
 - [ ] T007 Create API bootstrap with versioned routing, authentication, authorization, validation, OpenAPI, DbContext registration, and IdentityAccess endpoint registration placeholders in apps/api/src/SafeSchool.Api/Program.cs
 - [ ] T008 [P] Create API configuration placeholders for connection strings, JWT, logging, audit, and feature settings in apps/api/src/SafeSchool.Api/appsettings.json and apps/api/src/SafeSchool.Api/appsettings.Development.json
@@ -44,7 +44,7 @@
 - [ ] T016 Create IdentityAccess model-builder extension for tenant-owned metadata, timestamps, indexes, and feature modules in apps/api/src/SafeSchool.Api/Features/IdentityAccess/IdentityAccessDbContextModelBuilderExtensions.cs
 - [ ] T017 Create tenant context abstraction and tenant resolution middleware that rejects missing or mismatched school account context in apps/api/src/SafeSchool.Api/Infrastructure/Tenancy/TenantContext.cs and apps/api/src/SafeSchool.Api/Infrastructure/Tenancy/TenantResolutionMiddleware.cs
 - [ ] T018 Create Phase 1 capability constants and feature gate service for identity.student_profiles, identity.guardian_linking, identity.nfc_credentials, identity.qr_fallback, identity.role_administration, and identity.permission_enforcement in apps/api/src/SafeSchool.Api/Infrastructure/FeatureFlags/IdentityAccessCapabilities.cs and apps/api/src/SafeSchool.Api/Infrastructure/FeatureFlags/FeatureGateService.cs
-- [ ] T019 Create permission requirement, permission guard interface, and default deny implementation for sensitive actions in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Authorization/PermissionGuard.cs
+- [ ] T019 Create permission requirement, seeded default permission catalog, school administrator role seed, and working permission guard for sensitive actions in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Authorization/PermissionGuard.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/PermissionCatalog.cs, and apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/SeededIdentityAccessRoles.cs
 - [ ] T020 Create AuditEvent entity and audit writer abstraction for tenant-scoped Phase 1 events in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Audit/AuditEvent.cs and apps/api/src/SafeSchool.Api/Features/IdentityAccess/Audit/AuditWriter.cs
 - [ ] T021 Create AccessDecision entity and writer abstraction for allow/deny outcomes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessDecision.cs and apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessDecisionWriter.cs
 - [ ] T022 Create consistent API error response middleware for validation, disabled capability, missing permission, tenant mismatch, and not-found-without-cross-tenant-leakage cases in apps/api/src/SafeSchool.Api/Infrastructure/Errors/ApiErrorMiddleware.cs
@@ -52,7 +52,7 @@
 - [ ] T024 Create API test fixture for tenants, capabilities, users, permissions, and audit assertions in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/Fixtures/IdentityAccessTestFixture.cs
 - [ ] T025 [P] Create unit tests for disabled and enabled Phase 1 feature capability decisions in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/Foundational/FeatureGateServiceTests.cs
 - [ ] T026 [P] Create unit tests for tenant context resolution, tenant mismatch, and missing tenant behavior in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/Foundational/TenantResolutionMiddlewareTests.cs
-- [ ] T027 [P] Create unit tests for audit writer and access decision writer required fields in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/Foundational/AuditAndAccessDecisionWriterTests.cs
+- [ ] T027 [P] Create unit tests for audit writer, access decision writer, seeded school administrator permission guard, and default denial behavior in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/Foundational/AuditAccessDecisionAndPermissionGuardTests.cs
 - [ ] T028 Create initial EF migration for shared IdentityAccess audit, access decision, and feature setting foundations in apps/api/src/SafeSchool.Api/Infrastructure/Persistence/Migrations/202605030001_IdentityAccessFoundation.cs
 - [ ] T029 [P] Create admin web IdentityAccess API client with tenant header handling, typed errors, and feature-disabled handling in apps/admin-web/src/features/identity-access/api/client.ts
 - [ ] T030 [P] Create mobile IdentityAccess API client shell with tenant context and credential status fetch placeholder in apps/mobile/lib/features/identity_access/identity_access_api.dart
@@ -104,21 +104,21 @@
 
 - [ ] T048 [P] [US2] Create PermissionEvaluator unit tests for tenant access, feature capability, active role assignment, required permission, and target ownership decisions in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/AccessControl/PermissionEvaluatorTests.cs
 - [ ] T049 [P] [US2] Create Role and ActorRoleAssignment lifecycle unit tests for Active, Suspended, Revoked, Expired, Deprecated, and invalid assignment cases in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/AccessControl/RoleAssignmentTests.cs
-- [ ] T050 [P] [US2] Create contract tests for roles, permissions, role assignments, access decisions, and audit-events routes in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/AccessControl/PermissionEnforcementContractTests.cs
+- [ ] T050 [P] [US2] Create contract tests for paginated roles, permissions, role assignments, access decisions, and audit-events routes in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/AccessControl/PermissionEnforcementContractTests.cs
 - [ ] T051 [P] [US2] Create integration tests proving unauthorized profile, guardian, credential, role, and permission actions are denied before mutation and audited in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/AccessControl/PermissionEnforcementIntegrationTests.cs
 - [ ] T052 [P] [US2] Create admin web tests for role management, role assignment, access decision review, and audit review in apps/admin-web/tests/identity-access/access-control.spec.ts
 
 ### Implementation for User Story 2
 
 - [ ] T053 [P] [US2] Create Role, Permission, RolePermission, and ActorRoleAssignment domain models in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Role.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Permission.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/RolePermission.cs, and apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/ActorRoleAssignment.cs
-- [ ] T054 [P] [US2] Create RBAC request/response DTOs matching contracts/permission-enforcement.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessControlDtos.cs
+- [ ] T054 [P] [US2] Create RBAC request/response DTOs and paginated list DTOs matching contracts/permission-enforcement.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessControlDtos.cs
 - [ ] T055 [US2] Create EF configurations and migration for roles, permissions, role permissions, actor role assignments, and access-decision indexes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessControlEntityTypeConfiguration.cs and apps/api/src/SafeSchool.Api/Infrastructure/Persistence/Migrations/202605030003_AccessControl.cs
-- [ ] T056 [US2] Implement PermissionCatalog with default permission families for student profiles, guardians, credentials, role administration, permission administration, audit, and review in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/PermissionCatalog.cs
+- [ ] T056 [US2] Extend the seeded PermissionCatalog with role administration, permission administration, audit, and reviewer permission families in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/PermissionCatalog.cs
 - [ ] T057 [US2] Implement RolePermissionService for role create, update, permission replacement, assignment create, assignment state changes, and history behavior in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/RolePermissionService.cs
 - [ ] T058 [US2] Implement PermissionEvaluator that checks tenant, capability, assignment state, permission, and target ownership before business logic runs in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Authorization/PermissionEvaluator.cs
-- [ ] T059 [US2] Implement RolesController, PermissionsController, and RoleAssignmentsController routes from contracts/permission-enforcement.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessControlControllers.cs
-- [ ] T060 [US2] Implement AccessDecisionsController and AuditEventsController for filtered reviewer access in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/ReviewControllers.cs
-- [ ] T061 [US2] Replace default deny guard with PermissionEvaluator in endpoint registration and StudentProfilesController in apps/api/src/SafeSchool.Api/Features/IdentityAccess/IdentityAccessEndpointRegistration.cs and apps/api/src/SafeSchool.Api/Features/IdentityAccess/StudentProfiles/StudentProfilesController.cs
+- [ ] T059 [US2] Implement paginated RolesController, PermissionsController, and RoleAssignmentsController routes from contracts/permission-enforcement.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/AccessControlControllers.cs
+- [ ] T060 [US2] Implement paginated AccessDecisionsController and AuditEventsController with reviewer filters in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/ReviewControllers.cs
+- [ ] T061 [US2] Extend the foundational permission guard with role administration, assignment lifecycle, and reviewer access behavior in apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Authorization/PermissionEvaluator.cs and apps/api/src/SafeSchool.Api/Features/IdentityAccess/AccessControl/Authorization/PermissionGuard.cs
 - [ ] T062 [P] [US2] Create admin web access-control types and API hooks in apps/admin-web/src/features/identity-access/access-control/accessControlApi.ts
 - [ ] T063 [P] [US2] Create admin web access-control route for roles, assignments, permissions, access decisions, and audit events in apps/admin-web/src/app/(school)/identity-access/access-control/page.tsx
 - [ ] T064 [US2] Create access decision table and audit event timeline components in apps/admin-web/src/features/identity-access/access-control/AccessDecisionTable.tsx and apps/admin-web/src/features/identity-access/access-control/AuditEventTimeline.tsx
@@ -173,24 +173,26 @@
 - [ ] T084 [P] [US4] Create integration tests for active student requirement, duplicate active NFC card reference, tenant isolation, disabled capability, missing permission, audit evidence, and retry-safe lifecycle commands in apps/api/tests/SafeSchool.Api.Tests/Features/IdentityAccess/Credentials/CredentialLifecycleIntegrationTests.cs
 - [ ] T085 [P] [US4] Create admin web credential lifecycle tests for issue, suspend, restore, replace, revoke, create QR, rotate QR, and status review in apps/admin-web/tests/identity-access/credential-lifecycle.spec.ts
 - [ ] T086 [P] [US4] Create mobile credential status snapshot and QR fallback tests in apps/mobile/test/features/identity_access/credential_status_snapshot_test.dart
+- [ ] T087 [P] [US4] Create mobile SQLite cache tests for cached snapshot reads, expired snapshot handling, refresh failure fallback, and offline mode in apps/mobile/test/features/identity_access/credential_status_cache_test.dart
 
 ### Implementation for User Story 4
 
-- [ ] T087 [P] [US4] Create IdentityCredential, NFC Card Credential, QR Fallback Credential, and Credential Status Snapshot domain models in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/IdentityCredential.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/NfcCardCredential.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/QrFallbackCredential.cs, and apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialStatusSnapshot.cs
-- [ ] T088 [P] [US4] Create credential lifecycle DTOs matching contracts/credential-lifecycle.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialDtos.cs
-- [ ] T089 [US4] Create EF configurations and migration for identity credentials, NFC credentials, QR credentials, status snapshots, unique active card references, and status indexes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialEntityTypeConfiguration.cs and apps/api/src/SafeSchool.Api/Infrastructure/Persistence/Migrations/202605030005_CredentialLifecycle.cs
-- [ ] T090 [US4] Implement CredentialLifecycleService for issue NFC, suspend, restore, replace, revoke, expire, list, history, and retry-safe client_request_id handling in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialLifecycleService.cs
-- [ ] T091 [US4] Implement QrFallbackCredentialService for QR create, rotate, validity window enforcement, capability checks, and prior credential replacement in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/QrFallbackCredentialService.cs
-- [ ] T092 [US4] Implement CredentialStatusSnapshotService that excludes suspended, replaced, expired, or revoked credentials from current identity evidence in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialStatusSnapshotService.cs
-- [ ] T093 [US4] Implement CredentialsController routes from contracts/credential-lifecycle.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialsController.cs
-- [ ] T094 [US4] Wire credential lifecycle audit events and access decisions for issue, suspend, restore, replace, revoke, expire, QR create, QR rotate, and status snapshot denial outcomes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialAuditAdapter.cs
-- [ ] T095 [P] [US4] Create admin web credential types and API hooks in apps/admin-web/src/features/identity-access/credentials/credentialsApi.ts
-- [ ] T096 [P] [US4] Create admin web credential issue form, credential table, lifecycle action menu, QR rotation form, and status snapshot viewer components in apps/admin-web/src/features/identity-access/credentials/CredentialIssueForm.tsx and apps/admin-web/src/features/identity-access/credentials/CredentialTable.tsx
-- [ ] T097 [US4] Create admin web student credentials route in apps/admin-web/src/app/(school)/identity-access/credentials/page.tsx
-- [ ] T098 [US4] Implement mobile credential status snapshot client and local model parsing in apps/mobile/lib/features/identity_access/credential_status_snapshot.dart and apps/mobile/lib/features/identity_access/credential_status_repository.dart
-- [ ] T099 [US4] Create mobile credential status review screen for current identity evidence without attendance or transport outcomes in apps/mobile/lib/features/identity_access/credential_status_screen.dart
+- [ ] T088 [P] [US4] Create IdentityCredential, NFC Card Credential, QR Fallback Credential, and Credential Status Snapshot domain models in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/IdentityCredential.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/NfcCardCredential.cs, apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/QrFallbackCredential.cs, and apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialStatusSnapshot.cs
+- [ ] T089 [P] [US4] Create credential lifecycle DTOs matching contracts/credential-lifecycle.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialDtos.cs
+- [ ] T090 [US4] Create EF configurations and migration for identity credentials, NFC credentials, QR credentials, status snapshots, unique active card references, and status indexes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialEntityTypeConfiguration.cs and apps/api/src/SafeSchool.Api/Infrastructure/Persistence/Migrations/202605030005_CredentialLifecycle.cs
+- [ ] T091 [US4] Implement CredentialLifecycleService for issue NFC, suspend, restore, replace, revoke, expire, list, history, and retry-safe client_request_id handling in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialLifecycleService.cs
+- [ ] T092 [US4] Implement QrFallbackCredentialService for QR create, rotate, validity window enforcement, capability checks, and prior credential replacement in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/QrFallbackCredentialService.cs
+- [ ] T093 [US4] Implement CredentialStatusSnapshotService that excludes suspended, replaced, expired, or revoked credentials from current identity evidence in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialStatusSnapshotService.cs
+- [ ] T094 [US4] Implement CredentialsController routes from contracts/credential-lifecycle.md in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialsController.cs
+- [ ] T095 [US4] Wire credential lifecycle audit events and access decisions for issue, suspend, restore, replace, revoke, expire, QR create, QR rotate, and status snapshot denial outcomes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/Credentials/CredentialAuditAdapter.cs
+- [ ] T096 [P] [US4] Create admin web credential types and API hooks in apps/admin-web/src/features/identity-access/credentials/credentialsApi.ts
+- [ ] T097 [P] [US4] Create admin web credential issue form, credential table, lifecycle action menu, QR rotation form, and status snapshot viewer components in apps/admin-web/src/features/identity-access/credentials/CredentialIssueForm.tsx and apps/admin-web/src/features/identity-access/credentials/CredentialTable.tsx
+- [ ] T098 [US4] Create admin web student credentials route in apps/admin-web/src/app/(school)/identity-access/credentials/page.tsx
+- [ ] T099 [US4] Implement mobile credential status snapshot client and local model parsing in apps/mobile/lib/features/identity_access/credential_status_snapshot.dart and apps/mobile/lib/features/identity_access/credential_status_repository.dart
+- [ ] T100 [US4] Implement SQLite-backed credential status snapshot cache with expiry, refresh metadata, and offline reads in apps/mobile/lib/features/identity_access/credential_status_cache.dart
+- [ ] T101 [US4] Create mobile credential status review screen using cached current identity evidence without attendance or transport outcomes in apps/mobile/lib/features/identity_access/credential_status_screen.dart
 
-**Checkpoint**: User Story 4 can be demonstrated independently after T081-T099 pass.
+**Checkpoint**: User Story 4 can be demonstrated independently after T081-T101 pass.
 
 ---
 
@@ -198,15 +200,15 @@
 
 **Purpose**: Validate the full Phase 1 implementation, harden security and observability, and preserve traceability for future phases.
 
-- [ ] T100 [P] Generate or update OpenAPI documentation for all IdentityAccess routes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/IdentityAccessOpenApi.md
-- [ ] T101 [P] Create end-to-end tenant isolation and feature-disabled scenarios across student, guardian, credential, role, permission, audit, and access decision workflows in tests/e2e/identity-access/identity-access.e2e.spec.ts
-- [ ] T102 [P] Create security review checklist for tenant boundaries, feature gates, permissions, audit evidence, raw credential exposure, and cross-tenant not-found behavior in docs/identity-access/security-review.md
-- [ ] T103 [P] Create observability review for logs, metrics, audit event categories, access-denial dashboards, and centralized error reporting in docs/identity-access/observability.md
-- [ ] T104 [P] Create Phase 1 traceability matrix mapping FR-001 through FR-018 and SC-001 through SC-007 to implemented tests and files in docs/identity-access/traceability.md
-- [ ] T105 Run API test suite and record relevant output for IdentityAccess in docs/identity-access/backend-test-results.md
-- [ ] T106 Run admin web test suite and record relevant output for IdentityAccess in docs/identity-access/admin-web-test-results.md
-- [ ] T107 Run mobile test suite and record relevant output for IdentityAccess in docs/identity-access/mobile-test-results.md
-- [ ] T108 Run quickstart.md validation scenarios end-to-end and record pass/fail evidence in docs/identity-access/quickstart-validation.md
+- [ ] T102 [P] Generate or update OpenAPI documentation for all IdentityAccess routes in apps/api/src/SafeSchool.Api/Features/IdentityAccess/IdentityAccessOpenApi.md
+- [ ] T103 [P] Create end-to-end tenant isolation and feature-disabled scenarios across student, guardian, credential, role, permission, audit, and access decision workflows in tests/e2e/identity-access/identity-access.e2e.spec.ts
+- [ ] T104 [P] Create security review checklist for tenant boundaries, feature gates, permissions, audit evidence, raw credential exposure, and cross-tenant not-found behavior in docs/identity-access/security-review.md
+- [ ] T105 [P] Create observability review for logs, metrics, audit event categories, access-denial dashboards, and centralized error reporting in docs/identity-access/observability.md
+- [ ] T106 [P] Create Phase 1 traceability matrix mapping FR-001 through FR-018 and SC-001 through SC-007 to implemented tests and files in docs/identity-access/traceability.md
+- [ ] T107 Run API test suite and record relevant output for IdentityAccess in docs/identity-access/backend-test-results.md
+- [ ] T108 Run admin web test suite and record relevant output for IdentityAccess in docs/identity-access/admin-web-test-results.md
+- [ ] T109 Run mobile test suite and record relevant output for IdentityAccess in docs/identity-access/mobile-test-results.md
+- [ ] T110 Run quickstart.md validation scenarios end-to-end and record pass/fail evidence in docs/identity-access/quickstart-validation.md
 
 ---
 
@@ -218,16 +220,16 @@
 - **Phase 2 Foundational**: Depends on Phase 1 completion and blocks all user stories.
 - **Phase 3 US1**: Depends on Phase 2.
 - **Phase 4 US2**: Depends on Phase 2. US2 can run in parallel with US1, but production-safe delivery should complete US1 and US2 together because both are P1.
-- **Phase 5 US3**: Depends on Phase 2 and uses StudentProfile references from US1 plus permission guard behavior from US2 for full integration tests.
-- **Phase 6 US4**: Depends on Phase 2 and uses active StudentProfile references from US1 plus permission guard behavior from US2 for full integration tests.
+- **Phase 5 US3**: Depends on Phase 2 and uses StudentProfile references from US1 plus foundational permission guard behavior for full integration tests.
+- **Phase 6 US4**: Depends on Phase 2 and uses active StudentProfile references from US1 plus foundational permission guard behavior for full integration tests.
 - **Phase 7 Polish**: Depends on all desired user stories being complete.
 
 ### User Story Dependencies
 
 - **US1 Maintain Student Identity Profile (P1)**: Can start after Phase 2. Delivers student profile MVP with tenant, capability, permission, and audit enforcement.
-- **US2 Enforce Identity Permissions (P1)**: Can start after Phase 2. Strengthens and exposes role/permission administration and reviewer workflows used by all stories.
-- **US3 Link Guardians to Students (P2)**: Best started after US1 and US2 for real student references and full permission enforcement.
-- **US4 Manage NFC and QR Identity Credentials (P3)**: Best started after US1 and US2 for real active student references and full permission enforcement.
+- **US2 Enforce Identity Permissions (P1)**: Can start after Phase 2. Extends the foundational permission guard with role/permission administration and reviewer workflows used by all stories.
+- **US3 Link Guardians to Students (P2)**: Best started after US1 for real student references; it uses the Phase 2 foundational permission guard and gains richer reviewer workflows after US2.
+- **US4 Manage NFC and QR Identity Credentials (P3)**: Best started after US1 for real active student references; it uses the Phase 2 foundational permission guard and gains richer reviewer workflows after US2.
 
 ### Within Each User Story
 
@@ -318,10 +320,10 @@ Run together after Phase 2 and preferably after US1/US2:
 - T086 mobile tests
 
 Run together after test files exist:
-- T087 credential domain models
-- T088 credential DTOs
-- T095 admin web API hooks
-- T096 admin web components
+- T088 credential domain models
+- T089 credential DTOs
+- T096 admin web API hooks
+- T097 admin web components
 ```
 
 ---

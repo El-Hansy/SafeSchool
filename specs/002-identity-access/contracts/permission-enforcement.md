@@ -95,6 +95,9 @@ review_status: "Recorded"
   the active school account unless a platform-level review role is used.
 - Role and permission administration changes require their own permission
   checks and audit evidence.
+- Role, permission, role assignment, access decision, and audit event list
+  responses must be paginated and support stable filtering by status, actor,
+  target, action, and event time where applicable.
 - UI feature gates may hide unavailable workflows but cannot be the only
   enforcement point.
 
