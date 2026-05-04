@@ -185,6 +185,7 @@ As a school administrator, academic coordinator, reviewer, guardian, or auditor,
 - **Manual Learning Review**: A reviewer action that corrects, reopens, resolves, escalates, dismisses, or documents a learning exception with reason and preserved history.
 - **Learning Rule Setting**: A school-account configuration record for learning visibility, late policies, quiz attempts, feedback visibility, star rules, reward rules, behavior categories, correction permissions, and review routing.
 - **Learning Review Summary**: A permission-scoped view of learning progress, assignment status, quiz outcomes, star balances, reward activity, behavior events, exceptions, and review outcomes.
+- **Learning Status Event**: Tenant-scoped exportable evidence that a Phase 5 learning, assignment, quiz, star, reward, behavior, exception, or review status changed and may be consumed later by Phase 6 star evidence or Phase 9 notification capabilities without delivering messages or approving requests directly.
 - **School Account Feature Setting**: A tenant capability setting that determines whether Phase 5 learning and engagement workflows are available.
 
 ## Success Criteria *(mandatory)*

@@ -431,7 +431,9 @@ operator documentation, and ensure every story remains independently testable.
 - [ ] T252 Review accessibility, loading, empty, disabled-capability, access-denied, sensitive-detail-hidden, duplicate-retry, and trace-link states for all Learning web routes in apps/admin-web/src/app/(school)/learning/, apps/admin-web/src/app/(student)/learning/, and apps/admin-web/src/app/(guardian)/learning/
 - [ ] T253 Validate [quickstart.md](./quickstart.md) end-to-end and document reviewer notes in docs/learning/README.md
 - [ ] T254 Update implementation documentation with Phase 5 capability keys, permission names, endpoint groups, rule version behavior, star ledger invariants, reward wallet boundary, behavior privacy rules, Phase 6 evidence export, Phase 9 status event boundary, and troubleshooting notes in docs/learning/README.md
-- [ ] T255 Run repository formatting, linting, type checking, migration validation, and contract fixture validation for all Learning changes in apps/api/, apps/admin-web/, apps/mobile/, and tests/contracts/learning/
+- [ ] T255 [P] Create guardian aggregate learning overview performance test verifying linked guardians can find allowed progress, assignment outcomes, quiz outcomes, star/reward state, and behavior records in under 30 seconds while staff-only details remain hidden in apps/api/tests/SafeSchool.Api.Tests/Features/Learning/Reviews/GuardianLearningOverviewPerformanceTests.cs
+- [ ] T256 [P] Create LearningStatusEvent export latency integration test verifying eligible content, progress, assignment, quiz, star, reward, behavior, exception, review, and configuration status changes are available to later notification consumers within 2 minutes without delivery side effects in apps/api/tests/SafeSchool.Api.Tests/Features/Learning/Audit/LearningStatusEventLatencyIntegrationTests.cs
+- [ ] T257 Run repository formatting, linting, type checking, migration validation, and contract fixture validation for all Learning changes in apps/api/, apps/admin-web/, apps/mobile/, and tests/contracts/learning/
 
 ---
 
