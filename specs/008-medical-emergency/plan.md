@@ -173,18 +173,16 @@ specs/008-medical-emergency/
 apps/
 ├── api/
 │   ├── src/SafeSchool.Api/Features/Medical/
+│   │   ├── Common/
 │   │   ├── Records/
-│   │   ├── Guardians/
 │   │   ├── EmergencyAccess/
-│   │   ├── OfflineCache/
 │   │   ├── Incidents/
-│   │   ├── CareActions/
 │   │   ├── Notifications/
-│   │   ├── Contacts/
-│   │   ├── Exceptions/
+│   │   ├── History/
 │   │   ├── Reviews/
 │   │   ├── Configuration/
-│   │   └── Audit/
+│   │   ├── Audit/
+│   │   └── Seed/
 │   └── tests/SafeSchool.Api.Tests/Features/Medical/
 ├── admin-web/
 │   ├── src/app/(school)/medical/

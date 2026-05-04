@@ -65,7 +65,7 @@ As a nurse, clinic staff member, teacher, or emergency-authorized staff member, 
 
 **Why this priority**: Incident logging turns emergency activity into evidence for guardians, reviewers, school leadership, and future care decisions.
 
-**Independent Test**: Log a medical incident for an active student, record severity, location, observed details, care actions, medication administration evidence, guardian contact attempt, follow-up requirement, and closure status, then verify the incident remains tenant-scoped and preserves all updates.
+**Independent Test**: Log a medical incident for an active student, record severity, location, observed details, care actions, medication administration evidence, guardian contact evidence, follow-up requirement, and closure status, then verify the incident remains tenant-scoped and preserves all updates.
 
 **Acceptance Scenarios**:
 
@@ -139,7 +139,7 @@ As a school administrator, medical coordinator, guardian, reviewer, or auditor, 
 - **FR-008**: Critical emergency profile views MUST include only active and relevant allergies, medication instructions, care plans, restrictions, emergency contacts, and recent medical incident context allowed by school rules.
 - **FR-009**: If emergency offline access is enabled, cached critical medical data MUST show freshness, remain usable only when synced within the last 24 hours, limit visible data to emergency essentials, warn on older stale data, require a reason for stale-cache access, prevent unrelated record browsing, route stale-cache access to review, and create syncable access evidence when connectivity returns.
 - **FR-010**: The system MUST allow authorized staff to log, view, update, correct, close, and review medical incidents when medical incident logging is enabled.
-- **FR-011**: Medical incident records MUST capture school account, student, actor, incident type, severity, location or context, observed details, time, care actions, medication administration evidence where applicable, contact attempts, follow-up requirements, status, visibility rules, and audit evidence.
+- **FR-011**: Medical incident records MUST capture school account, student, actor, incident type, severity, location or context, observed details, time, care actions, medication administration evidence where applicable, guardian contact evidence as a care action, follow-up requirements, status, visibility rules, and audit evidence.
 - **FR-012**: Care action records MUST preserve action type, actor, time, reason, medication or treatment evidence when applicable, guardian or contact involvement, follow-up state, correction history, and link to the parent incident.
 - **FR-013**: Medication administration evidence MUST require an active medication instruction or authorized override reason and MUST NOT create diagnosis, prescription, pharmacy, wallet, or payment outcomes.
 - **FR-014**: Medical notification requests MUST capture source incident or emergency access context, urgency, audience, contact priority, privacy-safe content summary, acknowledgement requirements, delivery or manual contact state, and audit evidence. High-severity medical incidents MUST default the audience to approved guardians, emergency contacts, assigned nurse or clinic staff, and the school emergency coordinator.
@@ -163,7 +163,7 @@ As a school administrator, medical coordinator, guardian, reviewer, or auditor, 
 ### Key Entities *(include if feature involves data)*
 
 - **Student Medical Profile**: A school-account record containing the student's medical summary, visibility rules, active care context, guardian visibility, review state, and audit history.
-- **Medical Condition Record**: A condition, diagnosis label, health concern, or care-relevant status recorded by authorized sources with effective dates, severity, visibility, and review status.
+- **Medical Condition Record**: A school-held condition label, externally supplied condition reference, health concern, or care-relevant status recorded by authorized sources with effective dates, severity, visibility, and review status.
 - **Allergy Record**: A care-critical allergy or sensitivity record with severity, reaction notes, exposure guidance, effective dates, and emergency visibility.
 - **Medication Instruction**: A school-held medication or administration instruction with dosage evidence, schedule, authorization state, expiry, override rules, and audit history.
 - **Care Plan**: A school-approved plan describing care instructions, restrictions, emergency steps, staff notes, guardian-visible summary, and effective period.

@@ -47,8 +47,9 @@ audit history.
 
 ## Medical Condition Record
 
-**Purpose**: A condition, diagnosis label, health concern, or care-relevant
-status recorded by authorized sources.
+**Purpose**: A school-held condition label, externally supplied condition
+reference, health concern, or care-relevant status recorded by authorized
+sources.
 
 **Fields**:
 - `medical_condition_record_id`: Stable identifier.
