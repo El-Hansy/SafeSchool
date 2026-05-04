@@ -5,14 +5,24 @@
 **Status**: Draft  
 **Input**: User description: "Read PLAN.md and create a specification for phase of Medical & Emergency ONLY."
 
+## Clarifications
+
+### Session 2026-05-05
+
+- Q: Which rule should govern guardian-submitted medical updates before they become active school-verified medical evidence? → A: All guardian-submitted updates become pending medical review before school-verified use.
+- Q: If emergency offline access is enabled, when should cached critical medical data be treated as usable versus stale? → A: Usable if synced within 24 hours; stale cache requires warning, reason, and review.
+- Q: How long should an emergency access or break-glass session stay active before it must expire or require re-confirmation? → A: 30 minutes; re-confirm if more time is needed.
+- Q: Who should be allowed to use break-glass emergency access when they do not have normal medical record permission? → A: Only pre-authorized emergency roles configured by the school.
+- Q: For high-severity medical incidents, who should be included by default in the medical notification request audience? → A: Approved guardians, emergency contacts, assigned nurse/clinic staff, and school emergency coordinator.
+
 ## Constitution Alignment *(mandatory)*
 
 - **Implementation Phase**: Phase 7: Medical & Emergency
 - **Feature Module(s)**: Medical Record, Emergency Access, Medical Incident Logging, Medical Notification
 - **Tenant Scope**: All student medical profiles, medical conditions, allergy records, medication instructions, care plans, emergency contacts, guardian medical consent records, emergency access sessions, break-glass events, medical incidents, care actions, medical notification requests, contact attempts, acknowledgements, exceptions, manual reviews, rule settings, and audit evidence belong to one school account and must not be visible or actionable outside that school account unless an explicit platform-level review role permits it.
 - **Feature Flag(s)**: Medical records, emergency access, medical incidents, medical notifications, medical history, medical configuration, and medical review summaries must respect each school account's enabled capabilities before users can access or automate the related workflow.
-- **Security/Roles**: Platform owners, school administrators, school nurses, clinic staff, medical coordinators, emergency-authorized staff, teachers with limited emergency view, transport or gate staff with emergency view where configured, guardians, students, auditors, and reviewers must have explicit permissions for each Phase 7 action. Students can access only allowed own medical summary details. Guardians can access only allowed records for students linked to them through an approved active guardian relationship. Staff users can act only within their school account and assigned medical, emergency, class, trip, gate, transport, reviewer, or administrative authority.
-- **Offline/NFC Impact**: Phase 7 may consume identity evidence from prior NFC or QR identity capabilities to locate a student during an emergency, but it does not provision NFC cards, create scan events, generate attendance, decide campus access, or manage transport boarding. If a school enables emergency offline access, cached critical medical data must show freshness, be limited to minimum necessary details, and create reviewable access evidence that syncs when connectivity returns.
+- **Security/Roles**: Platform owners, school administrators, school nurses, clinic staff, medical coordinators, emergency-authorized staff, teachers with limited emergency view, transport or gate staff with emergency view where configured, guardians, students, auditors, and reviewers must have explicit permissions for each Phase 7 action. Students can access only allowed own medical summary details. Guardians can access only allowed records for students linked to them through an approved active guardian relationship. Staff users can act only within their school account and assigned medical, emergency, class, trip, gate, transport, reviewer, or administrative authority. Break-glass emergency access is limited to pre-authorized emergency roles configured by the school.
+- **Offline/NFC Impact**: Phase 7 may consume identity evidence from prior NFC or QR identity capabilities to locate a student during an emergency, but it does not provision NFC cards, create scan events, generate attendance, decide campus access, or manage transport boarding. If a school enables emergency offline access, cached critical medical data is usable only when synced within the last 24 hours; older cached data must show a stale-data warning, require a reason, route the access to review, and create reviewable access evidence that syncs when connectivity returns.
 - **Observability**: The system must emit reviewable evidence for medical record creation, medical record update, guardian-submitted update, consent change, emergency access, break-glass access, emergency access denial, medical incident creation, severity escalation, care action logging, medication administration evidence, guardian or contact notification request, contact attempt, acknowledgement, failed contact, incident correction, incident closure, configuration changes, summary reads, manual review, and access denial.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -44,7 +54,7 @@ As emergency-authorized school staff, I need rapid, accountable access to critic
 **Acceptance Scenarios**:
 
 1. **Given** emergency access is enabled and the actor has emergency access authority, **When** the actor opens a student's emergency profile with a reason and emergency context, **Then** the actor sees only critical medical details, emergency contacts, and active care instructions needed for immediate response.
-2. **Given** an urgent emergency occurs and the actor lacks ordinary medical record permission but has configured break-glass authority, **When** the actor confirms emergency need and provides a reason, **Then** temporary access is granted, marked for mandatory review, and fully auditable.
+2. **Given** an urgent emergency occurs and the actor lacks ordinary medical record permission but belongs to a school-configured pre-authorized emergency role, **When** the actor confirms emergency need and provides a reason, **Then** temporary access is granted, marked for mandatory review, and fully auditable.
 3. **Given** the actor is unauthorized, the student is outside the school account, the guardian link is invalid, the emergency feature is disabled, the cached profile is stale, or no reason is provided, **When** emergency access is requested, **Then** access is denied or routed to the school's manual emergency protocol without exposing unrelated records.
 
 ---
@@ -71,11 +81,11 @@ As authorized medical or emergency staff, I need medical notification requests, 
 
 **Why this priority**: Notifications are critical for emergency response, but they depend on accurate medical records and incident evidence.
 
-**Independent Test**: Create a medical notification request from a high-severity incident, verify the correct guardian, emergency contact, and school staff audience is selected, record contact attempts and acknowledgements, and confirm sensitive details are minimized and no broad messaging or broadcast workflow is created.
+**Independent Test**: Create a medical notification request from a high-severity incident, verify approved guardians, emergency contacts, assigned nurse or clinic staff, and the school emergency coordinator are selected by default, record contact attempts and acknowledgements, and confirm sensitive details are minimized and no broad messaging or broadcast workflow is created.
 
 **Acceptance Scenarios**:
 
-1. **Given** medical notifications are enabled and an incident or emergency access session requires contact, **When** authorized staff creates or confirms the notification request, **Then** the request records audience, urgency, privacy-safe content summary, contact priority, and acknowledgement requirements.
+1. **Given** medical notifications are enabled and a high-severity incident or emergency access session requires contact, **When** authorized staff creates or confirms the notification request, **Then** the request defaults to approved guardians, emergency contacts, assigned nurse or clinic staff, and the school emergency coordinator while recording audience, urgency, privacy-safe content summary, contact priority, and acknowledgement requirements.
 2. **Given** a notification cannot be delivered automatically or the recipient does not acknowledge, **When** staff records manual call, alternate contact, failed contact, or delayed acknowledgement, **Then** the contact history remains visible to authorized reviewers and emergency staff.
 3. **Given** the notification contains sensitive medical information, targets an invalid guardian link, references a closed incident, duplicates an existing active notification, or attempts broad broadcast behavior, **When** it is evaluated, **Then** restricted details are minimized, invalid recipients are blocked, duplicates are handled idempotently, and broad messaging is prevented.
 
@@ -102,14 +112,16 @@ As a school administrator, medical coordinator, guardian, reviewer, or auditor, 
 - A student is transferred, suspended, withdrawn, graduated, or duplicated while active medical instructions or incidents exist.
 - A guardian link is pending, expired, suspended, removed, rejected, restricted, or belongs to another school account.
 - A nurse, teacher, transport supervisor, gate staff member, or emergency-authorized actor is removed, transferred, disabled, or assigned after records already exist.
+- A staff member has student, class, gate, trip, or bus assignment but is not in a pre-authorized emergency role for break-glass access.
 - A medical condition, allergy, care plan, medication instruction, or consent record expires during an emergency.
 - Guardian-provided medical details conflict with nurse-entered or school-verified records.
 - A student is unconscious, unable to identify themselves, or does not have an available NFC or QR identity during an emergency.
-- Emergency access is requested while the device is offline, has stale cached emergency data, or cannot sync the access audit immediately.
+- Emergency access is requested while the device is offline, has cached emergency data older than 24 hours, or cannot sync the access audit immediately.
+- An emergency access or break-glass session reaches 30 minutes while the emergency response or handoff is still active.
 - Two staff members log the same medical incident or care action at nearly the same time.
 - Medication administration is recorded with missing consent, expired instructions, wrong dosage evidence, or conflicting care plan guidance.
 - Emergency contacts are unreachable, invalid, duplicated, out of order, or not authorized for medical details.
-- A high-severity incident requires guardian contact, emergency services handoff, school leadership awareness, or later follow-up.
+- A high-severity incident requires the default medical notification audience, emergency services handoff, school leadership awareness, or later follow-up.
 - A guardian disputes an incident, medication action, notification content, or emergency access event.
 - A user attempts to use medical status as authorization for attendance, campus gate, transport boarding, wallet purchase, learning reward, request approval, complaint escalation, broad messaging, document storage, or global search.
 
@@ -121,16 +133,16 @@ As a school administrator, medical coordinator, guardian, reviewer, or auditor, 
 - **FR-002**: The system MUST validate school account scope, feature availability, student status, guardian link status, actor permission, medical role, emergency authority, visibility rules, consent state, and applicable medical rule settings before creating, changing, showing, notifying, or reviewing a Phase 7 record.
 - **FR-003**: Medical profile records MUST capture school account, student, medical summary, conditions, allergies, medication instructions, care plans, emergency contacts, consent state, visibility rules, effective dates, review status, source evidence, and audit evidence.
 - **FR-004**: The system MUST allow linked guardians to view school-approved medical details, submit medical update information when allowed, and see allowed incident or notification outcomes without exposing staff-only notes or unrelated student records.
-- **FR-005**: Guardian-submitted medical updates MUST route to authorized school medical review before becoming school-verified medical evidence unless school policy explicitly allows direct guardian-maintained fields.
-- **FR-006**: Emergency access sessions MUST require tenant scope, enabled emergency access capability, eligible student identity, actor authority or break-glass authority, emergency reason, access purpose, minimum-necessary data view, time-bounded access, and audit evidence.
-- **FR-007**: Break-glass emergency access MUST require an explicit emergency confirmation and reason, preserve the actor, student, viewed data category, time, and context, and route the access event to mandatory review.
+- **FR-005**: All guardian-submitted medical updates MUST route to pending authorized school medical review before becoming school-verified medical evidence.
+- **FR-006**: Emergency access sessions MUST require tenant scope, enabled emergency access capability, eligible student identity, actor authority or break-glass authority, emergency reason, access purpose, minimum-necessary data view, a 30-minute access window, re-confirmation for continued access after expiry, and audit evidence.
+- **FR-007**: Break-glass emergency access MUST be limited to pre-authorized emergency roles configured by the school, require explicit emergency confirmation and reason, preserve the actor, student, viewed data category, time, and context, and route the access event to mandatory review.
 - **FR-008**: Critical emergency profile views MUST include only active and relevant allergies, medication instructions, care plans, restrictions, emergency contacts, and recent medical incident context allowed by school rules.
-- **FR-009**: If emergency offline access is enabled, cached critical medical data MUST show freshness, limit visible data to emergency essentials, prevent unrelated record browsing, and create syncable access evidence when connectivity returns.
+- **FR-009**: If emergency offline access is enabled, cached critical medical data MUST show freshness, remain usable only when synced within the last 24 hours, limit visible data to emergency essentials, warn on older stale data, require a reason for stale-cache access, prevent unrelated record browsing, route stale-cache access to review, and create syncable access evidence when connectivity returns.
 - **FR-010**: The system MUST allow authorized staff to log, view, update, correct, close, and review medical incidents when medical incident logging is enabled.
 - **FR-011**: Medical incident records MUST capture school account, student, actor, incident type, severity, location or context, observed details, time, care actions, medication administration evidence where applicable, contact attempts, follow-up requirements, status, visibility rules, and audit evidence.
 - **FR-012**: Care action records MUST preserve action type, actor, time, reason, medication or treatment evidence when applicable, guardian or contact involvement, follow-up state, correction history, and link to the parent incident.
 - **FR-013**: Medication administration evidence MUST require an active medication instruction or authorized override reason and MUST NOT create diagnosis, prescription, pharmacy, wallet, or payment outcomes.
-- **FR-014**: Medical notification requests MUST capture source incident or emergency access context, urgency, audience, contact priority, privacy-safe content summary, acknowledgement requirements, delivery or manual contact state, and audit evidence.
+- **FR-014**: Medical notification requests MUST capture source incident or emergency access context, urgency, audience, contact priority, privacy-safe content summary, acknowledgement requirements, delivery or manual contact state, and audit evidence. High-severity medical incidents MUST default the audience to approved guardians, emergency contacts, assigned nurse or clinic staff, and the school emergency coordinator.
 - **FR-015**: Medical notifications MUST minimize sensitive details for each recipient role and MUST NOT create broad messaging, broadcast, complaint, request approval, or general notification-management workflows.
 - **FR-016**: Contact attempts and acknowledgements MUST preserve recipient, contact route category, attempt time, outcome, acknowledgement state, actor when manually recorded, failure reason when applicable, and source incident or emergency access reference.
 - **FR-017**: The system MUST detect and record medical exceptions, including invalid student, inactive student, expired medical instruction, conflicting medical record, missing consent, missing emergency reason, duplicate incident, duplicate notification, failed contact, stale emergency cache, disabled feature, cross-school access attempt, and manual-review-required condition.
@@ -157,11 +169,11 @@ As a school administrator, medical coordinator, guardian, reviewer, or auditor, 
 - **Care Plan**: A school-approved plan describing care instructions, restrictions, emergency steps, staff notes, guardian-visible summary, and effective period.
 - **Emergency Contact**: A guardian, emergency contact, or authorized contact route with priority, relationship, visibility permissions, and active status.
 - **Medical Consent Record**: Evidence of guardian, school, or authorized consent for medical visibility, medication administration, emergency care steps, or information sharing.
-- **Emergency Access Session**: A time-bounded access event that exposes critical medical data during an emergency and records actor, reason, viewed categories, context, and review state.
-- **Break-Glass Access Event**: An emergency access event granted under configured break-glass rules that requires mandatory review.
+- **Emergency Access Session**: A 30-minute access event that exposes critical medical data during an emergency and records actor, reason, viewed categories, expiry, re-confirmation history, context, and review state.
+- **Break-Glass Access Event**: An emergency access event granted only to school-configured pre-authorized emergency roles under configured break-glass rules and requiring mandatory review.
 - **Medical Incident**: A health, injury, medication, emergency, or care event logged for a student with severity, context, care actions, notification state, status, and audit evidence.
 - **Care Action**: A recorded action taken during or after a medical incident, such as first aid, observation, medication administration evidence, emergency services handoff, guardian contact, or follow-up.
-- **Medical Notification Request**: A tenant-owned request to notify guardians, emergency contacts, or required staff about a medical incident or emergency access event with urgency, privacy-safe content, and acknowledgement needs.
+- **Medical Notification Request**: A tenant-owned request to notify guardians, emergency contacts, assigned nurse or clinic staff, the school emergency coordinator, or required staff about a medical incident or emergency access event with urgency, privacy-safe content, default audience rules, and acknowledgement needs.
 - **Medical Contact Attempt**: Evidence that a recipient was contacted or contact was attempted, including outcome, acknowledgement state, failure reason, and actor when manually recorded.
 - **Medical Exception**: A reviewable issue involving invalid student, missing consent, expired instruction, duplicate incident, failed contact, stale cache, disabled feature, cross-school access, or manual review requirement.
 - **Manual Medical Review**: A reviewer action that corrects, reopens, resolves, dismisses, escalates, or documents a medical record, incident, notification, access event, or exception with reason and preserved history.
@@ -177,12 +189,12 @@ As a school administrator, medical coordinator, guardian, reviewer, or auditor, 
 - **SC-001**: Authorized medical staff can create or update a complete student medical profile with condition, allergy, medication instruction, care plan, emergency contact, and consent details in under 3 minutes during review testing.
 - **SC-002**: 100% of sampled unauthorized, cross-school, expired guardian link, disabled-feature, and restricted-visibility medical record access attempts are blocked or hidden without exposing unrelated records.
 - **SC-003**: Emergency-authorized staff can open a student's critical emergency profile in under 30 seconds during review testing when the student is in their authorized school scope.
-- **SC-004**: 100% of sampled emergency access and break-glass sessions preserve actor, reason, student, viewed data category, time, and review state.
+- **SC-004**: 100% of sampled emergency access and break-glass sessions preserve actor, reason, student, viewed data category, time, 30-minute expiry, re-confirmation history when applicable, and review state.
 - **SC-005**: Authorized staff can log a complete medical incident with severity, observation, care action, contact requirement, and follow-up state in under 2 minutes during review testing.
 - **SC-006**: 100% of sampled incident corrections preserve original incident evidence, correction reason, actor, time, resulting status, and guardian or staff visibility rules.
-- **SC-007**: 95% of high-severity medical incident notification requests are available to responsible staff or later notification capabilities within 2 minutes of incident classification.
+- **SC-007**: 95% of high-severity medical incident notification requests with the default audience are available to responsible staff or later notification capabilities within 2 minutes of incident classification.
 - **SC-008**: Guardians can find allowed medical profile, incident, notification, and acknowledgement information for linked students in under 30 seconds while 100% of sampled staff-only details remain hidden.
-- **SC-009**: 100% of sampled expired medication instructions, expired care plans, missing consent, stale emergency cache, duplicate incidents, duplicate notifications, and failed contacts are blocked, flagged, or routed to review with a clear reason.
+- **SC-009**: 100% of sampled expired medication instructions, expired care plans, missing consent, emergency cache older than 24 hours, duplicate incidents, duplicate notifications, and failed contacts are blocked, flagged, or routed to review with a clear reason.
 - **SC-010**: Auditors can trace a sampled medical lifecycle from profile update through emergency access, incident logging, care action, notification request, acknowledgement, correction, and review summary in under 60 seconds during review testing.
 - **SC-011**: 100% of sampled Phase 7 records are visible only within the authorized school account scope, approved guardian link scope, student ownership scope, medical assignment scope, emergency authority scope, reviewer scope, or explicit platform-level review scope.
 - **SC-012**: 100% of sampled Phase 7 medical and emergency actions create no attendance, campus gate, transport, wallet, learning reward, request approval, complaint escalation, document storage, global search, broad messaging, or broad admin dashboard outcome.
