@@ -1,7 +1,7 @@
 # Implementation Plan: Phase 5 Learning & Engagement
 
-**Branch**: `008-learning-engagement` | **Date**: 2026-05-05 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/007-learning-engagement/spec.md`
+**Branch**: `006-learning-engagement` | **Date**: 2026-05-05 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/006-learning-engagement/spec.md`
 
 **Note**: This plan is filled in by the `/speckit.plan` workflow and stops after
 planning artifacts. Implementation tasks are generated later by
@@ -142,7 +142,7 @@ boundaries, and introduce no constitution violations.
 ### Documentation (this feature)
 
 ```text
-specs/007-learning-engagement/
+specs/006-learning-engagement/
 ├── plan.md
 ├── research.md
 ├── data-model.md

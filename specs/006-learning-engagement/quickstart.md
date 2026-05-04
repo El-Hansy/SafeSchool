@@ -15,10 +15,10 @@ before generating tasks or starting implementation.
 - Read Phase 4 artifacts under `specs/005-wallet-payments/` only to preserve
   wallet and payment boundaries; Phase 5 rewards must not create wallet or
   payment outcomes.
-- Read Phase 6 artifacts under `specs/006-requests-permissions/` only to
+- Read Phase 6 artifacts under `specs/007-requests-permissions/` only to
   preserve request workflow boundaries and confirm Phase 6 consumes Phase 5
   star evidence without owning star balances.
-- Confirm `.specify/feature.json` points to `specs/007-learning-engagement`.
+- Confirm `.specify/feature.json` points to `specs/006-learning-engagement`.
 
 ## Artifact Review
 

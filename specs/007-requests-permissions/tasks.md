@@ -1,6 +1,6 @@
 # Tasks: Phase 6 Requests & Permissions
 
-**Input**: Design documents from `/specs/006-requests-permissions/`
+**Input**: Design documents from `/specs/007-requests-permissions/`
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md)
 
 **Tests**: Included because the constitution and Phase 6 plan require unit,
@@ -381,17 +381,17 @@ activated version while historical requests keep their original version.
 **Purpose**: Validate the full Phase 6 slice against quality gates, boundaries,
 observability, and quickstart scenarios.
 
-- [ ] T198 [P] Run full API unit, integration, contract, authorization, tenant-isolation, audit, and performance test suites for Requests and record results in specs/006-requests-permissions/implementation-validation.md
-- [ ] T199 [P] Run admin web Requests route and component tests for school, guardian, student, approver, reviewer, early leave, star rule, history, and configuration journeys and record results in specs/006-requests-permissions/implementation-validation.md
-- [ ] T200 [P] Run mobile Requests tests for optional request submission, status, early leave, and approval surfaces and record results in specs/006-requests-permissions/implementation-validation.md
+- [ ] T198 [P] Run full API unit, integration, contract, authorization, tenant-isolation, audit, and performance test suites for Requests and record results in specs/007-requests-permissions/implementation-validation.md
+- [ ] T199 [P] Run admin web Requests route and component tests for school, guardian, student, approver, reviewer, early leave, star rule, history, and configuration journeys and record results in specs/007-requests-permissions/implementation-validation.md
+- [ ] T200 [P] Run mobile Requests tests for optional request submission, status, early leave, and approval surfaces and record results in specs/007-requests-permissions/implementation-validation.md
 - [ ] T201 Review all Requests endpoints for tenant, feature, permission, guardian scope, student scope, assigned approver scope, platform review scope, and audit enforcement in apps/api/src/SafeSchool.Api/Features/Requests/
 - [ ] T202 Review Phase 6 boundary guards to confirm no attendance, campus gate, NFC/QR scan, transport, wallet, learning, medical, complaint, messaging delivery, document, search, or broad dashboard side effects in apps/api/src/SafeSchool.Api/Features/Requests/Common/Boundaries/
 - [ ] T203 [P] Review OpenAPI examples and contract fixtures for all six contracts and align examples with implemented DTO names in apps/api/src/SafeSchool.Api/Features/Requests/ and tests/contracts/requests/
 - [ ] T204 [P] Review web accessibility, empty, loading, error, disabled capability, and access-denied states for all Requests pages in apps/admin-web/src/app/(school)/requests/, apps/admin-web/src/app/(guardian)/requests/, and apps/admin-web/src/app/(student)/requests/
 - [ ] T205 Review structured logs, metrics, error reporting, audit events, and status event export for request lifecycle, workflow queues, expiry routing, star rules, early leave release eligibility, exceptions, reviews, and access denial in apps/api/src/SafeSchool.Api/Features/Requests/Audit/
-- [ ] T206 Execute every validation scenario from quickstart.md and document pass/fail evidence in specs/006-requests-permissions/implementation-validation.md
+- [ ] T206 Execute every validation scenario from quickstart.md and document pass/fail evidence in specs/007-requests-permissions/implementation-validation.md
 - [ ] T207 Update Requests implementation README with module ownership, configuration keys, permission keys, route map, test commands, and known phase boundaries in docs/requests/README.md
-- [ ] T208 Run final formatting, linting, type checking, migration validation, and test commands for API, admin web, and mobile surfaces and record command outputs in specs/006-requests-permissions/implementation-validation.md
+- [ ] T208 Run final formatting, linting, type checking, migration validation, and test commands for API, admin web, and mobile surfaces and record command outputs in specs/007-requests-permissions/implementation-validation.md
 
 ---
 

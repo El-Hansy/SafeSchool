@@ -1,7 +1,7 @@
 # Implementation Plan: Phase 6 Requests & Permissions
 
 **Branch**: `007-requests-permissions` | **Date**: 2026-05-05 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/006-requests-permissions/spec.md`
+**Input**: Feature specification from `/specs/007-requests-permissions/spec.md`
 
 **Note**: This plan is filled in by the `/speckit.plan` workflow and stops after
 planning artifacts. Implementation tasks are generated later by
@@ -133,7 +133,7 @@ constitution violations.
 ### Documentation (this feature)
 
 ```text
-specs/006-requests-permissions/
+specs/007-requests-permissions/
 ├── plan.md
 ├── research.md
 ├── data-model.md

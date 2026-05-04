@@ -1,6 +1,6 @@
 # Feature Specification: Phase 5 Learning & Engagement
 
-**Feature Branch**: `008-learning-engagement`
+**Feature Branch**: `006-learning-engagement`
 **Created**: 2026-05-05
 **Status**: Draft
 **Input**: User description: "Read PLAN.md and create a specification for phase 5: Learning & Engagement ONLY."

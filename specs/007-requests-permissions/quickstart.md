@@ -22,7 +22,7 @@ before generating tasks or starting implementation.
   permission rules; Phase 6 consumes Phase 5 star evidence but does not own
   star balances.
 - Confirm `.specify/feature.json` points to
-  `specs/006-requests-permissions`.
+  `specs/007-requests-permissions`.
 
 ## Artifact Review
 
