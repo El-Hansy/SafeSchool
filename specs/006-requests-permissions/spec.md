@@ -5,6 +5,19 @@
 **Status**: Draft
 **Input**: User description: "Read PLAN.md and create a specification for phase 6: Requests & Permissions ONLY."
 
+## Clarifications
+
+### Session 2026-05-04
+
+- Q: When a request requires guardian consent and a student has multiple authorized guardians, whose consent should be enough by default? → A: Any one authorized guardian may satisfy consent by default; schools can require stricter consent per request type.
+
+### Session 2026-05-05
+
+- Q: For star-gated requests that spend stars, when should stars be reserved or consumed? → A: Reserve stars at submission, consume on final approval, and release on denial, withdrawal, or expiry.
+- Q: For early leave pickup, what evidence should Phase 6 require by default before staff can treat an approved request as release-eligible? → A: Guardian-selected authorized pickup person plus staff verification note.
+- Q: When an approval workflow step reaches its configured expiry time without a decision, what should Phase 6 do by default? → A: Route to manual review or configured escalation while keeping the request pending.
+- Q: When a student already has an active request for the same request type and overlapping date/time window, what should Phase 6 do by default? → A: Block exact active duplicates and route overlapping non-identical requests to manual review.
+
 ## Constitution Alignment *(mandatory)*
 
 - **Implementation Phase**: Phase 6: Requests & Permissions
@@ -28,7 +41,7 @@ As a student or guardian, I need to submit outing or permission requests and tra
 **Acceptance Scenarios**:
 
 1. **Given** the request type is enabled and the student or guardian is authorized, **When** they submit an outing or permission request with all required details, **Then** the request is created in the correct school account, enters the configured approval workflow, and becomes visible to authorized participants.
-2. **Given** the request is missing required details, the requester is not eligible, the guardian link is not approved and active, or the student belongs to another school account, **When** submission is attempted, **Then** the request is blocked with a reviewable reason and no workflow decision is created.
+2. **Given** the request is missing required details, the requester is not eligible, the guardian link is not approved and active, the student belongs to another school account, or the request is an exact active duplicate, **When** submission is attempted, **Then** the request is blocked with a reviewable reason and no workflow decision is created.
 3. **Given** a request has not reached a final decision, **When** the original requester withdraws it, **Then** the request status changes to withdrawn, pending approval work stops, and the withdrawal reason remains audit-visible.
 
 ---
@@ -45,7 +58,7 @@ As an assigned approver, I need to approve, deny, request information, or escala
 
 1. **Given** a request is waiting on an assigned workflow step, **When** an authorized approver approves, denies, or requests information with the required reason or note, **Then** the decision is recorded, the next step or final status is calculated, and the full decision history remains reviewable.
 2. **Given** an actor is not assigned to the active step, lacks permission, belongs to another school account, or tries to decide a final request, **When** they attempt a decision, **Then** the action is rejected or returned as already final without changing the approved decision history.
-3. **Given** a workflow step expires, is delegated, or requires escalation, **When** the configured condition is reached, **Then** the request receives the appropriate escalated or reassigned state and authorized reviewers can see why it changed.
+3. **Given** a workflow step expires without a decision, is delegated, or requires escalation, **When** the configured condition is reached, **Then** the request remains pending and is routed to manual review or configured escalation with reviewable evidence explaining why it changed.
 
 ---
 
@@ -55,13 +68,13 @@ As a guardian or authorized staff member, I need early leave requests with picku
 
 **Why this priority**: Early leave affects student safety and must be controlled before lower-priority history, summaries, and advanced configuration work.
 
-**Independent Test**: Submit an early leave request with student, date, release time, reason, guardian consent, and pickup evidence; approve it through the workflow; and verify authorized staff can see release eligibility without creating an attendance or gate event.
+**Independent Test**: Submit an early leave request with student, date, release time, reason, guardian consent, guardian-selected authorized pickup person, and staff verification note; approve it through the workflow; and verify authorized staff can see release eligibility without creating an attendance or gate event.
 
 **Acceptance Scenarios**:
 
-1. **Given** early leave requests are enabled and a guardian or staff user is authorized, **When** they submit a request with date, release time, reason, guardian consent where required, and pickup person evidence, **Then** the request enters the configured approval workflow.
-2. **Given** an early leave request is approved and still valid, **When** authorized attendance, gate, or school staff view it, **Then** they can see release eligibility and pickup evidence allowed by their role, but no attendance, entry, exit, or scan outcome is created by Phase 6.
-3. **Given** the guardian is unlinked, the pickup person is not authorized, the approval has expired, or the request conflicts with school rules, **When** release eligibility is checked, **Then** the request is blocked or marked for review with a clear reason.
+1. **Given** early leave requests are enabled and a guardian or staff user is authorized, **When** they submit a request with date, release time, reason, guardian consent where required, guardian-selected authorized pickup person, and pickup evidence, **Then** the request enters the configured approval workflow.
+2. **Given** an early leave request is approved and still valid, **When** authorized attendance, gate, or school staff view it after staff verification is recorded, **Then** they can see release eligibility and pickup evidence allowed by their role, but no attendance, entry, exit, or scan outcome is created by Phase 6.
+3. **Given** the guardian is unlinked, the pickup person is not authorized, the staff verification note is missing, the approval has expired, or the request conflicts with school rules, **When** release eligibility is checked, **Then** the request is blocked or marked for review with a clear reason.
 
 ---
 
@@ -118,17 +131,18 @@ As a school administrator, I need configurable request types, required fields, a
 - A student attempts to submit a request type that the school account allows only guardians or staff to initiate.
 - A guardian link is pending, expired, suspended, removed, rejected, or belongs to another school account.
 - A request is submitted for an inactive, graduated, transferred, duplicated, or cross-school student profile.
-- A requester submits duplicate requests for the same student, date, time window, and request type.
+- A requester submits an exact active duplicate for the same student, request type, date, and time window, or submits a non-identical request with an overlapping date or time window.
 - A request is withdrawn while an approver is viewing or deciding it.
 - Two approvers attempt to decide the same active workflow step at nearly the same time.
 - An approver is removed from a role, transferred, disabled, or delegated after a request has already reached their step.
-- A workflow step expires during school closure, holiday, weekend, or outside configured working hours.
+- A workflow step expires during school closure, holiday, weekend, or outside configured working hours and must remain pending while routing to manual review or configured escalation.
 - A workflow template changes while requests using the old version are still pending.
-- A request requires guardian consent but the student has multiple linked guardians with different decision authority.
+- A request requires guardian consent but the student has multiple linked guardians with different decision authority, and the request type has a stricter consent rule than the default one-authorized-guardian rule.
 - An early leave request is approved after the requested release time has passed.
-- An early leave pickup person is missing, duplicated, expired, blocked, or no longer approved by the guardian or school.
+- An early leave pickup person is missing, duplicated, expired, blocked, no longer approved by the guardian or school, or lacks the required staff verification note.
 - An approved outing request reaches the end of its time window without an expected return status or closure.
 - Star evidence is delayed, unavailable, stale, corrected, or changed after request submission.
+- A star-gated request with a star cost is denied, withdrawn, or expires after stars were reserved at submission and before final approval.
 - A star-gated request is submitted before Phase 5 star or reward records are available to the school account.
 - A school disables outing requests, early leave requests, star rules, or workflow configuration while related requests are pending.
 - A reviewer reopens a final request after a guardian, student, or staff user has already viewed the prior outcome.
@@ -142,17 +156,17 @@ As a school administrator, I need configurable request types, required fields, a
 - **FR-002**: The system MUST validate school account scope, feature availability, student status, requester identity, guardian link status, actor permission, request type eligibility, required field completion, workflow availability, and applicable rule settings before creating, submitting, deciding, withdrawing, correcting, or showing a request.
 - **FR-003**: Each request record MUST capture the school account, student, requester, request type, source role, reason, requested date and time window, status, active workflow version, required field responses, related consent status, decision history, current assignee state, exception state, and audit evidence.
 - **FR-004**: Outing requests MUST capture destination or purpose, requested departure and return window, supervision or transport expectation when required by the school account, guardian consent when required, approval status, and closure or return status when the request type requires it.
-- **FR-005**: Early leave requests MUST capture requested release date and time, reason, guardian consent where required, authorized pickup person or pickup evidence where required, approval status, expiry rules, and release eligibility status.
+- **FR-005**: Early leave requests MUST capture requested release date and time, reason, guardian consent where required, guardian-selected authorized pickup person, staff verification note before release eligibility, approval status, expiry rules, and release eligibility status.
 - **FR-006**: Phase 6 MUST expose approved early leave or outing eligibility to authorized school, attendance, or gate staff as read-only request evidence and MUST NOT directly create attendance records, gate entry or exit events, scan events, transport events, or student location outcomes.
-- **FR-007**: The approval workflow engine MUST support configurable request types, required fields, ordered or conditional approval steps, assigned approver roles, guardian consent steps, school staff decision steps, escalation timing, delegation, expiration, final statuses, and manual review routing within a school account.
+- **FR-007**: The approval workflow engine MUST support configurable request types, required fields, ordered or conditional approval steps, assigned approver roles, guardian consent steps, school staff decision steps, escalation timing, delegation, expiration, final statuses, and manual review routing within a school account. By default, an expired workflow step MUST route the request to manual review or configured escalation while keeping the request pending, and MUST NOT automatically approve or deny the request.
 - **FR-008**: Workflow decisions MUST require an authorized actor assigned to the active step or explicitly permitted reviewer role, preserve the decision, reason when required, actor, timestamp, resulting status, and next-step calculation, and prevent direct edits or deletion of approved decision history.
 - **FR-009**: The system MUST reject, ignore as already processed, or route to review any duplicate, out-of-order, unauthorized, cross-school, final-state, withdrawn, expired, or concurrently conflicting workflow decision without corrupting the request outcome.
 - **FR-010**: The system MUST allow authorized approvers to approve, deny, request more information, delegate, escalate, or mark a request for manual review when the active workflow step and school rules permit the action.
 - **FR-011**: The system MUST allow original requesters to withdraw requests only before configured final states or restricted review states, and withdrawal MUST stop pending approval work while preserving all prior request and workflow history.
 - **FR-012**: Star-based permission rules MUST be configurable by school account, request type, active date range, eligible student groups where allowed, required star threshold, optional star cost, manual review behavior, and failure behavior when star evidence is unavailable.
 - **FR-013**: Star-rule evaluation MUST use Phase 5 star or reward evidence when available, capture the rule version and star outcome used at evaluation time, and MUST NOT invent, silently modify, or assume star balances when Phase 5 evidence is missing, unavailable, stale, or disabled.
-- **FR-014**: If a star-gated request consumes, reserves, or releases stars under school rules, the Phase 6 record MUST preserve the requested star impact, the external star evidence or outcome reference, the rule snapshot, and any failed, pending, reversed, or reviewed result without becoming the source of truth for star balances.
-- **FR-015**: Guardian consent requirements MUST distinguish between guardians who may view, submit, approve, deny, or withdraw requests for a linked student, and requests requiring guardian consent MUST not proceed past the configured consent point until the required guardian decision is satisfied or the workflow routes to review.
+- **FR-014**: If a star-gated request has a star cost under school rules, Phase 6 MUST reserve the required stars at submission, consume the reserved stars only on final approval, and release the reservation on denial, withdrawal, or expiry. The Phase 6 record MUST preserve the requested star impact, external star evidence or outcome reference, rule snapshot, reservation status, consumption status, release status, and any failed, pending, reversed, or reviewed result without becoming the source of truth for star balances.
+- **FR-015**: Guardian consent requirements MUST distinguish between guardians who may view, submit, approve, deny, or withdraw requests for a linked student. By default, any one authorized guardian may satisfy guardian consent for a request, and schools MAY configure stricter consent rules per request type. Requests requiring guardian consent MUST not proceed past the configured consent point until the required guardian decision is satisfied or the workflow routes to review.
 - **FR-016**: Staff and guardian visibility MUST be permission-scoped so guardians see only linked student request details allowed for their role, students see only their own eligible request details, staff see only school-account records allowed by assignment or role, and platform-level reviewers see only records permitted by explicit review authority.
 - **FR-017**: Request history MUST be filterable by student, requester, guardian, request type, status, date range, requested time window, approver, current assignee, workflow version, star-rule outcome, exception type, and review status within the user's authorized scope.
 - **FR-018**: The system MUST allow authorized reviewers to correct, reopen, close, resolve, or escalate request exceptions with a reason while preserving the original request, original decisions, correction actor, correction time, and resulting status.
@@ -165,20 +179,21 @@ As a school administrator, I need configurable request types, required fields, a
 - **FR-025**: The system MUST record audit evidence for request creation, submission, withdrawal, approval, denial, information request, escalation, delegation, expiration, correction, reopening, star-rule evaluation, guardian decision, early leave release eligibility changes, workflow template changes, exception creation, manual review, and access denial.
 - **FR-026**: The system MUST provide request review summaries by student, request type, status, current assignee, approver, guardian, date range, workflow version, exception state, and star-rule outcome without exposing records outside the authorized school account, guardian link, or student scope.
 - **FR-027**: Phase 6 MUST explicitly exclude attendance generation, campus entry or exit decisions, NFC or QR scan processing, transport boarding or drop-off decisions, wallet or payment actions, learning content delivery, star balance ownership, medical or emergency workflows, complaint escalation workflows, broad messaging or broadcasts, document storage workflows, global search, and broad admin dashboards from deliverable scope.
+- **FR-028**: The system MUST block exact active duplicates for the same student, request type, requested date, and requested time window. The system MUST route overlapping non-identical active requests for the same student and request type to manual review instead of silently allowing or merging them.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Permission Request**: A tenant-owned request for outing, early leave, or another school-defined permission type, including requester, student, reason, requested time window, status, workflow version, and review history.
+- **Permission Request**: A tenant-owned request for outing, early leave, or another school-defined permission type, including requester, student, reason, requested date and time window, status, workflow version, duplicate or overlap review state, and review history.
 - **Outing Request Detail**: Request-specific data for a student leaving campus or participating in an outing, including destination or purpose, departure and return window, supervision or transport expectation, consent needs, and closure status.
 - **Early Leave Detail**: Request-specific data for releasing a student before the normal end time, including release time, reason, guardian consent, pickup evidence, expiry, and release eligibility status.
 - **Request Type**: A school account configuration record that defines who may initiate a request, required fields, applicable workflow, consent requirements, star rules, expiry behavior, and closure expectations.
 - **Workflow Template**: A versioned school account approval definition containing ordered or conditional approval steps, assigned roles, escalation timing, delegation rules, final states, and manual review routes.
 - **Workflow Step**: A specific approval, consent, information request, escalation, or review point inside a workflow version.
 - **Workflow Decision**: An approval, denial, information request, consent decision, escalation, delegation, or review outcome recorded by an authorized actor for a request step.
-- **Guardian Consent Record**: Evidence that an eligible guardian approved, denied, or was required to decide a student request under school rules.
+- **Guardian Consent Record**: Evidence that an eligible guardian approved, denied, or was required to decide a student request under the default one-authorized-guardian consent rule or a stricter school-configured request type rule.
 - **Star Permission Rule**: A versioned rule that determines whether a request needs a star threshold, star cost, manual review, or failure behavior based on Phase 5 star or reward evidence.
-- **Star Rule Evaluation**: The captured outcome of applying a star permission rule to a request, including rule version, available evidence, sufficiency, pending or failed state, and any requested star reservation or consumption outcome reference.
-- **Pickup Evidence**: Approved person, relationship, identity note, authorization status, or school-approved evidence needed for an early leave release decision.
+- **Star Rule Evaluation**: The captured outcome of applying a star permission rule to a request, including rule version, available evidence, sufficiency, pending or failed state, reservation status, consumption status, release status, and any requested star reservation or consumption outcome reference.
+- **Pickup Evidence**: Guardian-selected authorized pickup person, relationship, authorization status, and staff verification note needed before an approved early leave request is treated as release-eligible.
 - **Request Exception**: A reviewable issue involving missing consent, invalid guardian link, duplicate request, expired approval, conflicting decision, stale workflow, insufficient stars, unavailable star evidence, invalid pickup evidence, disabled feature, or access denial.
 - **Manual Request Review**: A reviewer action that corrects, reopens, resolves, escalates, closes, or documents an exception with reason and history.
 - **Request Review Summary**: A permission-scoped view of request counts, pending assignments, final outcomes, exception states, and star-rule outcomes.
@@ -193,7 +208,7 @@ As a school administrator, I need configurable request types, required fields, a
 - **SC-003**: Assigned approvers can find and decide a pending request in under 60 seconds during review testing after the request reaches their active workflow step.
 - **SC-004**: 100% of sampled duplicate, out-of-order, unauthorized, withdrawn, expired, concurrent, and final-state workflow decision attempts do not create duplicate final outcomes or corrupt decision history.
 - **SC-005**: Approved early leave requests become visible as release eligibility evidence to authorized staff within 1 minute of final approval during review testing, and 100% of sampled approved early leave records create no attendance, gate, or scan event as a Phase 6 side effect.
-- **SC-006**: 100% of sampled early leave requests with unlinked guardians, unauthorized pickup evidence, expired approvals, invalid students, or disabled capability are blocked or routed to review with a clear reason.
+- **SC-006**: 100% of sampled early leave requests with unlinked guardians, unauthorized pickup evidence, missing staff verification note, expired approvals, invalid students, or disabled capability are blocked or routed to review with a clear reason.
 - **SC-007**: Star-based permission outcomes match the configured school rule and available Phase 5 star evidence in 100% of sampled sufficient, insufficient, unavailable, disabled, and corrected star-evidence scenarios.
 - **SC-008**: 100% of sampled star-gated requests preserve the rule version and star outcome used at evaluation time, even after the rule or star evidence later changes.
 - **SC-009**: Authorized users can find a request from the last 90 days by student, request type, status, date range, approver, workflow version, exception state, or star-rule outcome in under 30 seconds during review testing.
@@ -202,13 +217,19 @@ As a school administrator, I need configurable request types, required fields, a
 - **SC-012**: 100% of sampled Phase 6 records are visible only within the authorized school account scope, approved guardian link scope, student ownership scope, assigned approver scope, or explicit platform-level review scope.
 - **SC-013**: Auditors can trace a sampled request from creation through final decision, exception handling, correction, and review summary in under 60 seconds during review testing.
 - **SC-014**: 95% of eligible request status changes are available to later notification capabilities within 2 minutes of the status change without requiring Phase 6 to deliver messages directly.
+- **SC-015**: 100% of sampled expired workflow steps route to manual review or configured escalation while keeping the request pending and creating no automatic approval or denial.
+- **SC-016**: 100% of sampled exact active duplicate requests are blocked, and 100% of sampled overlapping non-identical active requests are routed to manual review without being silently merged, approved, or withdrawn.
 
 ## Assumptions
 
 - Phase 6 builds on Phase 0 tenant configuration, feature flag, audit, and observability capabilities, and Phase 1 student identity, guardian linking, role, and permission capabilities.
 - Star-based permission rules depend on Phase 5 star and reward evidence when the school account enables them. If Phase 5 star evidence is unavailable, Phase 6 records the request as blocked, denied, or manual-review-required according to school rules rather than creating its own star balance.
+- Star-gated requests with a star cost reserve stars at submission, consume reserved stars only on final approval, and release reservations when requests are denied, withdrawn, or expired.
 - Students may initiate requests only for request types where the school account explicitly allows student initiation; otherwise guardians or staff must initiate.
-- Guardian consent rules can vary by school account and request type, but all guardian actions require an approved active guardian link to the student.
+- Guardian consent defaults to any one authorized guardian satisfying consent for a request. School accounts can configure stricter consent rules per request type, and all guardian actions require an approved active guardian link to the student.
+- Early leave release eligibility requires a guardian-selected authorized pickup person plus a staff verification note by default; this does not require Phase 6 to capture government ID images or process NFC or QR release scans.
+- Expired workflow steps do not automatically approve or deny requests by default; they keep requests pending and route them to manual review or configured escalation.
+- Exact active duplicates are requests for the same student, request type, requested date, and requested time window while the earlier request is still pending, under review, approved but not expired, or otherwise not final for duplicate-checking purposes. Overlapping non-identical active requests are routed to manual review by default.
 - Early leave and outing request approval is evidence for staff review only in this phase; attendance, gate, transport, scan, and notification systems may consume the status in later phases but are not implemented by Phase 6.
 - Request workflow configuration is school-account scoped and versioned, with historical requests retaining the version active at submission time.
 - General messaging, broadcasts, and notification delivery belong to Phase 9. Phase 6 only makes status changes and reviewable events available to those later capabilities.
