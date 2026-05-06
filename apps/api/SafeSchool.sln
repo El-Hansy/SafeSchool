@@ -1,0 +1,10 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeSchool.Api", "src\SafeSchool.Api\SafeSchool.Api.csproj", "{8D0B96B2-9E34-465B-B1C8-000000000201}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeSchool.Api.Tests", "tests\SafeSchool.Api.Tests\SafeSchool.Api.Tests.csproj", "{8D0B96B2-9E34-465B-B1C8-000000000202}"
+EndProject
+Global
+EndGlobal
