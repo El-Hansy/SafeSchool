@@ -101,3 +101,16 @@ feature plans where runtime behavior is in scope.
 - Add clarification markers for future stack choices: rejected because the
   constitution already defines the baseline and no runtime component is created
   here.
+
+## Decision Index
+
+| Research Decision | Foundation Decision ID | Foundation Area | Traceability |
+|-------------------|------------------------|-----------------|--------------|
+| Treat Phase 0 as a foundation planning package | FD-001 | System Architecture | [foundation-areas.md](./foundation-areas.md) |
+| Use school account as the default tenant boundary | FD-002 | Multi-Tenant Architecture | [foundation-areas.md](./foundation-areas.md) |
+| Define actor categories before detailed roles | FD-003 | Identity & Access Model | [tenant-access-boundaries.md](./tenant-access-boundaries.md) |
+| Document feature capability as a tenant configuration record | FD-006 | Feature Flag / Tenant Configuration | [contracts/tenant-configuration.md](./contracts/tenant-configuration.md) |
+| Use scan event accountability without defining business outcomes | FD-004 | NFC & QR Integration | [scan-audit-accountability.md](./scan-audit-accountability.md) |
+| Model audit events as reviewable evidence categories | FD-005 | Event & Audit Logging | [scan-audit-accountability.md](./scan-audit-accountability.md) |
+| Keep reference frames as optional context only | FD-001 | System Architecture | [foundation-areas.md](./foundation-areas.md) |
+| No unresolved technical clarifications remain | FD-001 | System Architecture | [review-log.md](./review-log.md) |

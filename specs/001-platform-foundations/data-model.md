@@ -27,6 +27,13 @@ runtime schemas by itself.
 - Cross-school access MUST require an explicit approved Permission Rule.
 - Internal campus scoping MUST NOT override the parent School Account boundary.
 
+**Validation examples**:
+- A campus gate scan belongs to the parent School Account even when the later
+  spec adds a campus or gate identifier.
+- A platform support review across schools requires a Platform Owner-approved
+  Permission Rule and Audit Event before data from another School Account is
+  visible.
+
 ## Feature Capability
 
 **Purpose**: Represents a named capability that can be enabled, disabled, or
@@ -55,6 +62,14 @@ reviewed for a School Account.
 - Later specs MUST document whether they introduce, read, or depend on a Feature
   Capability.
 
+**Validation examples**:
+- If `attendance.gate-scan` is Disabled for a School Account, the later gate
+  scan spec must surface unavailable capability behavior instead of processing
+  the workflow.
+- If `transport.boarding-scan` is Suspended, offline scan evidence may still be
+  preserved for review, but the later transport spec must define whether a
+  boarding outcome is deferred or rejected.
+
 **State transitions**:
 - Proposed -> Enabled when approved.
 - Proposed -> Disabled when rejected or deferred.
@@ -82,6 +97,23 @@ reviewed for a School Account.
 - Later specs MUST use existing actor categories unless an amendment adds a new
   category.
 
+**Allowed boundary values**:
+- Platform-wide
+- School Account
+- Internal campus scope
+- Assignment-scoped
+- Delegated
+- Self-only
+- Assigned review scope
+
+**Sensitive-action examples**:
+- Platform Owner approves a cross-school support review.
+- School Administrator requests a tenant capability change.
+- Staff Member performs a school-scoped sensitive workflow under assignment.
+- Guardian opens a delegated student-visible record.
+- Student opens a self-scope record where enabled.
+- Reviewer resolves a duplicate scan conflict.
+
 ## Permission Rule
 
 **Purpose**: Describes who may perform or approve a sensitive action.
@@ -104,6 +136,22 @@ reviewed for a School Account.
 - Sensitive actions MUST have an active Permission Rule before implementation.
 - Permission Rules MUST identify whether access is school-scoped,
   platform-scoped, self-scoped, or delegated.
+
+**Allowed boundary values**:
+- Platform-scoped
+- School-scoped
+- Campus-scoped inside a School Account
+- Assignment-scoped
+- Delegated relationship
+- Self-scoped
+- Assigned review scope
+
+**Sensitive-action examples**:
+- Enabling a Feature Capability.
+- Approving temporary cross-school access.
+- Reviewing a rejected guardian access attempt.
+- Reconciling an offline Scan Event conflict.
+- Amending an accepted Foundation Decision.
 
 ## Identity Evidence
 
@@ -131,6 +179,12 @@ credential, scan method, or fallback method to a School Account.
 - Identity Evidence MUST identify the School Account boundary.
 - NFC and QR fallback evidence MUST meet equivalent review expectations.
 - Card provisioning and guardian linking workflows are excluded from Phase 0.
+
+**State transition examples**:
+- Proposed -> Verified when a reviewer accepts evidence for later use.
+- Proposed -> Rejected when the evidence cannot be trusted.
+- Verified -> Revoked when the credential, relationship, or source becomes
+  invalid for later specs.
 
 ## Scan Event
 
@@ -169,6 +223,13 @@ status.
 - Pending or Synced -> Conflict when evidence conflicts with existing records.
 - Conflict -> Accepted, Rejected, or Deferred after review.
 
+**State transition examples**:
+- Offline NFC capture starts as Pending, becomes Synced when received, and then
+  becomes Accepted after later review.
+- QR fallback starts as Pending, becomes Conflict if the credential no longer
+  matches the expected School Account, and then becomes Rejected with audit
+  evidence.
+
 ## Audit Event
 
 **Purpose**: Provides reviewable evidence for important identity, access,
@@ -194,6 +255,12 @@ configuration, scan, and administrative activity.
   administrative reviews MUST produce Audit Events.
 - Audit Events MUST preserve enough context for reviewers to understand who did
   what, for which School Account, and why.
+
+**Review evidence examples**:
+- A duplicate Scan Event creates an Audit Event in the Scan Reconciliation
+  category with the duplicate reference and reviewer reason.
+- A denied cross-school access attempt creates an Access Audit Event with actor
+  category, boundary, result, and reason.
 
 ## Configuration Change
 
@@ -222,6 +289,12 @@ availability.
 - Tenant boundary and feature availability changes MUST include requester,
   approver, reason, and effective time.
 - Rejected or rolled back changes MUST retain review evidence.
+
+**Review evidence examples**:
+- An approved capability change records previous value, new value, approver,
+  effective time, and Audit Event reference.
+- A rolled-back change records the rollback reason and preserves the original
+  applied change for review.
 
 ## Foundation Decision
 

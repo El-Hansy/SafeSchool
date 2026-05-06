@@ -65,10 +65,16 @@ violations.
 
 ```text
 specs/001-platform-foundations/
+├── README.md
 ├── plan.md
 ├── research.md
 ├── data-model.md
 ├── quickstart.md
+├── foundation-areas.md
+├── tenant-access-boundaries.md
+├── scan-audit-accountability.md
+├── traceability-matrix.md
+├── review-log.md
 ├── contracts/
 │   ├── foundation-decision.md
 │   ├── tenant-configuration.md
