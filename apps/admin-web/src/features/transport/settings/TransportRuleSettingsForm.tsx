@@ -1,0 +1,1 @@
+export function TransportRuleSettingsForm() { return <form aria-label="Transport rule settings"><label>Retention days<input name="locationDetailRetentionDays" defaultValue={30} /></label><button type="submit">Activate</button></form>; }

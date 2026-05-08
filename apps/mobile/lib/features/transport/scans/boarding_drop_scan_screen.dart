@@ -1,0 +1,2 @@
+import 'package:flutter/material.dart';
+class BoardingDropScanScreen extends StatelessWidget { const BoardingDropScanScreen({super.key, required this.activeTripLabel, required this.offline}); final String activeTripLabel; final bool offline; @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Transport Scan')), body: Column(children: [Text(activeTripLabel), Text(offline ? 'Offline' : 'Online')])); }

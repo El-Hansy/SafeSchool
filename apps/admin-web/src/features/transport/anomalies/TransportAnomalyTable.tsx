@@ -1,0 +1,1 @@
+export function TransportAnomalyTable({ anomalies }: { anomalies: string[] }) { return <table><tbody>{anomalies.map((item) => <tr key={item}><td>{item}</td></tr>)}</tbody></table>; } export function TransportAnomalyDetailPanel({ anomalyId }: { anomalyId: string }) { return <section>{anomalyId}</section>; }

@@ -1,0 +1,1 @@
+export function NotificationRecordTable({ records }: { records: string[] }) { return <table><tbody>{records.map((record) => <tr key={record}><td>{record}</td></tr>)}</tbody></table>; } export function NotificationStatusBadge({ status }: { status: string }) { return <span>{status}</span>; }

@@ -1,0 +1,1 @@
+export function TripProgressPanel({ progress }: { progress: string }) { return <section aria-label="Trip progress">{progress}</section>; } export function RetentionBadge({ state }: { state: string }) { return <span>{state}</span>; }

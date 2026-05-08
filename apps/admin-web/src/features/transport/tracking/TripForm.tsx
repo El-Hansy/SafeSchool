@@ -1,0 +1,1 @@
+export function TripForm() { return <form aria-label="Transport trip"><label>Tracking device<input name="trackingDeviceReference" /></label><button type="submit">Plan</button></form>; } export function TripStatusBadge({ status }: { status: string }) { return <span>{status}</span>; }

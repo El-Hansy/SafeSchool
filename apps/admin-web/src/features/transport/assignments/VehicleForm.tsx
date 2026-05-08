@@ -1,0 +1,1 @@
+export function VehicleForm() { return <form aria-label="Transport vehicle"><label>Vehicle code<input name="vehicleCode" /></label><button type="submit">Save</button></form>; } export function AssignmentForm() { return <form aria-label="Transport assignment"><label>Student<input name="studentProfileId" /></label><button type="submit">Assign</button></form>; }

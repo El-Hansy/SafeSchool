@@ -1,0 +1,3 @@
+class LocationProviderResult { const LocationProviderResult({required this.locationReference, required this.reportedAt, required this.permissionGranted, required this.trusted}); final String locationReference; final DateTime reportedAt; final bool permissionGranted; final bool trusted; }
+abstract class LocationProviderAdapter { Future<LocationProviderResult> currentLocation(); }
+class FakeLocationProviderAdapter implements LocationProviderAdapter { FakeLocationProviderAdapter(this.result); final LocationProviderResult result; @override Future<LocationProviderResult> currentLocation() async => result; }
