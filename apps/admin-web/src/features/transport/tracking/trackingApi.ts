@@ -1,0 +1,1 @@
+export const trackingRoutes = { trips: "/trips", start: (tripId: string) => `/trips/${tripId}/start`, end: (tripId: string) => `/trips/${tripId}/end`, location: (tripId: string) => `/trips/${tripId}/location-updates`, progress: (tripId: string) => `/trips/${tripId}/progress`, trace: (tripId: string) => `/trips/${tripId}/trace` };

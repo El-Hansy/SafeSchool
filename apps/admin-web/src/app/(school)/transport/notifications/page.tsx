@@ -1,0 +1,1 @@
+import { NotificationRecordTable } from "../../../../features/transport/notifications/NotificationRecordTable"; export default function TransportNotificationsPage() { return <main><h1>Notifications</h1><NotificationRecordTable records={["notification-1"]} /></main>; }

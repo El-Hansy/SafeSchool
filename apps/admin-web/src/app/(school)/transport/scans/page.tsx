@@ -1,0 +1,1 @@
+import { ScanEventTable } from "../../../../features/transport/scans/ScanEventTable"; export default function TransportScansPage() { return <main><h1>Scans</h1><ScanEventTable scans={["scan-1"]} /></main>; }

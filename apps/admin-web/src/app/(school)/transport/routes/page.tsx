@@ -1,0 +1,1 @@
+import { RouteForm } from "../../../../features/transport/routes/RouteForm"; import { RouteStopSequenceEditor } from "../../../../features/transport/routes/RouteStopSequenceEditor"; export default function TransportRoutesPage() { return <main><h1>Routes</h1><RouteForm /><RouteStopSequenceEditor stops={["Stop 1", "Stop 2"]} /></main>; }

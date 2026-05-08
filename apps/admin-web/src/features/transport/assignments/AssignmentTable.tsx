@@ -1,0 +1,1 @@
+export function AssignmentTable({ assignments }: { assignments: string[] }) { return <table><tbody>{assignments.map((assignment) => <tr key={assignment}><td>{assignment}</td></tr>)}</tbody></table>; } export function AssignmentTracePanel({ assignmentId }: { assignmentId: string }) { return <aside>{assignmentId}</aside>; }

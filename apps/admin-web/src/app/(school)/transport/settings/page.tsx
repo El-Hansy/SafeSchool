@@ -1,0 +1,1 @@
+import { TransportRuleSettingsForm } from "../../../../features/transport/settings/TransportRuleSettingsForm"; export default function TransportSettingsPage() { return <main><h1>Transport Settings</h1><TransportRuleSettingsForm /></main>; }

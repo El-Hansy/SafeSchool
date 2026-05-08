@@ -1,0 +1,1 @@
+export function EtaTable({ records }: { records: string[] }) { return <table><tbody>{records.map((record) => <tr key={record}><td>{record}</td></tr>)}</tbody></table>; } export function EtaStatusBadge({ state }: { state: string }) { return <span>{state}</span>; }

@@ -1,0 +1,1 @@
+import { TransportReviewSummaryTable } from "../../../../features/transport/review/TransportReviewSummaryTable"; export default function TransportReviewPage() { return <main><h1>Transport Review</h1><TransportReviewSummaryTable rows={["school"]} /></main>; }

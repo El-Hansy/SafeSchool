@@ -1,0 +1,1 @@
+import { TripForm } from "../../../../features/transport/tracking/TripForm"; import { TripProgressPanel } from "../../../../features/transport/tracking/TripProgressPanel"; export default function TransportTripsPage() { return <main><h1>Trips</h1><TripForm /><TripProgressPanel progress="current" /></main>; }
