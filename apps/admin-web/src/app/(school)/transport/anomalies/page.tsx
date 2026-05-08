@@ -1,1 +1,5 @@
-import { TransportAnomalyTable } from "../../../../features/transport/anomalies/TransportAnomalyTable"; export default function TransportAnomaliesPage() { return <main><h1>Anomalies</h1><TransportAnomalyTable anomalies={["anomaly-1"]} /></main>; }
+import { TransportDemo } from "../../../../features/transport/demo/TransportDemo";
+
+export default function TransportAnomaliesPage() {
+  return <TransportDemo section="anomalies" />;
+}

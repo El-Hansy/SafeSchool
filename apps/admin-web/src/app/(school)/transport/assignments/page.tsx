@@ -1,1 +1,5 @@
-import { VehicleForm, AssignmentForm } from "../../../../features/transport/assignments/VehicleForm"; export default function TransportAssignmentsPage() { return <main><h1>Assignments</h1><VehicleForm /><AssignmentForm /></main>; }
+import { TransportDemo } from "../../../../features/transport/demo/TransportDemo";
+
+export default function TransportAssignmentsPage() {
+  return <TransportDemo section="assignments" />;
+}

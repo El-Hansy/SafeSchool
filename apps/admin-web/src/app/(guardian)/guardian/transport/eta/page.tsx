@@ -1,5 +1,5 @@
-import { GuardianEtaPanel } from "../../../../../features/guardian-transport/eta/GuardianEtaPanel";
+import { GuardianTransportDemo } from "../../../../../features/transport/demo/TransportDemo";
 
 export default function GuardianTransportEtaPage() {
-  return <main><h1>ETA</h1><GuardianEtaPanel state="Available" /></main>;
+  return <GuardianTransportDemo section="eta" />;
 }

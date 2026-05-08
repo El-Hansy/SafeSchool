@@ -1,1 +1,5 @@
-import { ScanEventTable } from "../../../../features/transport/scans/ScanEventTable"; export default function TransportScansPage() { return <main><h1>Scans</h1><ScanEventTable scans={["scan-1"]} /></main>; }
+import { TransportDemo } from "../../../../features/transport/demo/TransportDemo";
+
+export default function TransportScansPage() {
+  return <TransportDemo section="scans" />;
+}

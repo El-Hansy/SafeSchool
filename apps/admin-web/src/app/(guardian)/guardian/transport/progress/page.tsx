@@ -1,5 +1,5 @@
-import { GuardianTripProgress } from "../../../../../features/guardian-transport/progress/GuardianTripProgress";
+import { GuardianTransportDemo } from "../../../../../features/transport/demo/TransportDemo";
 
 export default function GuardianTransportProgressPage() {
-  return <main><h1>Progress</h1><GuardianTripProgress phase="Before Boarding" /></main>;
+  return <GuardianTransportDemo section="progress" />;
 }

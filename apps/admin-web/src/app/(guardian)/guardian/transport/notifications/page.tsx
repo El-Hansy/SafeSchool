@@ -1,5 +1,5 @@
-import { GuardianTransportNotificationList } from "../../../../../features/guardian-transport/notifications/GuardianTransportNotificationList";
+import { GuardianTransportDemo } from "../../../../../features/transport/demo/TransportDemo";
 
 export default function GuardianTransportNotificationsPage() {
-  return <main><h1>Notifications</h1><GuardianTransportNotificationList records={["Boarding"]} /></main>;
+  return <GuardianTransportDemo section="notifications" />;
 }

@@ -1,3 +1,5 @@
+import { GuardianTransportDemo } from "../../../../features/transport/demo/TransportDemo";
+
 export default function GuardianTransportPage() {
-  return <main><h1>Guardian Transport</h1></main>;
+  return <GuardianTransportDemo section="overview" />;
 }
