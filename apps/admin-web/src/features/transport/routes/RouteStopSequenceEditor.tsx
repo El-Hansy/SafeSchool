@@ -1,0 +1,1 @@
+export function RouteStopSequenceEditor({ stops }: { stops: string[] }) { return <ol>{stops.map((stop) => <li key={stop}>{stop}</li>)}</ol>; } export function RouteTracePanel({ routeId }: { routeId: string }) { return <section aria-label="Route trace">{routeId}</section>; }

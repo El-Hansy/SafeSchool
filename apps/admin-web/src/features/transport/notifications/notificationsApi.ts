@@ -1,0 +1,1 @@
+export const notificationRoutes = { list: "/notification-records", detail: (id: string) => `/notification-records/${id}`, withdraw: (id: string) => `/notification-records/${id}/withdraw`, trace: (id: string) => `/notification-records/${id}/trace` };

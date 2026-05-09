@@ -1,0 +1,1 @@
+export const vehicleRoutes = { list: "/vehicles", create: "/vehicles", patch: (vehicleId: string) => `/vehicles/${vehicleId}` }; export const assignmentRoutes = { list: "/assignments", create: "/assignments", detail: (id: string) => `/assignments/${id}`, trace: (id: string) => `/assignments/${id}/trace`, studentPlan: (studentId: string) => `/students/${studentId}/plan` };

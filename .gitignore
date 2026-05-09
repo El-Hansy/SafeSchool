@@ -22,3 +22,11 @@ build/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+*.db
+*.sqlite
+*.sqlite3
+.location-fixtures/
+*.location.json
+.learning-fixtures/
+*.learning-seed.json
+*.learning-local.json

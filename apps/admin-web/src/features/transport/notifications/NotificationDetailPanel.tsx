@@ -1,0 +1,1 @@
+export function NotificationDetailPanel({ recordId }: { recordId: string }) { return <section aria-label="Notification detail">{recordId}</section>; } export function WithdrawalDialog() { return <dialog>Withdraw</dialog>; }
