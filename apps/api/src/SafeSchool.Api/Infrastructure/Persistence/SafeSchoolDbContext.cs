@@ -15,6 +15,10 @@ using SafeSchool.Api.Features.IdentityAccess.Audit;
 using SafeSchool.Api.Features.IdentityAccess.Credentials;
 using SafeSchool.Api.Features.IdentityAccess.Guardians;
 using SafeSchool.Api.Features.IdentityAccess.StudentProfiles;
+using SafeSchool.Api.Features.Learning;
+using SafeSchool.Api.Features.Learning.Audit;
+using SafeSchool.Api.Features.Learning.Common.Idempotency;
+using LearningDomain = SafeSchool.Api.Features.Learning.Domain;
 using SafeSchool.Api.Features.Transport;
 using SafeSchool.Api.Features.Transport.Anomalies;
 using SafeSchool.Api.Features.Transport.Assignments;
@@ -112,6 +116,33 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<WalletRuleSetting> WalletRuleSettings => Set<WalletRuleSetting>();
     public DbSet<WalletAuditEvent> WalletAuditEvents => Set<WalletAuditEvent>();
     public DbSet<WalletIdempotencyRecord> WalletIdempotencyRecords => Set<WalletIdempotencyRecord>();
+    public DbSet<LearningDomain.Course> LearningCourses => Set<LearningDomain.Course>();
+    public DbSet<LearningDomain.LearningGroup> LearningGroups => Set<LearningDomain.LearningGroup>();
+    public DbSet<LearningDomain.LearningGroupMembership> LearningGroupMemberships => Set<LearningDomain.LearningGroupMembership>();
+    public DbSet<LearningDomain.StaffLearningAssignment> StaffLearningAssignments => Set<LearningDomain.StaffLearningAssignment>();
+    public DbSet<LearningDomain.LearningContentItem> LearningContentItems => Set<LearningDomain.LearningContentItem>();
+    public DbSet<LearningDomain.LearningProgressEvent> LearningProgressEvents => Set<LearningDomain.LearningProgressEvent>();
+    public DbSet<LearningDomain.Assignment> LearningAssignments => Set<LearningDomain.Assignment>();
+    public DbSet<LearningDomain.AssignmentSubmission> LearningAssignmentSubmissions => Set<LearningDomain.AssignmentSubmission>();
+    public DbSet<LearningDomain.Quiz> LearningQuizzes => Set<LearningDomain.Quiz>();
+    public DbSet<LearningDomain.QuizQuestion> LearningQuizQuestions => Set<LearningDomain.QuizQuestion>();
+    public DbSet<LearningDomain.QuizAttempt> LearningQuizAttempts => Set<LearningDomain.QuizAttempt>();
+    public DbSet<LearningDomain.QuizResponse> LearningQuizResponses => Set<LearningDomain.QuizResponse>();
+    public DbSet<LearningDomain.StarRuleSetting> LearningStarRuleSettings => Set<LearningDomain.StarRuleSetting>();
+    public DbSet<LearningDomain.StarLedgerEntry> LearningStarLedgerEntries => Set<LearningDomain.StarLedgerEntry>();
+    public DbSet<LearningDomain.StarBalanceSnapshot> LearningStarBalanceSnapshots => Set<LearningDomain.StarBalanceSnapshot>();
+    public DbSet<LearningDomain.RewardCatalogItem> LearningRewardCatalogItems => Set<LearningDomain.RewardCatalogItem>();
+    public DbSet<LearningDomain.RewardRedemption> LearningRewardRedemptions => Set<LearningDomain.RewardRedemption>();
+    public DbSet<LearningDomain.BehaviorCategory> LearningBehaviorCategories => Set<LearningDomain.BehaviorCategory>();
+    public DbSet<LearningDomain.BehaviorEvent> LearningBehaviorEvents => Set<LearningDomain.BehaviorEvent>();
+    public DbSet<LearningDomain.LearningException> LearningExceptions => Set<LearningDomain.LearningException>();
+    public DbSet<LearningDomain.ManualLearningReview> ManualLearningReviews => Set<LearningDomain.ManualLearningReview>();
+    public DbSet<LearningDomain.LearningRuleSetting> LearningRuleSettings => Set<LearningDomain.LearningRuleSetting>();
+    public DbSet<LearningDomain.LearningReviewSummary> LearningReviewSummaries => Set<LearningDomain.LearningReviewSummary>();
+    public DbSet<LearningDomain.SchoolAccountFeatureSetting> LearningFeatureSettings => Set<LearningDomain.SchoolAccountFeatureSetting>();
+    public DbSet<LearningAuditEvent> LearningAuditEvents => Set<LearningAuditEvent>();
+    public DbSet<LearningStatusEvent> LearningStatusEvents => Set<LearningStatusEvent>();
+    public DbSet<LearningIdempotencyRecord> LearningIdempotencyRecords => Set<LearningIdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -119,5 +150,6 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
         modelBuilder.ApplyAttendanceAccessModel();
         modelBuilder.ApplyTransportModel();
         modelBuilder.ApplyWalletModel();
+        modelBuilder.ApplyLearningModel();
     }
 }

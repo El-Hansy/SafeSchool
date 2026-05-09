@@ -27,3 +27,6 @@ build/
 *.sqlite3
 .location-fixtures/
 *.location.json
+.learning-fixtures/
+*.learning-seed.json
+*.learning-local.json
