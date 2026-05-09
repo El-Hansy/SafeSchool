@@ -1,0 +1,1 @@
+import 'package:flutter_test/flutter_test.dart'; import '../transport_test_data.dart'; void main() { test('scan capture keeps local evidence under latency target', () { final scan = testTransportScan(); expect(scan.toJson()['client_scan_id'], 'scan-1'); }); }

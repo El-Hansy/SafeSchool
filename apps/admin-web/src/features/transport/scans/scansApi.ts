@@ -1,0 +1,1 @@
+export const scanRoutes = { createTrip: "/scan-context-trips", startTrip: (tripId: string) => `/scan-context-trips/${tripId}/start`, endTrip: (tripId: string) => `/scan-context-trips/${tripId}/end`, record: "/scan-events", sync: "/scan-events/sync", trace: (scanId: string) => `/scan-events/${scanId}/trace`, review: (scanId: string) => `/scan-events/${scanId}/review-outcome` };

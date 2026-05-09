@@ -1,0 +1,1 @@
+export const etaRoutes = { recalculate: (tripId: string) => `/trips/${tripId}/eta/recalculate`, list: (tripId: string) => `/trips/${tripId}/eta`, stop: (tripId: string, stopId: string) => `/trips/${tripId}/stops/${stopId}/eta`, trace: (etaId: string) => `/eta-records/${etaId}/trace` };

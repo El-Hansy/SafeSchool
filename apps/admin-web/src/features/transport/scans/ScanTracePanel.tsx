@@ -1,0 +1,1 @@
+export function ScanTracePanel({ scanId }: { scanId: string }) { return <section aria-label="Scan trace">{scanId}</section>; } export function ScanReadyTripControls() { return <div><button>Start</button><button>End</button></div>; }
