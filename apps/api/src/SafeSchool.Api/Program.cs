@@ -18,6 +18,7 @@ using SafeSchool.Api.Features.IdentityAccess.Audit;
 using SafeSchool.Api.Features.IdentityAccess.Credentials;
 using SafeSchool.Api.Features.IdentityAccess.Guardians;
 using SafeSchool.Api.Features.IdentityAccess.StudentProfiles;
+using SafeSchool.Api.Features.Learning;
 using SafeSchool.Api.Features.Transport;
 using SafeSchool.Api.Features.Transport.Anomalies;
 using SafeSchool.Api.Features.Transport.Assignments;
@@ -216,6 +217,7 @@ builder.Services.AddScoped<SettlementReferenceService>();
 builder.Services.AddScoped<WalletReviewSummaryService>();
 builder.Services.AddScoped<WalletRetentionService>();
 builder.Services.AddScoped<WalletReconciliationTraceService>();
+builder.Services.AddLearningFeature();
 builder.Services.AddDbContext<SafeSchoolDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SafeSchool")));
 
@@ -228,6 +230,7 @@ app.MapIdentityAccessEndpoints();
 app.MapAttendanceAccessEndpoints();
 app.MapTransportEndpoints();
 app.MapWalletEndpoints();
+app.MapLearningEndpoints();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.Run();
 
