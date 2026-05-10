@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "SafeSchool Identity Access",
-  description: "School-scoped identity and access administration",
+  title: "SafeSchool Command Center",
+  description: "Role-based school NFC, attendance, transport, wallet, mobile, and operations demo",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

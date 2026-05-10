@@ -1,5 +1,23 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { metadata } from "../../src/app/layout";
 import { mobileDemoSteps, safeSchoolModuleLinks } from "../../src/features/home";
+
+const appRoot = fileURLToPath(new URL("../../src/app", import.meta.url));
+
+function collectFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      return collectFiles(fullPath);
+    }
+
+    return entry.isFile() ? [fullPath] : [];
+  });
+}
 
 describe("home dashboard", () => {
   it("links every implemented phase from the root command center", () => {
@@ -24,5 +42,20 @@ describe("home dashboard", () => {
     expect(mobileDemoSteps.join(" ")).toContain("app-release.apk");
     expect(mobileDemoSteps.join(" ")).toContain("Simulate gate NFC");
     expect(mobileDemoSteps.join(" ")).toContain("Canteen cashier");
+  });
+
+  it("uses master command center metadata", () => {
+    expect(metadata.title).toBe("SafeSchool Command Center");
+    expect(metadata.description).toContain("Role-based school NFC");
+    expect(metadata.description).toContain("mobile");
+  });
+
+  it("does not ship literal phase demo route pages", () => {
+    const routeFiles = collectFiles(appRoot).filter((file) => file.endsWith("page.tsx"));
+    const offenders = routeFiles.filter((file) =>
+      readFileSync(file, "utf8").includes("SafeSchool phase demo"),
+    );
+
+    expect(offenders).toEqual([]);
   });
 });
