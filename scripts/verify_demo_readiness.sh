@@ -65,6 +65,12 @@ fail_if_matches "No false-green placeholder tests" \
   --glob '!**/.next/**' \
   -S
 
+log "No generic admin web route shells"
+if rg -n "OperationalRoutePage|LearningDemo|AdminDemo|DocumentsDemo|ComplaintsDemo|CommunicationsDemo|TransportDemo|WalletDemo" "$ROOT_DIR/apps/admin-web/src/app" -S; then
+  echo "Readiness check failed: admin web app routes must use operational feature pages, not generic route shells or static demos." >&2
+  exit 1
+fi
+
 log "Backend API tests"
 dotnet test "$ROOT_DIR/apps/api/tests/SafeSchool.Api.Tests/SafeSchool.Api.Tests.csproj" -v minimal
 
