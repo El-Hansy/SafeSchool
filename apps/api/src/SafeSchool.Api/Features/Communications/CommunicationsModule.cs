@@ -21,7 +21,20 @@ public static class CommunicationsModule
         var student = endpoints.MapGroup(StudentRoutePrefix);
         school.MapGet("/", (string schoolAccountId) => Results.Ok(CommunicationWorkflowService.DemoBoard(schoolAccountId)));
         school.MapPost("/source-events", (NotificationSourceEventRequest request, CommunicationWorkflowService service) => Results.Ok(service.AcceptSourceEvent(request)));
+        school.MapGet("/notifications/{notificationId}", (string notificationId, CommunicationWorkflowService service) => Results.Ok(service.Detail(notificationId, "notification")));
+        school.MapGet("/acknowledgements", (CommunicationWorkflowService service) => Results.Ok(service.Acknowledgements()));
+        school.MapGet("/delivery", (CommunicationWorkflowService service) => Results.Ok(service.Delivery()));
+        school.MapGet("/summaries", (CommunicationWorkflowService service) => Results.Ok(service.Summaries()));
+        school.MapGet("/history", (CommunicationWorkflowService service) => Results.Ok(service.History()));
+        school.MapGet("/moderation", (CommunicationWorkflowService service) => Results.Ok(service.Moderation()));
+        school.MapGet("/exceptions", (CommunicationWorkflowService service) => Results.Ok(service.Exceptions()));
+        school.MapGet("/configuration", (CommunicationWorkflowService service) => Results.Ok(service.Configuration()));
+        school.MapGet("/configuration/audience-rules/{ruleId}", (string ruleId, CommunicationWorkflowService service) => Results.Ok(service.AudienceRule(ruleId)));
+        school.MapGet("/configuration/templates/{templateId}", (string templateId, CommunicationWorkflowService service) => Results.Ok(service.Template(templateId)));
+        school.MapGet("/conversations", (CommunicationWorkflowService service) => Results.Ok(service.Conversations()));
         school.MapPost("/conversations", (MessageRequest request, CommunicationWorkflowService service) => Results.Ok(service.SendMessage(request)));
+        school.MapGet("/conversations/{conversationId}", (string conversationId, CommunicationWorkflowService service) => Results.Ok(service.Detail(conversationId, "conversation")));
+        school.MapGet("/broadcasts/{broadcastId}", (string broadcastId, CommunicationWorkflowService service) => Results.Ok(service.Detail(broadcastId, "broadcast")));
         school.MapPost("/broadcasts", (BroadcastRequest request, CommunicationWorkflowService service) => Results.Ok(service.PublishBroadcast(request)));
         school.MapGet("/trace/{reference}", (string reference, CommunicationWorkflowService service) => Results.Ok(service.Trace(reference)));
         guardian.MapGet("/notifications", () => Results.Ok(CommunicationWorkflowService.NotificationCenter("guardian")));
@@ -39,6 +52,17 @@ public sealed class CommunicationWorkflowService(CommunicationIdempotencyService
 {
     public static object DemoBoard(string schoolAccountId) => new { schoolAccountId, phase = "communication-notifications", status = "demo-ready", unread = 42, broadcasts = 6, deliveryExceptions = 4, capabilities = CommunicationCapabilities.All };
     public static IReadOnlyList<CommunicationResponse> NotificationCenter(string scope) => [new($"{scope}-notification-1", "Unread", [scope], ["recipient-snapshot", "read-state-pending"] )];
+    public IReadOnlyList<CommunicationResponse> Acknowledgements() => [new("ack-guardian-1", "Acknowledged", ["guardian-amina"], ["read-state-recorded", "audit-written"])];
+    public IReadOnlyList<CommunicationResponse> Delivery() => [new("delivery-guardian-1", "Delivered", ["guardian-amina"], ["attempt-recorded", "provider-reference-minimized"])];
+    public IReadOnlyList<CommunicationResponse> Summaries() => [new("summary-daily-1", "Ready", ["school-admin"], ["counts-minimized", "suppression-included"])];
+    public IReadOnlyList<CommunicationResponse> History() => [new("history-message-1", "Sent", ["guardian-amina"], ["lifecycle-trace", "audit-written"])];
+    public IReadOnlyList<CommunicationResponse> Conversations() => [new("conversation-1", "Sent", ["guardian-amina"], ["moderation-checked", "delivery-attempt-recorded"])];
+    public IReadOnlyList<CommunicationResponse> Moderation() => [new("moderation-1", "Approved", ["guardian-amina"], ["policy-checked", "reviewer-audit"])];
+    public IReadOnlyList<CommunicationResponse> Exceptions() => [new("communication-exception-1", "RetryScheduled", ["support"], ["delivery-failed", "owner-assigned"])];
+    public object Configuration() => new { templates = 4, audienceRules = 3, quietHours = "Enabled", evidence = new[] { "tenant-scoped", "version-preserved" } };
+    public object AudienceRule(string ruleId) => new { ruleId, scope = "grade:4", channel = "guardian", status = "Enabled", evidence = new[] { "audience-snapshot", "visibility-reviewed" } };
+    public object Template(string templateId) => new { templateId, channel = "push", locale = "en/ar", status = "Approved", evidence = new[] { "template-versioned", "moderation-ready" } };
+    public CommunicationResponse Detail(string reference, string kind) => new(reference, "Ready", [kind], ["tenant-checked", "recipient-snapshot", "audit-written"]);
     public CommunicationResponse AcceptSourceEvent(NotificationSourceEventRequest request) => new($"event-{request.ClientRequestId}", idempotency.Record("source", request.ClientRequestId, request.SourceReference).ToString(), ["eligible-recipient"], ["source-read-only", "notification-created"]);
     public CommunicationResponse SendMessage(MessageRequest request) => new($"conversation-{request.ClientRequestId}", "Sent", [request.RecipientScope], ["moderation-checked", "delivery-attempt-recorded"]);
     public CommunicationResponse PublishBroadcast(BroadcastRequest request) => new($"broadcast-{request.ClientRequestId}", "Published", [request.AudienceRule], ["audience-snapshot", "quiet-hours-applied"]);

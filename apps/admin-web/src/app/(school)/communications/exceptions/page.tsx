@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../features/communications";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="Communication Exceptions"
-      detail="Review failed, suppressed, duplicate, or policy-blocked messages with owner actions and audit context."
-    />
-  );
+  return <CommunicationsSecondaryPage view="exceptions" />;
 }

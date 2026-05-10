@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../../../features/communications";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="Communication Trace"
-      detail="Trace one communication through audience selection, delivery channel, acknowledgement, moderation, and audit evidence."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ communicationId: string }> }) {
+  const { communicationId } = await params;
+  return <CommunicationsSecondaryPage view="trace" recordId={communicationId} />;
 }

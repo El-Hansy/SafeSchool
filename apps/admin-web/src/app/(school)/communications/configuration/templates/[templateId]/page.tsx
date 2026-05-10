@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../../../features/communications";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications / Configuration"
-      title="Template Detail"
-      detail="Review a communication template with approved content, variables, languages, channel mapping, and audit history."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ templateId: string }> }) {
+  const { templateId } = await params;
+  return <CommunicationsSecondaryPage view="template" recordId={templateId} />;
 }

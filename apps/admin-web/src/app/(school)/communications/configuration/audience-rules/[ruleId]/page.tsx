@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../../../features/communications";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications / Configuration"
-      title="Audience Rule Detail"
-      detail="Inspect one audience rule with eligibility filters, owner approval, suppression behavior, and change history."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ ruleId: string }> }) {
+  const { ruleId } = await params;
+  return <CommunicationsSecondaryPage view="audience-rule" recordId={ruleId} />;
 }

@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../features/communications";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="Moderation Queue"
-      detail="Review messages and broadcasts needing moderation, approval, correction, escalation, or rejection evidence."
-    />
-  );
+  return <CommunicationsSecondaryPage view="moderation" />;
 }

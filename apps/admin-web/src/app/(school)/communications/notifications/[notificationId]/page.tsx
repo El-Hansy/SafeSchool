@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../../features/communications";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="Notification Detail"
-      detail="Open one notification with audience, source module, delivery state, suppression reason, and acknowledgement status."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ notificationId: string }> }) {
+  const { notificationId } = await params;
+  return <CommunicationsSecondaryPage view="notification-detail" recordId={notificationId} />;
 }

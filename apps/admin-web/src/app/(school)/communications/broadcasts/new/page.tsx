@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../../features/communications";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="New Broadcast"
-      detail="Prepare a targeted school broadcast with approved audience rules, template controls, scheduling, and review evidence."
-    />
-  );
+  return <CommunicationsSecondaryPage view="broadcast-new" />;
 }

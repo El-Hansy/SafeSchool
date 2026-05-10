@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../../features/communications";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="Conversation Detail"
-      detail="Open a moderated direct conversation with participants, message timeline, attachments, and escalation evidence."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ conversationId: string }> }) {
+  const { conversationId } = await params;
+  return <CommunicationsSecondaryPage view="conversation-detail" recordId={conversationId} />;
 }

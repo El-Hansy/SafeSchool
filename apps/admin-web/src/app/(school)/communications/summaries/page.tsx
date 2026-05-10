@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { CommunicationsSecondaryPage } from "../../../../features/communications";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Communications"
-      title="Communication Summaries"
-      detail="Compare delivery, acknowledgement, moderation, failure, and escalation summaries across school workflows."
-    />
-  );
+  return <CommunicationsSecondaryPage view="summaries" />;
 }
