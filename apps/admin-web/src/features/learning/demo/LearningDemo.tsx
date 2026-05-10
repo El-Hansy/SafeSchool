@@ -25,7 +25,7 @@ export function LearningDemo({ section = "overview", audience = "school" }: { se
     <main style={{ minHeight: "100vh", background: "#eef3f7", color: "#111827", padding: "32px" }}>
       <section style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#5b6472", textTransform: "uppercase" }}>SafeSchool Phase 5</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: "#5b6472", textTransform: "uppercase" }}>SafeSchool 006</div>
           <h1 style={{ fontSize: 44, lineHeight: 1.05, margin: "8px 0" }}>{title}</h1>
           <p style={{ maxWidth: 960, color: "#4b5563", fontSize: 20, lineHeight: 1.45, margin: 0 }}>{subtitle}</p>
         </div>

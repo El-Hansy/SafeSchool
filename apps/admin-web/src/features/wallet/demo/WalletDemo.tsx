@@ -19,7 +19,7 @@ export function WalletDemo({ section = "overview" }: { section?: WalletSection }
     <main style={{ minHeight: "100vh", background: "#eef3f7", color: "#111827", padding: "32px" }}>
       <section style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#5b6472", textTransform: "uppercase" }}>SafeSchool Phase 4</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: "#5b6472", textTransform: "uppercase" }}>SafeSchool 005</div>
           <h1 style={{ fontSize: 44, lineHeight: 1.05, margin: "8px 0" }}>Wallet Command Center</h1>
           <p style={{ maxWidth: 920, color: "#4b5563", fontSize: 20, lineHeight: 1.45, margin: 0 }}>
             School finance and canteen operations for student wallets, top-ups, POS purchases, limits, corrections, chargebacks, reconciliation, and audit evidence.

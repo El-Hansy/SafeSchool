@@ -6,6 +6,7 @@ import { metadata } from "../../src/app/layout";
 import { mobileDemoSteps, safeSchoolModuleLinks } from "../../src/features/home";
 
 const appRoot = fileURLToPath(new URL("../../src/app", import.meta.url));
+const featuresRoot = fileURLToPath(new URL("../../src/features", import.meta.url));
 
 function collectFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -57,5 +58,23 @@ describe("home dashboard", () => {
     );
 
     expect(offenders).toEqual([]);
+  });
+
+  it("keeps visible demo badges aligned with master phase ids", () => {
+    const demoBadges = [
+      ["transport/demo/TransportDemo.tsx", "SafeSchool 004"],
+      ["wallet/demo/WalletDemo.tsx", "SafeSchool 005"],
+      ["learning/demo/LearningDemo.tsx", "SafeSchool 006"],
+      ["complaints/demo/ComplaintsDemo.tsx", "SafeSchool 009"],
+      ["communications/demo/CommunicationsDemo.tsx", "SafeSchool 010"],
+      ["documents/demo/DocumentsDemo.tsx", "SafeSchool 011"],
+      ["administration/demo/AdminDemo.tsx", "SafeSchool 011"],
+      ["mobile/components/MobileReleaseNotesEditor.tsx", "SafeSchool 012"],
+    ];
+
+    for (const [relativePath, badge] of demoBadges) {
+      const source = readFileSync(join(featuresRoot, relativePath), "utf8");
+      expect(source).toContain(badge);
+    }
   });
 });

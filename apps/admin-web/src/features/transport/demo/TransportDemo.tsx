@@ -233,7 +233,7 @@ function PageShell({
       <div style={styles.shell}>
         <header style={styles.header}>
           <div>
-            <p style={styles.eyebrow}>SafeSchool Phase 3</p>
+            <p style={styles.eyebrow}>SafeSchool 004</p>
             <h1 style={styles.title}>{title}</h1>
             <p style={styles.subtitle}>{subtitle}</p>
           </div>
