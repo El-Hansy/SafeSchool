@@ -28,6 +28,22 @@ using SafeSchool.Api.Features.Transport.Scans;
 using SafeSchool.Api.Features.Transport.Tracking;
 using SafeSchool.Api.Features.Transport.Trips;
 using SafeSchool.Api.Features.Transport.Reviews;
+using SafeSchool.Api.Features.Wallet;
+using SafeSchool.Api.Features.Wallet.Anomalies;
+using SafeSchool.Api.Features.Wallet.Audit;
+using SafeSchool.Api.Features.Wallet.Canteen;
+using SafeSchool.Api.Features.Wallet.Common.Idempotency;
+using SafeSchool.Api.Features.Wallet.Corrections;
+using SafeSchool.Api.Features.Wallet.Ledger;
+using SafeSchool.Api.Features.Wallet.Limits;
+using SafeSchool.Api.Features.Wallet.Payments;
+using SafeSchool.Api.Features.Wallet.Pos;
+using SafeSchool.Api.Features.Wallet.Reconciliation;
+using SafeSchool.Api.Features.Wallet.Reviews;
+using SafeSchool.Api.Features.Wallet.Rules;
+using SafeSchool.Api.Features.Wallet.Sync;
+using SafeSchool.Api.Features.Wallet.TopUps;
+using SafeSchool.Api.Features.Wallet.Wallets;
 
 namespace SafeSchool.Api.Infrastructure.Persistence;
 
@@ -75,11 +91,33 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<TransportRuleSetting> TransportRuleSettings => Set<TransportRuleSetting>();
     public DbSet<TransportAuditEvent> TransportAuditEvents => Set<TransportAuditEvent>();
     public DbSet<TransportIdempotencyRecord> TransportIdempotencyRecords => Set<TransportIdempotencyRecord>();
+    public DbSet<StudentWallet> StudentWallets => Set<StudentWallet>();
+    public DbSet<WalletLedgerEntry> WalletLedgerEntries => Set<WalletLedgerEntry>();
+    public DbSet<WalletTopUp> WalletTopUps => Set<WalletTopUp>();
+    public DbSet<PaymentConfirmation> PaymentConfirmations => Set<PaymentConfirmation>();
+    public DbSet<CanteenMerchant> CanteenMerchants => Set<CanteenMerchant>();
+    public DbSet<CanteenItemCategory> CanteenItemCategories => Set<CanteenItemCategory>();
+    public DbSet<PurchaseEligibilityRule> PurchaseEligibilityRules => Set<PurchaseEligibilityRule>();
+    public DbSet<POSTerminal> PosTerminals => Set<POSTerminal>();
+    public DbSet<OfflinePosSyncBatch> OfflinePosSyncBatches => Set<OfflinePosSyncBatch>();
+    public DbSet<CanteenPurchaseTransaction> CanteenPurchaseTransactions => Set<CanteenPurchaseTransaction>();
+    public DbSet<SpendingLimit> SpendingLimits => Set<SpendingLimit>();
+    public DbSet<RefundOrReversal> RefundOrReversals => Set<RefundOrReversal>();
+    public DbSet<ManualWalletReview> ManualWalletReviews => Set<ManualWalletReview>();
+    public DbSet<WalletAnomaly> WalletAnomalies => Set<WalletAnomaly>();
+    public DbSet<SettlementReference> SettlementReferences => Set<SettlementReference>();
+    public DbSet<WalletReconciliationRun> WalletReconciliationRuns => Set<WalletReconciliationRun>();
+    public DbSet<WalletReconciliationMismatch> WalletReconciliationMismatches => Set<WalletReconciliationMismatch>();
+    public DbSet<WalletReviewSummary> WalletReviewSummaries => Set<WalletReviewSummary>();
+    public DbSet<WalletRuleSetting> WalletRuleSettings => Set<WalletRuleSetting>();
+    public DbSet<WalletAuditEvent> WalletAuditEvents => Set<WalletAuditEvent>();
+    public DbSet<WalletIdempotencyRecord> WalletIdempotencyRecords => Set<WalletIdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyIdentityAccessModel();
         modelBuilder.ApplyAttendanceAccessModel();
         modelBuilder.ApplyTransportModel();
+        modelBuilder.ApplyWalletModel();
     }
 }
