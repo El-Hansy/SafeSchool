@@ -1,7 +1,7 @@
 name: safeschool_mobile
-description: SafeSchool mobile identity access module shell.
+description: SafeSchool role-based NFC mobile demo app.
 publish_to: none
-version: 0.1.0+1
+version: 12.0.0+1200
 environment:
   sdk: ">=3.5.0 <4.0.0"
 dependencies:
