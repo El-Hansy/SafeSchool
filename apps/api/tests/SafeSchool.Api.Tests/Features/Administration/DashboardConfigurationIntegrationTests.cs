@@ -1,3 +1,10 @@
+using SafeSchool.Api.Tests.Support;
 using Xunit;
-namespace SafeSchool.Api.Tests.Placeholders;
-public sealed class DashboardConfigurationIntegrationTests { [Fact] public void Placeholder_compiles() => Assert.True(true); }
+
+namespace SafeSchool.Api.Tests.Features.Administration;
+
+public sealed class DashboardConfigurationIntegrationTests
+{
+    [Fact]
+    public void Feature_contract_holds() => FeatureContractAssertions.AdministrationContractsHold();
+}
