@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { DocumentsSecondaryPage } from "../../../../features/documents";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Documents / Certificates"
-      title="Certificate Detail"
-      detail="Open a certificate record with issuer, student scope, verification state, visibility, expiry, and audit evidence."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ certificateId: string }> }) {
+  const { certificateId } = await params;
+  return <DocumentsSecondaryPage view="certificate-detail" recordId={certificateId} />;
 }

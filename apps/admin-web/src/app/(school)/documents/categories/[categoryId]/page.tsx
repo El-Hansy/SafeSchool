@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { DocumentsSecondaryPage } from "../../../../../features/documents";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Documents"
-      title="Document Category Detail"
-      detail="Review one document category with retention policy, visibility defaults, upload rules, and approval history."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ categoryId: string }> }) {
+  const { categoryId } = await params;
+  return <DocumentsSecondaryPage view="document-category" recordId={categoryId} />;
 }

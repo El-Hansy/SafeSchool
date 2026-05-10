@@ -1,10 +1,17 @@
 export const documentsRoutes = {
   documents: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/documents`,
+  documentDetail: (schoolAccountId: string, documentId: string) => `${documentsRoutes.documents(schoolAccountId)}/${documentId}`,
+  documentCategories: (schoolAccountId: string) => `${documentsRoutes.documents(schoolAccountId)}/categories`,
+  documentCategory: (schoolAccountId: string, categoryId: string) => `${documentsRoutes.documentCategories(schoolAccountId)}/${categoryId}`,
   documentHold: (schoolAccountId: string, documentId: string) => `${documentsRoutes.documents(schoolAccountId)}/${documentId}/hold`,
   documentExport: (schoolAccountId: string, documentId: string) => `${documentsRoutes.documents(schoolAccountId)}/${documentId}/export`,
   certificates: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/certificates`,
+  certificateDetail: (schoolAccountId: string, certificateId: string) => `${documentsRoutes.certificates(schoolAccountId)}/${certificateId}`,
+  certificateTypes: (schoolAccountId: string) => `${documentsRoutes.certificates(schoolAccountId)}/types`,
+  certificateType: (schoolAccountId: string, typeId: string) => `${documentsRoutes.certificateTypes(schoolAccountId)}/${typeId}`,
   certificateVerify: (schoolAccountId: string, certificateId: string) => `${documentsRoutes.certificates(schoolAccountId)}/${certificateId}/verify`,
   search: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/search`,
+  searchResult: (schoolAccountId: string, entryId: string) => `${documentsRoutes.search(schoolAccountId)}/results/${entryId}`,
   searchOpen: (schoolAccountId: string, entryId: string) => `${documentsRoutes.search(schoolAccountId)}/${entryId}/open`,
   searchIndexHealth: (schoolAccountId: string) => `${documentsRoutes.search(schoolAccountId)}/index-health`,
   guardianDocuments: () => "/api/v1/guardians/me/documents",
@@ -54,6 +61,33 @@ export type SearchIndexHealthResponse = {
   suppressed: number;
 };
 
+export type DocumentCategoryResponse = {
+  categoryId: string;
+  name: string;
+  retention: string;
+  visibility: string;
+  approval: string;
+  evidence?: string[];
+};
+
+export type CertificateTypeResponse = {
+  typeId: string;
+  name: string;
+  issuingRole: string;
+  visibility: string;
+  expiry?: string;
+  requiredFields?: string[];
+  evidence?: string[];
+};
+
+export type SearchResultDetailResponse = {
+  entryId: string;
+  sourceModule: string;
+  freshness: string;
+  visibilityDecision: string;
+  evidence: string[];
+};
+
 export type DocumentsOperationsData = {
   schoolAccountId: string;
   dataSource: DocumentDataSource;
@@ -64,6 +98,9 @@ export type DocumentsOperationsData = {
   certificates: CertificateResponse[];
   guardianCertificates: CertificateResponse[];
   studentCertificates: CertificateResponse[];
+  documentCategories: DocumentCategoryResponse[];
+  certificateTypes: CertificateTypeResponse[];
+  searchResultDetails: SearchResultDetailResponse[];
   search: SearchResponse;
   indexHealth: SearchIndexHealthResponse;
 };
@@ -101,6 +138,18 @@ export const documentsFallbackData: DocumentsOperationsData = {
   studentCertificates: [
     { reference: "CERT-2026-0001", status: "Issued", verificationState: "Verified", evidence: ["student-visible", "source-preserved"] },
   ],
+  documentCategories: [
+    { categoryId: "guardian-consent", name: "Guardian Consent", retention: "7 years", visibility: "Guardian summary", approval: "Registrar", evidence: ["policy-versioned", "visibility-reviewed"] },
+    { categoryId: "medical-note", name: "Medical Note", retention: "Legal hold aware", visibility: "Restricted", approval: "Medical staff", evidence: ["restricted-category", "audit-written"] },
+  ],
+  certificateTypes: [
+    { typeId: "attendance-letter", name: "Attendance Letter", issuingRole: "Registrar", visibility: "Guardian and student", expiry: "None", requiredFields: ["student", "term", "issuer"], evidence: ["template-versioned", "visibility-reviewed"] },
+    { typeId: "enrollment-proof", name: "Enrollment Proof", issuingRole: "Registrar", visibility: "Guardian and student", expiry: "One term", requiredFields: ["student", "year"], evidence: ["type-validated"] },
+  ],
+  searchResultDetails: [
+    { entryId: "entry-doc-amina", sourceModule: "documents", freshness: "Fresh", visibilityDecision: "Allowed", evidence: ["tenant-checked", "permission-revalidated", "audit-written"] },
+    { entryId: "entry-cert-amina", sourceModule: "certificates", freshness: "Fresh", visibilityDecision: "Allowed", evidence: ["source-preserved", "certificate-visible"] },
+  ],
   search: {
     queryLogReference: "search-log-1",
     results: ["Document: Amina consent form", "Certificate: Attendance letter", "Audit: export approved"],
@@ -136,15 +185,17 @@ async function fetchDocumentsJson<T>(path: string, schoolAccountId: string, acto
 }
 
 export async function loadDocumentsOperations(schoolAccountId = documentsFallbackData.schoolAccountId): Promise<DocumentsOperationsData> {
-  const [board, guardianDocuments, studentDocuments, certificates, indexHealth] = await Promise.all([
+  const [board, guardianDocuments, studentDocuments, certificates, documentCategories, certificateTypes, indexHealth] = await Promise.all([
     fetchDocumentsJson<DocumentBoardResponse>(documentsRoutes.documents(schoolAccountId), schoolAccountId),
     fetchDocumentsJson<DocumentResponse[]>(documentsRoutes.guardianDocuments(), schoolAccountId, "guardian-demo"),
     fetchDocumentsJson<DocumentResponse[]>(documentsRoutes.studentDocuments(), schoolAccountId, "student-demo"),
     fetchDocumentsJson<CertificateResponse[]>(documentsRoutes.certificates(schoolAccountId), schoolAccountId),
+    fetchDocumentsJson<DocumentCategoryResponse[]>(documentsRoutes.documentCategories(schoolAccountId), schoolAccountId),
+    fetchDocumentsJson<CertificateTypeResponse[]>(documentsRoutes.certificateTypes(schoolAccountId), schoolAccountId),
     fetchDocumentsJson<SearchIndexHealthResponse>(documentsRoutes.searchIndexHealth(schoolAccountId), schoolAccountId),
   ]);
 
-  const hasApiData = [board, guardianDocuments, studentDocuments, certificates, indexHealth].some((item) => item !== null);
+  const hasApiData = [board, guardianDocuments, studentDocuments, certificates, documentCategories, certificateTypes, indexHealth].some((item) => item !== null);
   if (!hasApiData) return { ...documentsFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {
@@ -155,6 +206,8 @@ export async function loadDocumentsOperations(schoolAccountId = documentsFallbac
     guardianDocuments: guardianDocuments ?? documentsFallbackData.guardianDocuments,
     studentDocuments: studentDocuments ?? documentsFallbackData.studentDocuments,
     certificates: certificates ?? documentsFallbackData.certificates,
+    documentCategories: documentCategories ?? documentsFallbackData.documentCategories,
+    certificateTypes: certificateTypes ?? documentsFallbackData.certificateTypes,
     indexHealth: indexHealth ?? documentsFallbackData.indexHealth,
   };
 }

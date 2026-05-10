@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { DocumentsSecondaryPage } from "../../../../../features/documents";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Search"
-      title="Search Result Detail"
-      detail="Open an authorized search result with source module, freshness, visibility decision, and access audit trail."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ entryId: string }> }) {
+  const { entryId } = await params;
+  return <DocumentsSecondaryPage view="search-result" recordId={entryId} />;
 }
