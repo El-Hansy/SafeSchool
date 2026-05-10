@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { ComplaintsSecondaryPage } from "../../../../../../features/complaints";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Complaints / Configuration"
-      title="Complaint Category Detail"
-      detail="Inspect one complaint category with routing, SLA policy, visibility rules, and escalation behavior."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ categoryId: string }> }) {
+  const { categoryId } = await params;
+  return <ComplaintsSecondaryPage view="category" recordId={categoryId} />;
 }

@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { ComplaintsSecondaryPage } from "../../../../../../features/complaints";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Complaints / Configuration"
-      title="Escalation Rule Detail"
-      detail="Review one escalation rule with trigger conditions, target role, timing, notification policy, and audit history."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ ruleId: string }> }) {
+  const { ruleId } = await params;
+  return <ComplaintsSecondaryPage view="escalation-rule" recordId={ruleId} />;
 }

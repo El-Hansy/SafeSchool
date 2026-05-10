@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { ComplaintsSecondaryPage } from "../../../../../features/complaints";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Complaints"
-      title="Assigned Complaint Detail"
-      detail="Work one assigned complaint with ownership, notes, due time, escalation status, and permitted resolution actions."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ complaintId: string }> }) {
+  const { complaintId } = await params;
+  return <ComplaintsSecondaryPage view="assigned-detail" recordId={complaintId} />;
 }

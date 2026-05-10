@@ -1,5 +1,14 @@
 export const complaintsRoutes = {
   school: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/complaints`,
+  detail: (schoolAccountId: string, complaintId: string) => `${complaintsRoutes.school(schoolAccountId)}/${complaintId}`,
+  triage: (schoolAccountId: string) => `${complaintsRoutes.school(schoolAccountId)}/triage`,
+  assigned: (schoolAccountId: string) => `${complaintsRoutes.school(schoolAccountId)}/assigned`,
+  assignedDetail: (schoolAccountId: string, complaintId: string) => `${complaintsRoutes.assigned(schoolAccountId)}/${complaintId}`,
+  escalations: (schoolAccountId: string) => `${complaintsRoutes.school(schoolAccountId)}/escalations`,
+  exceptions: (schoolAccountId: string) => `${complaintsRoutes.school(schoolAccountId)}/exceptions`,
+  summaries: (schoolAccountId: string) => `${complaintsRoutes.school(schoolAccountId)}/summaries`,
+  category: (schoolAccountId: string, categoryId: string) => `${complaintsRoutes.school(schoolAccountId)}/configuration/categories/${categoryId}`,
+  escalationRule: (schoolAccountId: string, ruleId: string) => `${complaintsRoutes.school(schoolAccountId)}/configuration/escalation-rules/${ruleId}`,
   assign: (schoolAccountId: string, complaintId: string) => `${complaintsRoutes.school(schoolAccountId)}/${complaintId}/assign`,
   escalate: (schoolAccountId: string, complaintId: string) => `${complaintsRoutes.school(schoolAccountId)}/${complaintId}/escalate`,
   resolve: (schoolAccountId: string, complaintId: string) => `${complaintsRoutes.school(schoolAccountId)}/${complaintId}/resolve`,
@@ -44,6 +53,13 @@ export type ComplaintOperationsData = {
   schoolComplaints: ComplaintResponse[];
   guardianComplaints: ComplaintResponse[];
   studentComplaints: ComplaintResponse[];
+  triageComplaints: ComplaintResponse[];
+  assignedComplaints: ComplaintResponse[];
+  escalatedComplaints: ComplaintResponse[];
+  exceptions: Array<{ exceptionReference: string; reason: string; owner: string; status: string }>;
+  summaries: Array<{ summaryReference: string; status: string; audience: string; evidence: string }>;
+  categories: Array<{ categoryId: string; name: string; ownerRole: string; sla: string; evidence: string[] }>;
+  escalationRules: Array<{ ruleId: string; trigger: string; ownerRole: string; window: string; evidence: string[] }>;
 };
 
 export const complaintCapabilities = [
@@ -80,6 +96,28 @@ export const complaintsFallbackData: ComplaintOperationsData = {
   studentComplaints: [
     { complaintId: "cmp-2", trackingReference: "CMP-2026-0002", status: "Received", priority: "Normal", visibleSummary: "Your complaint was received.", auditTrail: ["submitted"] },
   ],
+  triageComplaints: [
+    { complaintId: "cmp-1", trackingReference: "CMP-2026-0001", status: "NeedsTriage", priority: "High", visibleSummary: "Wellbeing category suggested; restricted details minimized.", auditTrail: ["submitted", "category-suggested"] },
+  ],
+  assignedComplaints: [
+    { complaintId: "cmp-1", trackingReference: "CMP-2026-0001", status: "Assigned", priority: "High", visibleSummary: "Assigned to student wellbeing owner.", auditTrail: ["submitted", "categorized", "assigned"] },
+  ],
+  escalatedComplaints: [
+    { complaintId: "cmp-2", trackingReference: "CMP-2026-0002", status: "Escalated", priority: "Urgent", visibleSummary: "Escalated for same-day transport review.", auditTrail: ["submitted", "assigned", "escalated"] },
+  ],
+  exceptions: [
+    { exceptionReference: "cmp-exception-1", reason: "Duplicate client request conflict", owner: "Complaint reviewer", status: "ManualReviewRequired" },
+  ],
+  summaries: [
+    { summaryReference: "cmp-summary-1", status: "Published", audience: "Guardian", evidence: "restricted-details-minimized" },
+  ],
+  categories: [
+    { categoryId: "wellbeing", name: "Wellbeing", ownerRole: "Student wellbeing", sla: "1 school day", evidence: ["category-versioned", "routing-reviewed"] },
+    { categoryId: "transport", name: "Transport", ownerRole: "Transport operations", sla: "Same day", evidence: ["owner-routed"] },
+  ],
+  escalationRules: [
+    { ruleId: "urgent-overdue", trigger: "Urgent priority or overdue SLA", ownerRole: "Senior operations", window: "Same day", evidence: ["rule-versioned", "audit-written"] },
+  ],
 };
 
 export function complaintsApiBaseUrl() {
@@ -108,13 +146,18 @@ async function fetchComplaintsJson<T>(path: string, schoolAccountId: string, act
 }
 
 export async function loadComplaintOperations(schoolAccountId = complaintsFallbackData.schoolAccountId): Promise<ComplaintOperationsData> {
-  const [board, guardianComplaints, studentComplaints] = await Promise.all([
+  const [board, guardianComplaints, studentComplaints, triageComplaints, assignedComplaints, escalatedComplaints, exceptions, summaries] = await Promise.all([
     fetchComplaintsJson<ComplaintBoardResponse>(complaintsRoutes.school(schoolAccountId), schoolAccountId),
     fetchComplaintsJson<ComplaintResponse[]>(complaintsRoutes.guardian(), schoolAccountId, "guardian-demo"),
     fetchComplaintsJson<ComplaintResponse[]>(complaintsRoutes.student(), schoolAccountId, "student-demo"),
+    fetchComplaintsJson<ComplaintResponse[]>(complaintsRoutes.triage(schoolAccountId), schoolAccountId),
+    fetchComplaintsJson<ComplaintResponse[]>(complaintsRoutes.assigned(schoolAccountId), schoolAccountId),
+    fetchComplaintsJson<ComplaintResponse[]>(complaintsRoutes.escalations(schoolAccountId), schoolAccountId),
+    fetchComplaintsJson<ComplaintOperationsData["exceptions"]>(complaintsRoutes.exceptions(schoolAccountId), schoolAccountId),
+    fetchComplaintsJson<ComplaintOperationsData["summaries"]>(complaintsRoutes.summaries(schoolAccountId), schoolAccountId),
   ]);
 
-  const hasApiData = [board, guardianComplaints, studentComplaints].some((item) => item !== null);
+  const hasApiData = [board, guardianComplaints, studentComplaints, triageComplaints, assignedComplaints, escalatedComplaints, exceptions, summaries].some((item) => item !== null);
   if (!hasApiData) return { ...complaintsFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {
@@ -124,5 +167,10 @@ export async function loadComplaintOperations(schoolAccountId = complaintsFallba
     board: board ?? { ...complaintsFallbackData.board, schoolAccountId },
     guardianComplaints: guardianComplaints ?? complaintsFallbackData.guardianComplaints,
     studentComplaints: studentComplaints ?? complaintsFallbackData.studentComplaints,
+    triageComplaints: triageComplaints ?? complaintsFallbackData.triageComplaints,
+    assignedComplaints: assignedComplaints ?? complaintsFallbackData.assignedComplaints,
+    escalatedComplaints: escalatedComplaints ?? complaintsFallbackData.escalatedComplaints,
+    exceptions: exceptions ?? complaintsFallbackData.exceptions,
+    summaries: summaries ?? complaintsFallbackData.summaries,
   };
 }

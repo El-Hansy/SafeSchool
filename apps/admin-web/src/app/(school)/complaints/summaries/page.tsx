@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { ComplaintsSecondaryPage } from "../../../../features/complaints";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Complaints"
-      title="Complaint Summaries"
-      detail="Compare complaint volumes, categories, SLA performance, escalation rates, closure quality, and feedback trends."
-    />
-  );
+  return <ComplaintsSecondaryPage view="summaries" />;
 }

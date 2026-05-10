@@ -24,6 +24,15 @@ public static class ComplaintsModule
 
         school.MapGet("/", (string schoolAccountId) => Results.Ok(ComplaintWorkflowService.DemoBoard(schoolAccountId)));
         school.MapPost("/", (string schoolAccountId, ComplaintSubmissionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Submit(schoolAccountId, request)));
+        school.MapGet("/triage", (ComplaintWorkflowService service) => Results.Ok(service.Triage()));
+        school.MapGet("/assigned", (ComplaintWorkflowService service) => Results.Ok(service.Assigned()));
+        school.MapGet("/assigned/{complaintId}", (string complaintId, ComplaintWorkflowService service) => Results.Ok(service.Detail(complaintId)));
+        school.MapGet("/escalations", (ComplaintWorkflowService service) => Results.Ok(service.Escalations()));
+        school.MapGet("/exceptions", (ComplaintWorkflowService service) => Results.Ok(service.Exceptions()));
+        school.MapGet("/summaries", (ComplaintWorkflowService service) => Results.Ok(service.Summaries()));
+        school.MapGet("/configuration/categories/{categoryId}", (string categoryId, ComplaintWorkflowService service) => Results.Ok(service.Category(categoryId)));
+        school.MapGet("/configuration/escalation-rules/{ruleId}", (string ruleId, ComplaintWorkflowService service) => Results.Ok(service.EscalationRule(ruleId)));
+        school.MapGet("/{complaintId}", (string complaintId, ComplaintWorkflowService service) => Results.Ok(service.Detail(complaintId)));
         school.MapPost("/{complaintId}/assign", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Assign(complaintId, request)));
         school.MapPost("/{complaintId}/escalate", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Escalate(complaintId, request)));
         school.MapPost("/{complaintId}/resolve", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Resolve(complaintId, request)));
@@ -50,6 +59,14 @@ public sealed class ComplaintWorkflowService(ComplaintIdempotencyService idempot
     public static object DemoBoard(string schoolAccountId) => new { schoolAccountId, phase = "complaints-escalations", status = "demo-ready", capabilities = ComplaintCapabilities.All, open = 14, escalated = 3, pendingFeedback = 5 };
     public static IReadOnlyList<ComplaintResponse> GuardianSummary() => [new("cmp-1", "CMP-2026-0001", "InReview", "High", "Your complaint is assigned and under review.", ["submitted", "assigned"])];
     public static IReadOnlyList<ComplaintResponse> StudentSummary() => [new("cmp-2", "CMP-2026-0002", "Received", "Normal", "Your complaint was received.", ["submitted"])];
+    public IReadOnlyList<ComplaintResponse> Triage() => [new("cmp-1", "CMP-2026-0001", "NeedsTriage", "High", "Wellbeing category suggested; restricted details minimized.", ["submitted", "category-suggested"])];
+    public IReadOnlyList<ComplaintResponse> Assigned() => [new("cmp-1", "CMP-2026-0001", "Assigned", "High", "Assigned to student wellbeing owner.", ["submitted", "categorized", "assigned"])];
+    public IReadOnlyList<ComplaintResponse> Escalations() => [new("cmp-2", "CMP-2026-0002", "Escalated", "Urgent", "Escalated for same-day transport review.", ["submitted", "assigned", "escalated"])];
+    public object Exceptions() => new[] { new { exceptionReference = "cmp-exception-1", reason = "Duplicate client request conflict", owner = "Complaint reviewer", status = "ManualReviewRequired" } };
+    public object Summaries() => new[] { new { summaryReference = "cmp-summary-1", status = "Published", audience = "Guardian", evidence = "restricted-details-minimized" } };
+    public object Category(string categoryId) => new { categoryId, name = "Wellbeing", ownerRole = "Student wellbeing", sla = "1 school day", evidence = new[] { "category-versioned", "routing-reviewed" } };
+    public object EscalationRule(string ruleId) => new { ruleId, trigger = "Urgent priority or overdue SLA", ownerRole = "Senior operations", window = "Same day", evidence = new[] { "rule-versioned", "audit-written" } };
+    public ComplaintResponse Detail(string complaintId) => new(complaintId, "CMP-2026-0001", "Assigned", "High", "Assigned to complaint owner queue without source-domain mutation.", ["submitted", "categorized", "assigned", "audit-written"]);
 
     public ComplaintResponse Submit(string tenantId, ComplaintSubmissionRequest request)
     {

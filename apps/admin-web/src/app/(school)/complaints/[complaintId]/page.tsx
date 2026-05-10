@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { ComplaintsSecondaryPage } from "../../../../features/complaints";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Complaints"
-      title="Complaint Detail"
-      detail="Review one complaint with category, submitter scope, assigned owner, SLA state, resolution, and feedback evidence."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ complaintId: string }> }) {
+  const { complaintId } = await params;
+  return <ComplaintsSecondaryPage view="detail" recordId={complaintId} />;
 }
