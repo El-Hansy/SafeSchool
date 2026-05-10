@@ -1,5 +1,5 @@
-import { DocumentsDemo } from "../../../../features/documents";
+import { DocumentsOperationsPage } from "../../../../features/documents";
 
 export default function Page() {
-  return <DocumentsDemo view="index-health" audience="school" />;
+  return <DocumentsOperationsPage view="index-health" audience="school" />;
 }
