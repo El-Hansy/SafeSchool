@@ -1,0 +1,1 @@
+export const transportTestData = { route: { routeCode: "NORTH-AM", stops: ["STOP-1", "STOP-2", "STOP-3", "STOP-4", "STOP-5"] }, assignment: { studentProfileId: "student-1", vehicleCode: "BUS-12" }, trip: { tripId: "trip-1", trackingDeviceReference: "device-1" }, eta: { state: "Available", confidence: "Medium" }, notification: { eventType: "Boarding", status: "Visible" } };

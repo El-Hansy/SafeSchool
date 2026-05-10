@@ -1,0 +1,2 @@
+class TransportDatabaseMigration { const TransportDatabaseMigration(this.version, this.statements); final int version; final List<String> statements; }
+class TransportDatabase { final migrations = const [TransportDatabaseMigration(1, ['create table transport_scan_queue(client_scan_id text primary key, payload text, state text)', 'create table transport_location_queue(client_location_id text primary key, payload text, state text)', 'create table transport_trip_cache(transport_trip_id text primary key, payload text)'])]; }

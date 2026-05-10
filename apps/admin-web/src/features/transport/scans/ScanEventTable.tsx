@@ -1,0 +1,1 @@
+export function ScanEventTable({ scans }: { scans: string[] }) { return <table><tbody>{scans.map((scan) => <tr key={scan}><td>{scan}</td></tr>)}</tbody></table>; } export function ScanDecisionBadge({ decision }: { decision: string }) { return <span>{decision}</span>; }

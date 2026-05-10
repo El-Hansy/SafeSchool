@@ -15,6 +15,19 @@ using SafeSchool.Api.Features.IdentityAccess.Audit;
 using SafeSchool.Api.Features.IdentityAccess.Credentials;
 using SafeSchool.Api.Features.IdentityAccess.Guardians;
 using SafeSchool.Api.Features.IdentityAccess.StudentProfiles;
+using SafeSchool.Api.Features.Transport;
+using SafeSchool.Api.Features.Transport.Anomalies;
+using SafeSchool.Api.Features.Transport.Assignments;
+using SafeSchool.Api.Features.Transport.Audit;
+using SafeSchool.Api.Features.Transport.Common.Idempotency;
+using SafeSchool.Api.Features.Transport.Eta;
+using SafeSchool.Api.Features.Transport.Notifications;
+using SafeSchool.Api.Features.Transport.Routes;
+using SafeSchool.Api.Features.Transport.Rules;
+using SafeSchool.Api.Features.Transport.Scans;
+using SafeSchool.Api.Features.Transport.Tracking;
+using SafeSchool.Api.Features.Transport.Trips;
+using SafeSchool.Api.Features.Transport.Reviews;
 
 namespace SafeSchool.Api.Infrastructure.Persistence;
 
@@ -46,10 +59,27 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<EntryExitNotificationRecord> EntryExitNotificationRecords => Set<EntryExitNotificationRecord>();
     public DbSet<AttendanceAnomaly> AttendanceAnomalies => Set<AttendanceAnomaly>();
     public DbSet<ManualReview> ManualReviews => Set<ManualReview>();
+    public DbSet<TransportRoute> TransportRoutes => Set<TransportRoute>();
+    public DbSet<TransportStop> TransportStops => Set<TransportStop>();
+    public DbSet<RouteStopSequence> RouteStopSequences => Set<RouteStopSequence>();
+    public DbSet<TransportVehicle> TransportVehicles => Set<TransportVehicle>();
+    public DbSet<StudentTransportAssignment> StudentTransportAssignments => Set<StudentTransportAssignment>();
+    public DbSet<TransportTrip> TransportTrips => Set<TransportTrip>();
+    public DbSet<OfflineTransportScanSyncBatch> OfflineTransportScanSyncBatches => Set<OfflineTransportScanSyncBatch>();
+    public DbSet<BoardingDropScanEvent> BoardingDropScanEvents => Set<BoardingDropScanEvent>();
+    public DbSet<TransportLocationUpdate> TransportLocationUpdates => Set<TransportLocationUpdate>();
+    public DbSet<EtaRecord> EtaRecords => Set<EtaRecord>();
+    public DbSet<TransportNotificationRecord> TransportNotificationRecords => Set<TransportNotificationRecord>();
+    public DbSet<TransportAnomaly> TransportAnomalies => Set<TransportAnomaly>();
+    public DbSet<ManualTransportReview> ManualTransportReviews => Set<ManualTransportReview>();
+    public DbSet<TransportRuleSetting> TransportRuleSettings => Set<TransportRuleSetting>();
+    public DbSet<TransportAuditEvent> TransportAuditEvents => Set<TransportAuditEvent>();
+    public DbSet<TransportIdempotencyRecord> TransportIdempotencyRecords => Set<TransportIdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyIdentityAccessModel();
         modelBuilder.ApplyAttendanceAccessModel();
+        modelBuilder.ApplyTransportModel();
     }
 }

@@ -1,0 +1,2 @@
+import 'package:flutter/material.dart';
+class TripTrackingScreen extends StatelessWidget { const TripTrackingScreen({super.key, required this.tripLabel, required this.permissionGranted}); final String tripLabel; final bool permissionGranted; @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Trip Tracking')), body: Column(children: [Text(tripLabel), Text(permissionGranted ? 'Location allowed' : 'Location permission denied')])); }
