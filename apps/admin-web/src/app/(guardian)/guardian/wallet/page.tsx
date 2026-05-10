@@ -1,5 +1,5 @@
-import { GuardianWalletDemo } from "../../../../features/wallet/demo/WalletDemo";
+import { GuardianWalletExperience } from "../../../../features/guardian-wallet/components/GuardianWalletExperience";
 
 export default function Page() {
-  return <GuardianWalletDemo section="overview" />;
+  return <GuardianWalletExperience section="overview" />;
 }

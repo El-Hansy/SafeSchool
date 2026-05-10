@@ -1,11 +1,12 @@
 using SafeSchool.Api.Features.Wallet.Common;
 using SafeSchool.Api.Features.Wallet.Ledger;
+using SafeSchool.Api.Infrastructure.Tenancy;
 
 namespace SafeSchool.Api.Features.Wallet.Wallets;
 
 public static class StudentWalletsController
 {
-    public static RouteGroupBuilder MapStudentWalletEndpoints(this RouteGroupBuilder group)
+    public static RouteGroupBuilder MapStudentWalletEndpoints(this RouteGroupBuilder group, RouteGroupBuilder guardianGroup)
     {
         var wallets = group.MapGroup("/student-wallets");
         wallets.MapGet("/", async (string schoolAccountId, StudentWalletService service, CancellationToken ct) => Results.Ok(await service.ListAsync(schoolAccountId, ct)));
@@ -50,6 +51,11 @@ public static class StudentWalletsController
         {
             var entry = await service.GetAsync(schoolAccountId, ledgerEntryId, ct);
             return entry is null ? Results.NotFound() : Results.Ok(entry);
+        });
+        guardianGroup.MapGet("/{studentProfileId}/wallet", async (string studentProfileId, ITenantContext tenantContext, GuardianWalletVisibilityService service, CancellationToken ct) =>
+        {
+            var result = await service.GetAsync(GuardianTenantResolver.Resolve(tenantContext), tenantContext.ActorReference ?? "anonymous", studentProfileId, ct);
+            return result.Succeeded ? Results.Ok(result.Value) : Results.BadRequest(result.Errors);
         });
         return group;
     }

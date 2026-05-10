@@ -1,5 +1,5 @@
-import { WalletDemo } from "../../../features/wallet/demo/WalletDemo";
+import { WalletOperationsPage } from "../../../features/wallet/components/WalletOperationsPage";
 
 export default function Page() {
-  return <WalletDemo section="overview" />;
+  return <WalletOperationsPage section="overview" />;
 }

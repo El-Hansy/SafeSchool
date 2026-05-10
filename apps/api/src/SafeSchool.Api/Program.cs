@@ -187,6 +187,7 @@ builder.Services.AddScoped<IWalletAuditWriter, WalletAuditWriter>();
 builder.Services.AddScoped<WalletRuleSettingValidator>();
 builder.Services.AddScoped<WalletRuleSettingService>();
 builder.Services.AddScoped<StudentWalletService>();
+builder.Services.AddScoped<GuardianWalletVisibilityService>();
 builder.Services.AddScoped<WalletLedgerPostingService>();
 builder.Services.AddScoped<WalletLedgerQueryService>();
 builder.Services.AddScoped<WalletBalanceProjectionService>();

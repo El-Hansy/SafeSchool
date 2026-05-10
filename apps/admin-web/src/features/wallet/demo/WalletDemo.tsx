@@ -90,15 +90,15 @@ function Boundary({ title, detail }: { title: string; detail: string }) {
 }
 
 function WalletList() {
-  return <div style={{ display: "grid", gap: 10 }}>{walletDemoData.wallets.map((wallet) => <Row key={wallet.walletId} left={wallet.student} middle={formatMoney(wallet.balanceMinor)} right={wallet.status} />)}</div>;
+  return <div style={{ display: "grid", gap: 10 }}>{walletDemoData.wallets.map((wallet) => <Row key={wallet.walletId} left={wallet.studentProfileId} middle={formatMoney(wallet.availableBalanceMinor, wallet.currencyCode)} right={wallet.walletStatus} />)}</div>;
 }
 
 function TopUpList() {
-  return <div style={{ display: "grid", gap: 10 }}>{walletDemoData.topUps.map((topUp) => <Row key={topUp.reference} left={topUp.reference} middle={formatMoney(topUp.amountMinor)} right={`${topUp.status} - ${topUp.source}`} />)}</div>;
+  return <div style={{ display: "grid", gap: 10 }}>{walletDemoData.topUps.map((topUp) => <Row key={topUp.topUpId} left={topUp.safeReference} middle={formatMoney(topUp.amountMinor, topUp.currencyCode)} right={`${topUp.status} - ${topUp.source}`} />)}</div>;
 }
 
 function PurchaseList() {
-  return <div style={{ display: "grid", gap: 10 }}>{walletDemoData.purchases.map((purchase) => <Row key={purchase.reference} left={purchase.reference} middle={purchase.merchant} right={`${formatMoney(purchase.amountMinor)} - ${purchase.decision}`} />)}</div>;
+  return <div style={{ display: "grid", gap: 10 }}>{walletDemoData.purchases.map((purchase) => <Row key={purchase.purchaseId} left={purchase.clientPurchaseId} middle={purchase.decisionReason} right={`${formatMoney(purchase.amountMinor, purchase.currencyCode)} - ${purchase.decision}`} />)}</div>;
 }
 
 function ReconciliationPanel() {

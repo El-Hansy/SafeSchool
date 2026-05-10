@@ -17,7 +17,7 @@ public static class WalletEndpointRegistration
     {
         var schoolGroup = endpoints.MapGroup(RoutePrefix);
         var guardianGroup = endpoints.MapGroup(GuardianRoutePrefix);
-        schoolGroup.MapStudentWalletEndpoints();
+        schoolGroup.MapStudentWalletEndpoints(guardianGroup);
         schoolGroup.MapWalletRuleSettingEndpoints();
         schoolGroup.MapWalletTopUpPaymentEndpoints(guardianGroup);
         schoolGroup.MapCanteenPosPurchaseEndpoints();
