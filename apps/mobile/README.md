@@ -21,6 +21,21 @@ apps/mobile/build/app/outputs/flutter-apk/app-release.apk
 If `android/key.properties` is not present, the build uses debug signing for a
 local demo install.
 
+## Install On Android
+
+1. Connect the phone by USB.
+2. Enable Developer options and USB debugging on the phone.
+3. Accept the Android RSA prompt when it appears.
+4. Run:
+
+```bash
+cd apps/mobile
+./tool/install_demo_apk.sh
+```
+
+If more than one device is connected, set `SAFE_SCHOOL_DEVICE_SERIAL` to the
+target device serial from `adb devices`.
+
 ## Pilot Or Production Signing
 
 1. Create an upload keystore outside the repository.
@@ -35,6 +50,7 @@ local demo install.
 ```bash
 flutter test
 ./tool/build_controlled_apk.sh
+./tool/install_demo_apk.sh
 ```
 
 Use the app to show the Guardian live view first, then switch roles for gate

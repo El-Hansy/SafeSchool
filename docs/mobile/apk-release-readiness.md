@@ -14,3 +14,6 @@
   and notification demo flows.
 - NFC, camera, and GPS are optional device features so the demo APK can install
   on supported Android phones even when one hardware capability is unavailable.
+- `apps/mobile/tool/install_demo_apk.sh` installs, verifies, and launches
+  package `com.safeschool.mobile` through `adb` for controlled physical-device
+  demo validation.
