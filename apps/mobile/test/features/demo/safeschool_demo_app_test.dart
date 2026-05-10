@@ -83,13 +83,101 @@ void main() {
     expect(find.text('عرض ولي الأمر المباشر'), findsOneWidget);
   });
 
-  testWidgets('configured API mode is visible in the demo shell',
+  testWidgets('configured API mode bootstraps from backend mobile contracts',
       (tester) async {
     useLargePhoneSurface(tester);
-    await tester.pumpWidget(const SafeSchoolDemoApp(
-      apiClient: MobileApiClient(baseUrl: 'https://school.example.com'),
-    ));
+    final client = MobileApiClient(
+      baseUrl: 'https://school.example.com',
+      schoolAccountId: 'school-demo',
+      jsonGet: (uri, headers) async {
+        if (uri.path.endsWith('/profile')) {
+          return {
+            'userId': 'guardian-demo',
+            'activeTenantId': 'school-demo',
+            'availableTenants': ['school-demo'],
+            'availableRoles': ['guardian', 'transport_driver'],
+            'linkedStudents': ['student-amina'],
+            'languageCode': 'en',
+            'textDirection': 'ltr',
+            'mobileAccessStatus': 'active',
+            'deniedReason': null,
+          };
+        }
 
-    expect(find.text('API ready'), findsOneWidget);
+        if (uri.path.endsWith('/workspaces')) {
+          return [
+            {
+              'workspaceCode': 'guardian',
+              'displayName': 'Guardian',
+              'roleCode': 'guardian',
+              'actions': [
+                {'actionCode': 'guardian.view'}
+              ],
+              'offlineCapabilities': <String>[],
+            },
+            {
+              'workspaceCode': 'transport_driver',
+              'displayName': 'Transport driver',
+              'roleCode': 'transport_driver',
+              'actions': [
+                {'actionCode': 'transport_driver.scan'}
+              ],
+              'offlineCapabilities': ['transport_driver.scan'],
+            },
+          ];
+        }
+
+        return {
+          'releaseId': 'release-12',
+          'versionName': '12.0.0',
+          'versionCode': 1200,
+          'updateRequired': false,
+          'checksum': 'sha256-demo-phase12',
+        };
+      },
+      jsonPost: (uri, headers, body) async {
+        if (uri.path.endsWith('/context')) {
+          return {
+            'activeTenantId': 'school-demo',
+            'activeRoleCode': body['roleCode'],
+            'languageCode': body['languageCode'],
+            'textDirection': 'ltr',
+            'workspaceSummary': {
+              'workspaceCode': body['roleCode'],
+              'displayName': body['roleCode'] == 'guardian'
+                  ? 'Guardian'
+                  : 'Transport driver',
+              'roleCode': body['roleCode'],
+              'actions': [
+                {'actionCode': '${body['roleCode']}.view'}
+              ],
+              'offlineCapabilities': <String>[],
+            },
+          };
+        }
+
+        return {
+          'eventId': 'event-1',
+          'accepted': true,
+          'nextAction': 'continue',
+          'userMessage': 'Version accepted.',
+        };
+      },
+    );
+
+    await tester.pumpWidget(SafeSchoolDemoApp(apiClient: client));
+    await tester.pumpAndSettle();
+
+    expect(find.text('API connected'), findsOneWidget);
+    expect(find.text('Mobile session'), findsOneWidget);
+    expect(
+        find.text(
+            'school-demo / guardian / APK 12.0.0 build 1200 / Install continue'),
+        findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('role-transport_driver')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('API role context selected'), findsOneWidget);
   });
 }

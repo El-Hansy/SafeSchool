@@ -66,13 +66,20 @@ class SafeSchoolDemoHome extends StatefulWidget {
 }
 
 class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
-  final _roles = MobileRoleWorkspaceRegistry.all;
+  List<MobileRoleWorkspace> _roles = MobileRoleWorkspaceRegistry.all;
   final _requestController = TextEditingController(
       text: 'Please approve early pickup today at 12:30.');
   final _complaintController =
       TextEditingController(text: 'The morning bus arrived late at Stop 2.');
 
   String _selectedRole = 'guardian';
+  MobileProfile? _profile;
+  MobileRelease? _release;
+  InstallEventResult? _installEvent;
+  bool _isBootstrapping = false;
+  int _bootstrapRun = 0;
+  String _connectionStatus = 'Demo data';
+  String? _bootstrapError;
   bool _offlineMode = false;
   bool _tripStarted = true;
   bool _onBus = true;
@@ -103,6 +110,20 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
   void initState() {
     super.initState();
     _selectedRole = widget.initialRoleCode;
+    _connectionStatus =
+        widget.apiClient.isConfigured ? 'API connecting' : 'Demo data';
+    _bootstrapMobileContext();
+  }
+
+  @override
+  void didUpdateWidget(covariant SafeSchoolDemoHome oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.languageCode != widget.languageCode ||
+        oldWidget.apiClient.baseUrl != widget.apiClient.baseUrl ||
+        oldWidget.apiClient.schoolAccountId !=
+            widget.apiClient.schoolAccountId) {
+      _bootstrapMobileContext();
+    }
   }
 
   @override
@@ -139,6 +160,8 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
               _roleSelector(),
               const SizedBox(height: 12),
               _modeBar(),
+              const SizedBox(height: 12),
+              _bootstrapCard(),
               const SizedBox(height: 12),
               _roleContent(),
               const SizedBox(height: 12),
@@ -186,7 +209,7 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
                     'SAR ${_walletBalance.toStringAsFixed(2)}'),
                 _statusChip(
                   Icons.cloud_done,
-                  widget.apiClient.isConfigured ? 'API ready' : 'Demo data',
+                  _connectionStatus,
                 ),
               ],
             ),
@@ -210,11 +233,42 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
             selected: selected,
             avatar: Icon(_roleIcon(role.roleCode), size: 18),
             label: Text(_isArabic ? role.arabicLabel : role.label),
-            onSelected: (_) => setState(() => _selectedRole = role.roleCode),
+            onSelected: (_) => _selectRole(role.roleCode),
           );
         },
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemCount: _roles.length,
+      ),
+    );
+  }
+
+  Widget _bootstrapCard() {
+    final releaseText = _release == null
+        ? 'APK check pending'
+        : 'APK ${_release!.versionName} build ${_release!.versionCode}';
+    final installText = _installEvent == null
+        ? 'Install event pending'
+        : 'Install ${_installEvent!.nextAction}';
+    final detail = _bootstrapError == null
+        ? '${_profile?.activeTenantId ?? widget.apiClient.schoolAccountId} / $_selectedRole / $releaseText / $installText'
+        : 'Using local fallback - $_bootstrapError';
+
+    return Card(
+      elevation: 0,
+      child: ListTile(
+        leading: Icon(_bootstrapError == null
+            ? Icons.verified_user
+            : Icons.warning_amber_rounded),
+        title: Text(
+            _isBootstrapping ? 'Mobile session loading' : 'Mobile session'),
+        subtitle: Text(detail),
+        trailing: _isBootstrapping
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : null,
       ),
     );
   }
@@ -758,6 +812,125 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_offlineMode ? 'Queued offline' : 'Saved')));
+  }
+
+  Future<void> _bootstrapMobileContext() async {
+    final run = ++_bootstrapRun;
+    setState(() {
+      _isBootstrapping = true;
+      _bootstrapError = null;
+      _connectionStatus =
+          widget.apiClient.isConfigured ? 'API connecting' : 'Demo data';
+    });
+
+    try {
+      final profile = await widget.apiClient.fetchProfile(
+        roleCode: _selectedRole,
+        languageCode: widget.languageCode,
+      );
+      final workspaces = await widget.apiClient.fetchLiveWorkspaces(
+        roleCode: _selectedRole,
+        languageCode: widget.languageCode,
+      );
+      final context = await widget.apiClient.selectContext(
+        roleCode: _selectedRole,
+        languageCode: widget.languageCode,
+        deviceId: 'device-guardian',
+      );
+      final release = await widget.apiClient.fetchCurrentRelease(
+        roleCode: context.activeRoleCode,
+        deviceId: 'device-guardian',
+      );
+      final installEvent = await widget.apiClient.recordInstallEvent(
+        deviceId: 'device-guardian',
+        releaseId: release.id,
+        versionName: release.versionName,
+        versionCode: release.versionCode,
+        userId: profile.userId,
+      );
+
+      if (!mounted || run != _bootstrapRun) {
+        return;
+      }
+
+      final nextRoles =
+          workspaces.isEmpty ? MobileRoleWorkspaceRegistry.all : workspaces;
+      final nextRole = nextRoles.any(
+        (workspace) => workspace.roleCode == context.activeRoleCode,
+      )
+          ? context.activeRoleCode
+          : nextRoles.first.roleCode;
+
+      setState(() {
+        _profile = profile;
+        _roles = nextRoles;
+        _selectedRole = nextRole;
+        _release = release;
+        _installEvent = installEvent;
+        _connectionStatus =
+            widget.apiClient.isConfigured ? 'API connected' : 'Demo data';
+        _isBootstrapping = false;
+        _recordTimelineOnce(
+          '${widget.apiClient.isConfigured ? 'API' : 'Demo'} mobile bootstrap ready - ${profile.activeTenantId} / $nextRole / APK ${release.versionName}',
+        );
+      });
+    } catch (error) {
+      if (!mounted || run != _bootstrapRun) {
+        return;
+      }
+
+      setState(() {
+        _roles = MobileRoleWorkspaceRegistry.all;
+        _connectionStatus = 'API unavailable';
+        _bootstrapError = error.toString();
+        _isBootstrapping = false;
+        _recordTimelineOnce('API bootstrap failed - using local fallback');
+      });
+    }
+  }
+
+  void _selectRole(String roleCode) {
+    setState(() => _selectedRole = roleCode);
+    if (widget.apiClient.isConfigured) {
+      _confirmRoleContext(roleCode);
+    }
+  }
+
+  Future<void> _confirmRoleContext(String roleCode) async {
+    try {
+      final context = await widget.apiClient.selectContext(
+        roleCode: roleCode,
+        languageCode: widget.languageCode,
+        deviceId: 'device-guardian',
+      );
+
+      if (!mounted || context.activeRoleCode != roleCode) {
+        return;
+      }
+
+      setState(() {
+        _bootstrapError = null;
+        _connectionStatus = 'API connected';
+        _recordTimelineOnce(
+          'API role context selected - ${context.activeTenantId} / ${context.activeRoleCode}',
+        );
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _connectionStatus = 'API unavailable';
+        _bootstrapError = error.toString();
+        _recordTimelineOnce('API role context failed - using local role');
+      });
+    }
+  }
+
+  void _recordTimelineOnce(String event) {
+    _timeline.remove(event);
+    _timeline.insert(0, event);
   }
 
   void _recordGuardianGateScan() {
