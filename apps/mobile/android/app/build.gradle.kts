@@ -17,7 +17,7 @@ val hasReleaseKeystore = listOf("storeFile", "storePassword", "keyAlias", "keyPa
     .all { keystoreProperties.getProperty(it)?.isNotBlank() == true }
 
 android {
-    namespace = "com.example.safeschool_mobile"
+    namespace = "com.safeschool.mobile"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

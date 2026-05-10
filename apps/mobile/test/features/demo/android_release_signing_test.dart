@@ -3,6 +3,19 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('android release identity uses SafeSchool package names', () {
+    final buildGradle = File('android/app/build.gradle.kts').readAsStringSync();
+    final mainActivity = File(
+      'android/app/src/main/kotlin/com/safeschool/mobile/MainActivity.kt',
+    ).readAsStringSync();
+
+    expect(buildGradle, contains('namespace = "com.safeschool.mobile"'));
+    expect(buildGradle, contains('applicationId = "com.safeschool.mobile"'));
+    expect(mainActivity, contains('package com.safeschool.mobile'));
+    expect(buildGradle, isNot(contains('com.example')));
+    expect(mainActivity, isNot(contains('com.example')));
+  });
+
   test('android release build supports configured upload signing', () {
     final buildGradle = File('android/app/build.gradle.kts').readAsStringSync();
     final example = File('android/key.properties.example').readAsStringSync();

@@ -1,4 +1,4 @@
-package com.example.safeschool_mobile
+package com.safeschool.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
