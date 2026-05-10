@@ -1,0 +1,2 @@
+class DocumentSummary { const DocumentSummary(this.reference, this.title); final String reference; final String title; }
+class DocumentsRepository { Future<List<DocumentSummary>> documents() async => const [DocumentSummary('DOC-1', 'Consent form')]; Future<List<DocumentSummary>> certificates() async => const [DocumentSummary('CERT-1', 'Attendance certificate')]; Future<List<String>> search(String text) async => text.isEmpty ? const [] : const ['DOC-1', 'CERT-1']; }

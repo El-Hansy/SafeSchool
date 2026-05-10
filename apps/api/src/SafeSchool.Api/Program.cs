@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using SafeSchool.Api.Features.AttendanceAccess;
+using SafeSchool.Api.Features.Administration;
+using SafeSchool.Api.Features.Documents;
+using SafeSchool.Api.Features.Communications;
+using SafeSchool.Api.Features.Complaints;
 using SafeSchool.Api.Features.AttendanceAccess.Anomalies;
 using SafeSchool.Api.Features.AttendanceAccess.Attendance;
 using SafeSchool.Api.Features.AttendanceAccess.Audit;
@@ -19,6 +23,7 @@ using SafeSchool.Api.Features.IdentityAccess.Credentials;
 using SafeSchool.Api.Features.IdentityAccess.Guardians;
 using SafeSchool.Api.Features.IdentityAccess.StudentProfiles;
 using SafeSchool.Api.Features.Learning;
+using SafeSchool.Api.Features.Mobile;
 using SafeSchool.Api.Features.Transport;
 using SafeSchool.Api.Features.Transport.Anomalies;
 using SafeSchool.Api.Features.Transport.Assignments;
@@ -218,6 +223,11 @@ builder.Services.AddScoped<WalletReviewSummaryService>();
 builder.Services.AddScoped<WalletRetentionService>();
 builder.Services.AddScoped<WalletReconciliationTraceService>();
 builder.Services.AddLearningFeature();
+builder.Services.AddAdministrationFeature();
+builder.Services.AddDocumentsFeature();
+builder.Services.AddCommunicationsFeature();
+builder.Services.AddComplaintsFeature();
+builder.Services.AddMobileFeature();
 builder.Services.AddDbContext<SafeSchoolDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SafeSchool")));
 
@@ -231,6 +241,11 @@ app.MapAttendanceAccessEndpoints();
 app.MapTransportEndpoints();
 app.MapWalletEndpoints();
 app.MapLearningEndpoints();
+app.MapAdministrationEndpoints();
+app.MapDocumentsEndpoints();
+app.MapCommunicationsEndpoints();
+app.MapComplaintsEndpoints();
+app.MapMobileEndpoints();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.Run();
 

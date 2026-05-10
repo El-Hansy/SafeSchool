@@ -214,6 +214,37 @@ Enable full operational control, monitoring, and system configuration.
 
 ---
 
+### Phase 12: Role-Based Mobile App & APK Release
+
+**Objective:**
+Deliver the production mobile application as a single APK/AAB that exposes
+different experiences based on authenticated roles and permissions. Guardians,
+students, staff, gate operators, transport users, canteen/POS users, and school
+admins use the same mobile app shell where applicable, with server-enforced
+permissions controlling visible and executable workflows.
+
+**Specs in this phase:**
+- Mobile App Shell Spec
+- Role-Based Mobile Navigation Spec
+- Guardian Mobile Permission Profile Spec
+- Student Mobile Permission Profile Spec
+- Staff Mobile Permission Profile Spec
+- Gate Operator Mobile Permission Profile Spec
+- Transport Mobile Permission Profile Spec
+- Canteen/POS Mobile Permission Profile Spec
+- Mobile Session & Tenant Switching Spec
+- Mobile Offline Cache & Sync Spec
+- Push Notification Permission Routing Spec
+- Android APK/AAB Release Pipeline Spec
+
+**Boundary:**
+Phase 12 does not create separate apps per user type. It creates one mobile
+application release pipeline with role- and permission-based experiences.
+Authorization remains server-side; mobile feature hiding is only a usability
+layer.
+
+---
+
 ## Execution Model
 
 Each spec follows a strict lifecycle:
@@ -239,4 +270,3 @@ Each spec follows a strict lifecycle:
 ## Outcome
 
 This approach transforms the project from a feature list into a **structured, scalable system**, ensuring clarity, consistency, and high-quality delivery across all phases.
-
