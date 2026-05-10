@@ -1,5 +1,5 @@
-import { ComplaintsDemo } from "../../../../features/complaints";
+import { ComplaintsOperationsPage } from "../../../../features/complaints";
 
 export default function Page() {
-  return <ComplaintsDemo view="overview" audience="guardian" />;
+  return <ComplaintsOperationsPage view="overview" audience="guardian" />;
 }
