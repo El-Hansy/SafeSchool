@@ -22,3 +22,6 @@ build/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+*.db
+*.sqlite
+*.sqlite3

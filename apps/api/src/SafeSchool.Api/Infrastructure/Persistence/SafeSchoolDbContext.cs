@@ -1,4 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using SafeSchool.Api.Features.AttendanceAccess;
+using SafeSchool.Api.Features.AttendanceAccess.Anomalies;
+using SafeSchool.Api.Features.AttendanceAccess.Attendance;
+using SafeSchool.Api.Features.AttendanceAccess.Audit;
+using SafeSchool.Api.Features.AttendanceAccess.Common;
+using SafeSchool.Api.Features.AttendanceAccess.Common.Idempotency;
+using SafeSchool.Api.Features.AttendanceAccess.Gates;
+using SafeSchool.Api.Features.AttendanceAccess.Notifications;
+using SafeSchool.Api.Features.AttendanceAccess.Reviews;
+using SafeSchool.Api.Features.AttendanceAccess.Scans;
 using SafeSchool.Api.Features.IdentityAccess;
 using SafeSchool.Api.Features.IdentityAccess.AccessControl;
 using SafeSchool.Api.Features.IdentityAccess.Audit;
@@ -23,9 +33,23 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<ActorRoleAssignment> ActorRoleAssignments => Set<ActorRoleAssignment>();
     public DbSet<AccessDecision> AccessDecisions => Set<AccessDecision>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+    public DbSet<Gate> Gates => Set<Gate>();
+    public DbSet<ScanPoint> ScanPoints => Set<ScanPoint>();
+    public DbSet<GateScanEvent> GateScanEvents => Set<GateScanEvent>();
+    public DbSet<OfflineSyncBatch> OfflineSyncBatches => Set<OfflineSyncBatch>();
+    public DbSet<CampusAccessDecision> CampusAccessDecisions => Set<CampusAccessDecision>();
+    public DbSet<AttendanceAccessRuleSettings> AttendanceAccessRuleSettings => Set<AttendanceAccessRuleSettings>();
+    public DbSet<AttendanceAccessAuditEvent> AttendanceAccessAuditEvents => Set<AttendanceAccessAuditEvent>();
+    public DbSet<AttendanceAccessIdempotencyRecord> AttendanceAccessIdempotencyRecords => Set<AttendanceAccessIdempotencyRecord>();
+    public DbSet<AttendanceSession> AttendanceSessions => Set<AttendanceSession>();
+    public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
+    public DbSet<EntryExitNotificationRecord> EntryExitNotificationRecords => Set<EntryExitNotificationRecord>();
+    public DbSet<AttendanceAnomaly> AttendanceAnomalies => Set<AttendanceAnomaly>();
+    public DbSet<ManualReview> ManualReviews => Set<ManualReview>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyIdentityAccessModel();
+        modelBuilder.ApplyAttendanceAccessModel();
     }
 }
