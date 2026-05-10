@@ -9,6 +9,7 @@ public static class MobileModule
         services.AddSingleton<MobileAuditService>();
         services.AddSingleton<ApkReleaseRepository>();
         services.AddSingleton<MobileOfflineActionSyncService>();
+        services.AddSingleton<OfflinePolicyAdapters>();
         services.AddScoped<MobileFeatureAvailabilityService>();
         services.AddScoped<MobilePermissionResolver>();
         services.AddScoped<MobileLanguageService>();
@@ -21,7 +22,6 @@ public static class MobileModule
         services.AddScoped<SourceDomainActionAdapters>();
         services.AddScoped<GuardianStudentActionRouter>();
         services.AddScoped<StaffSourceActionRouter>();
-        services.AddScoped<OfflinePolicyAdapters>();
         services.AddScoped<ApkReleaseService>();
         services.AddScoped<ReleaseAudienceService>();
         services.AddScoped<MobileVersionPolicyService>();
