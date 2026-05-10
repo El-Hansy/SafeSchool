@@ -1,5 +1,5 @@
-import { LearningDemo } from "../../../../features/learning/demo/LearningDemo";
+import { LearningOperationsPage } from "../../../../features/learning";
 
 export default function LearningHistoryPage() {
-  return <LearningDemo section="history" />;
+  return <LearningOperationsPage view="history" />;
 }

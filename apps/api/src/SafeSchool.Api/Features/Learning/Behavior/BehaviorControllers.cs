@@ -6,8 +6,11 @@ public static class BehaviorEndpointExtensions
     {
         group.MapGet("/behavior-categories", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-categories", status = "demo-ready" }));
         group.MapGet("/behavior-events", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-events", status = "demo-ready" }));
+        group.MapPost("/behavior-events", (string schoolAccountId, LogBehaviorEventCommand request) => Results.Ok(new { schoolAccountId, behaviorReference = $"behavior-{request.ClientRequestId}", request.StudentProfileId, request.CategoryCode, status = "Recorded", evidence = new[] { "visibility-filtered", "staff-only-detail-protected", "audit-written" } }));
         group.MapGet("/behavior-review", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-review", status = "demo-ready" }));
         group.MapGet("/behavior-trace", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-trace", status = "demo-ready" }));
         return group;
     }
 }
+
+public sealed record LogBehaviorEventCommand(string StudentProfileId, string CategoryCode, string Summary, string ClientRequestId);

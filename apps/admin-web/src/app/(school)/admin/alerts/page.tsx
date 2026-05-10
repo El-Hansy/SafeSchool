@@ -1,5 +1,5 @@
-import { AdminDemo } from "../../../../features/administration";
+import { AdminOperationsPage } from "../../../../features/administration";
 
 export default function Page() {
-  return <AdminDemo view="alerts" audience="school" />;
+  return <AdminOperationsPage view="alerts" />;
 }

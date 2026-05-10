@@ -1,5 +1,5 @@
-import { LearningDemo } from "../../../../features/learning/demo/LearningDemo";
+import { LearningOperationsPage } from "../../../../features/learning";
 
 export default function GuardianLearningPage() {
-  return <LearningDemo audience="guardian" section="guardian" />;
+  return <LearningOperationsPage audience="guardian" view="guardian" />;
 }
