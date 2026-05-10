@@ -20,6 +20,29 @@ fail_if_matches() {
   fi
 }
 
+resolve_adb() {
+  if command -v adb >/dev/null 2>&1; then
+    command -v adb
+    return 0
+  fi
+
+  local candidates=(
+    "${ANDROID_HOME:-}/platform-tools/adb"
+    "${ANDROID_SDK_ROOT:-}/platform-tools/adb"
+    "$HOME/Library/Android/sdk/platform-tools/adb"
+  )
+
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "$candidate" ]]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 log "SafeSchool demo readiness verifier"
 echo "Repository: $ROOT_DIR"
 echo "Branch: $(git -C "$ROOT_DIR" branch --show-current)"
@@ -66,9 +89,11 @@ ls -lh "$APK_PATH"
 shasum -a 256 "$APK_PATH"
 
 log "Android device readiness"
-if command -v adb >/dev/null 2>&1; then
-  adb devices
-  authorized_count="$(adb devices | awk 'NR > 1 && $2 == "device" { count++ } END { print count + 0 }')"
+ADB_BIN="$(resolve_adb || true)"
+if [[ -n "$ADB_BIN" ]]; then
+  echo "adb: $ADB_BIN"
+  "$ADB_BIN" devices
+  authorized_count="$("$ADB_BIN" devices | awk 'NR > 1 && $2 == "device" { count++ } END { print count + 0 }')"
 
   if [[ "$authorized_count" -eq 0 ]]; then
     echo "No authorized Android device detected. Set SAFE_SCHOOL_VERIFY_ANDROID_INSTALL=1 only after USB debugging is available."
@@ -78,7 +103,7 @@ if command -v adb >/dev/null 2>&1; then
     echo "Authorized Android device detected. To install and launch the APK, rerun with SAFE_SCHOOL_VERIFY_ANDROID_INSTALL=1."
   fi
 else
-  echo "adb not found. Install Android platform-tools before physical-device validation."
+  echo "adb not found. Install Android platform-tools or set ANDROID_HOME/ANDROID_SDK_ROOT before physical-device validation."
 fi
 
 log "Readiness verifier completed"

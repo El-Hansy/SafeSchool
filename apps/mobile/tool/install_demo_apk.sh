@@ -6,8 +6,32 @@ MOBILE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 APP_ID="${SAFE_SCHOOL_APP_ID:-com.safeschool.mobile}"
 APK_PATH="${1:-$MOBILE_DIR/build/app/outputs/flutter-apk/app-release.apk}"
 
-if ! command -v adb >/dev/null 2>&1; then
-  echo "adb is not available. Install Android platform-tools and make sure adb is on PATH." >&2
+resolve_adb() {
+  if command -v adb >/dev/null 2>&1; then
+    command -v adb
+    return 0
+  fi
+
+  local candidates=(
+    "${ANDROID_HOME:-}/platform-tools/adb"
+    "${ANDROID_SDK_ROOT:-}/platform-tools/adb"
+    "$HOME/Library/Android/sdk/platform-tools/adb"
+  )
+
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "$candidate" ]]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+ADB_BIN="$(resolve_adb || true)"
+if [[ -z "$ADB_BIN" ]]; then
+  echo "adb is not available. Install Android platform-tools or set ANDROID_HOME/ANDROID_SDK_ROOT." >&2
   exit 1
 fi
 
@@ -20,7 +44,7 @@ fi
 devices=()
 while IFS= read -r device; do
   devices+=("$device")
-done < <(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+done < <("$ADB_BIN" devices | awk 'NR > 1 && $2 == "device" { print $1 }')
 
 if [[ -n "${SAFE_SCHOOL_DEVICE_SERIAL:-}" ]]; then
   devices=("$SAFE_SCHOOL_DEVICE_SERIAL")
@@ -40,12 +64,12 @@ fi
 
 serial="${devices[0]}"
 echo "Installing $APK_PATH on Android device $serial"
-adb -s "$serial" install -r "$APK_PATH"
+"$ADB_BIN" -s "$serial" install -r "$APK_PATH"
 
 echo "Verifying package $APP_ID"
-adb -s "$serial" shell pm path "$APP_ID" >/dev/null
+"$ADB_BIN" -s "$serial" shell pm path "$APP_ID" >/dev/null
 
 echo "Launching SafeSchool NFC"
-adb -s "$serial" shell monkey -p "$APP_ID" -c android.intent.category.LAUNCHER 1 >/dev/null
+"$ADB_BIN" -s "$serial" shell monkey -p "$APP_ID" -c android.intent.category.LAUNCHER 1 >/dev/null
 
 echo "SafeSchool NFC installed and launched on $serial"
