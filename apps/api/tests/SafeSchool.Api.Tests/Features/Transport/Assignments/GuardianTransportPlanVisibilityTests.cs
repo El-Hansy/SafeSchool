@@ -1,6 +1,7 @@
 using FluentAssertions;
+using SafeSchool.Api.Features.Transport.Assignments;
 using SafeSchool.Api.Features.Transport.Common;
-using SafeSchool.Api.Infrastructure.FeatureFlags;
+using SafeSchool.Api.Tests.Features.Transport.Fixtures;
 using Xunit;
 
 namespace SafeSchool.Api.Tests.Features.Transport.Assignments;
@@ -8,10 +9,47 @@ namespace SafeSchool.Api.Tests.Features.Transport.Assignments;
 public sealed class GuardianTransportPlanVisibilityTests
 {
     [Fact]
-    public void Phase3TransportBehavior_IsTenantScopedFeatureGatedAndAuditable()
+    public async Task VisiblePlanAsync_returns_only_guardian_visible_records_for_active_tenant()
     {
-        TransportCapabilities.RouteStopManagement.Should().Be("transport.route_stop_management");
-        TransportPermissionCatalog.TransportAdministrator.Should().Contain(TransportPermissionCatalog.AuditRead);
-        new ValidationError("tenant_mismatch", "Denied").Code.Should().Be("tenant_mismatch");
+        var fixture = new TransportTestFixture();
+        await using var dbContext = fixture.CreateDbContext();
+        var liveRoute = TransportTestData.ActiveRoute("school-live");
+        var otherRoute = TransportTestData.ActiveRoute("school-other");
+        dbContext.TransportRoutes.AddRange(liveRoute, otherRoute);
+        dbContext.StudentTransportAssignments.AddRange(
+            new StudentTransportAssignment
+            {
+                TenantId = "school-live",
+                StudentProfileId = "student-amina",
+                TransportRouteId = liveRoute.Id,
+                AssignmentStatus = AssignmentStatus.Active,
+                VisibilityState = GuardianVisibilityState.GuardianVisible
+            },
+            new StudentTransportAssignment
+            {
+                TenantId = "school-live",
+                StudentProfileId = "student-amina",
+                TransportRouteId = liveRoute.Id,
+                AssignmentStatus = AssignmentStatus.Active,
+                VisibilityState = GuardianVisibilityState.StaffOnly
+            },
+            new StudentTransportAssignment
+            {
+                TenantId = "school-other",
+                StudentProfileId = "student-amina",
+                TransportRouteId = otherRoute.Id,
+                AssignmentStatus = AssignmentStatus.Active,
+                VisibilityState = GuardianVisibilityState.GuardianVisible
+            });
+        await dbContext.SaveChangesAsync();
+
+        var service = new GuardianTransportPlanVisibilityService(dbContext, new FakeTransportGuardianLinkProvider());
+
+        var result = await service.VisiblePlanAsync("school-live", "guardian-live", "student-amina");
+
+        result.Succeeded.Should().BeTrue();
+        result.Value!.Assignments.Should().ContainSingle();
+        result.Value.Assignments[0].SchoolAccountId.Should().Be("school-live");
+        result.Value.Assignments[0].VisibilityState.Should().Be(GuardianVisibilityState.GuardianVisible);
     }
 }

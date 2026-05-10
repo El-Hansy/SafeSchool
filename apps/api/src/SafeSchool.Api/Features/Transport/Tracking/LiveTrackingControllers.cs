@@ -1,4 +1,5 @@
 using SafeSchool.Api.Features.Transport.Trips;
+using SafeSchool.Api.Infrastructure.Tenancy;
 
 namespace SafeSchool.Api.Features.Transport.Tracking;
 
@@ -19,9 +20,9 @@ public static class LiveTrackingControllers
             var trace = await service.TraceAsync(schoolAccountId, tripId, ct);
             return trace is null ? Results.NotFound() : Results.Ok(trace);
         });
-        guardianGroup.MapGet("/{studentProfileId}/transport/trips/{tripId:guid}/progress", async (string studentProfileId, Guid tripId, GuardianTripProgressService service, CancellationToken ct) =>
+        guardianGroup.MapGet("/{studentProfileId}/transport/trips/{tripId:guid}/progress", async (string studentProfileId, Guid tripId, ITenantContext tenantContext, GuardianTripProgressService service, CancellationToken ct) =>
         {
-            var result = await service.ProgressAsync("school-1", "guardian:me", studentProfileId, tripId, ct);
+            var result = await service.ProgressAsync(GuardianTenantResolver.Resolve(tenantContext), tenantContext.ActorReference ?? "anonymous", studentProfileId, tripId, ct);
             return result.Succeeded ? Results.Ok(result.Value) : Results.BadRequest(result.Errors);
         });
         return group;
