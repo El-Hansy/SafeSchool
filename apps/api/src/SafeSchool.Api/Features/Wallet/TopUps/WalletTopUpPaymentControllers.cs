@@ -1,4 +1,5 @@
 using SafeSchool.Api.Features.Wallet.Payments;
+using SafeSchool.Api.Infrastructure.Tenancy;
 
 namespace SafeSchool.Api.Features.Wallet.TopUps;
 
@@ -6,12 +7,14 @@ public static class WalletTopUpPaymentControllers
 {
     public static RouteGroupBuilder MapWalletTopUpPaymentEndpoints(this RouteGroupBuilder schoolGroup, RouteGroupBuilder guardianGroup)
     {
-        guardianGroup.MapPost("/{studentProfileId}/wallet/top-ups", async (string studentProfileId, GuardianTopUpRequest request, GuardianTopUpService service, CancellationToken ct) =>
+        guardianGroup.MapPost("/{studentProfileId}/wallet/top-ups", async (string studentProfileId, GuardianTopUpRequest request, ITenantContext tenantContext, GuardianTopUpService service, CancellationToken ct) =>
         {
-            var result = await service.InitiateAsync("demo-school", studentProfileId, request, ct);
+            var tenantId = GuardianTenantResolver.Resolve(tenantContext);
+            var result = await service.InitiateAsync(tenantId, studentProfileId, request, ct);
             return result.Succeeded ? Results.Created($"/api/v1/guardians/me/students/{studentProfileId}/wallet/top-ups/{result.Value!.TopUpId}", result.Value) : Results.BadRequest(result.Errors);
         });
-        guardianGroup.MapGet("/{studentProfileId}/wallet/top-ups", async (string studentProfileId, TopUpQueryService service, CancellationToken ct) => Results.Ok(await service.ListGuardianAsync("demo-school", studentProfileId, ct)));
+        guardianGroup.MapGet("/{studentProfileId}/wallet/top-ups", async (string studentProfileId, ITenantContext tenantContext, TopUpQueryService service, CancellationToken ct) =>
+            Results.Ok(await service.ListGuardianAsync(GuardianTenantResolver.Resolve(tenantContext), studentProfileId, ct)));
 
         schoolGroup.MapPost("/top-ups/cashier", async (string schoolAccountId, CashierTopUpRequest request, CashierTopUpService service, CancellationToken ct) =>
         {

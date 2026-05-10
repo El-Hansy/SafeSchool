@@ -1,3 +1,5 @@
+using SafeSchool.Api.Infrastructure.Tenancy;
+
 namespace SafeSchool.Api.Features.Complaints;
 
 public static class ComplaintsModule
@@ -21,18 +23,20 @@ public static class ComplaintsModule
         var student = endpoints.MapGroup(StudentRoutePrefix);
 
         school.MapGet("/", (string schoolAccountId) => Results.Ok(ComplaintWorkflowService.DemoBoard(schoolAccountId)));
-        school.MapPost("/", (ComplaintSubmissionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Submit("school-demo", request)));
+        school.MapPost("/", (string schoolAccountId, ComplaintSubmissionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Submit(schoolAccountId, request)));
         school.MapPost("/{complaintId}/assign", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Assign(complaintId, request)));
         school.MapPost("/{complaintId}/escalate", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Escalate(complaintId, request)));
         school.MapPost("/{complaintId}/resolve", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Resolve(complaintId, request)));
         school.MapGet("/{complaintId}/trace", (string complaintId, ComplaintWorkflowService service) => Results.Ok(service.Trace(complaintId)));
 
         guardian.MapGet("/", () => Results.Ok(ComplaintWorkflowService.GuardianSummary()));
-        guardian.MapPost("/", (ComplaintSubmissionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Submit("school-demo", request with { SubmitterRole = "guardian" })));
+        guardian.MapPost("/", (ComplaintSubmissionRequest request, ITenantContext tenantContext, ComplaintWorkflowService service) =>
+            Results.Ok(service.Submit(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "guardian" })));
         guardian.MapPost("/{complaintId}/feedback", (string complaintId, ComplaintActionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Feedback(complaintId, request)));
 
         student.MapGet("/", () => Results.Ok(ComplaintWorkflowService.StudentSummary()));
-        student.MapPost("/", (ComplaintSubmissionRequest request, ComplaintWorkflowService service) => Results.Ok(service.Submit("school-demo", request with { SubmitterRole = "student" })));
+        student.MapPost("/", (ComplaintSubmissionRequest request, ITenantContext tenantContext, ComplaintWorkflowService service) =>
+            Results.Ok(service.Submit(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "student" })));
         return endpoints;
     }
 }
@@ -44,12 +48,12 @@ public sealed record ComplaintResponse(string ComplaintId, string TrackingRefere
 public sealed class ComplaintWorkflowService(ComplaintIdempotencyService idempotency)
 {
     public static object DemoBoard(string schoolAccountId) => new { schoolAccountId, phase = "complaints-escalations", status = "demo-ready", capabilities = ComplaintCapabilities.All, open = 14, escalated = 3, pendingFeedback = 5 };
-    public static IReadOnlyList<ComplaintResponse> GuardianSummary() => [new("cmp-1", "CMP-2026-0001", "InReview", "High", "Your complaint is assigned and under review.", ["submitted", "assigned"] )];
-    public static IReadOnlyList<ComplaintResponse> StudentSummary() => [new("cmp-2", "CMP-2026-0002", "Received", "Normal", "Your complaint was received.", ["submitted"] )];
+    public static IReadOnlyList<ComplaintResponse> GuardianSummary() => [new("cmp-1", "CMP-2026-0001", "InReview", "High", "Your complaint is assigned and under review.", ["submitted", "assigned"])];
+    public static IReadOnlyList<ComplaintResponse> StudentSummary() => [new("cmp-2", "CMP-2026-0002", "Received", "Normal", "Your complaint was received.", ["submitted"])];
 
     public ComplaintResponse Submit(string tenantId, ComplaintSubmissionRequest request)
     {
-        var duplicate = idempotency.Record("submit", request.ClientRequestId, $"{request.StudentProfileId}:{request.CategoryCode}:{request.Description}");
+        var duplicate = idempotency.Record($"{tenantId}:submit", request.ClientRequestId, $"{request.StudentProfileId}:{request.CategoryCode}:{request.Description}");
         var status = duplicate == ComplaintIdempotencyOutcome.Conflict ? "ManualReviewRequired" : "Received";
         return new ComplaintResponse($"complaint-{request.ClientRequestId}", "CMP-2026-0001", status, "High", "Complaint accepted with restricted details minimized.", ["tenant-checked", "feature-checked", "audit-written", duplicate.ToString()]);
     }

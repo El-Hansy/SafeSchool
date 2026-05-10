@@ -1,5 +1,7 @@
 namespace SafeSchool.Api.Features.Wallet.Limits;
 
+using SafeSchool.Api.Infrastructure.Tenancy;
+
 public static class SpendingLimitsController
 {
     public static RouteGroupBuilder MapSpendingLimitEndpoints(this RouteGroupBuilder schoolGroup, RouteGroupBuilder guardianGroup)
@@ -24,12 +26,13 @@ public static class SpendingLimitsController
         });
         schoolGroup.MapGet("/student-wallets/{walletId:guid}/spending-limits/effective", async (string schoolAccountId, Guid walletId, SpendingLimitEvaluationService service, CancellationToken ct) => Results.Ok(await service.EvaluateAsync(schoolAccountId, walletId, 0, cancellationToken: ct)));
         schoolGroup.MapGet("/spending-limits/{spendingLimitId:guid}/trace", (Guid spendingLimitId, SpendingLimitTraceService service) => Results.Ok(service.Trace(spendingLimitId)));
-        guardianGroup.MapPost("/{studentProfileId}/wallet/spending-limits", async (string studentProfileId, SpendingLimitRequest request, SpendingLimitManagementService service, CancellationToken ct) =>
+        guardianGroup.MapPost("/{studentProfileId}/wallet/spending-limits", async (string studentProfileId, SpendingLimitRequest request, ITenantContext tenantContext, SpendingLimitManagementService service, CancellationToken ct) =>
         {
-            var result = await service.CreateAsync("demo-school", request with { OwnerType = SafeSchool.Api.Features.Wallet.Common.SpendingLimitOwnerType.Guardian }, ct);
+            var result = await service.CreateAsync(GuardianTenantResolver.Resolve(tenantContext), request with { OwnerType = SafeSchool.Api.Features.Wallet.Common.SpendingLimitOwnerType.Guardian }, ct);
             return result.Succeeded ? Results.Ok(result.Value) : Results.BadRequest(result.Errors);
         });
-        guardianGroup.MapGet("/{studentProfileId}/wallet/spending-limits", async (string studentProfileId, SpendingLimitManagementService service, CancellationToken ct) => Results.Ok(await service.ListAsync("demo-school", cancellationToken: ct)));
+        guardianGroup.MapGet("/{studentProfileId}/wallet/spending-limits", async (string studentProfileId, ITenantContext tenantContext, SpendingLimitManagementService service, CancellationToken ct) =>
+            Results.Ok(await service.ListAsync(GuardianTenantResolver.Resolve(tenantContext), cancellationToken: ct)));
         return schoolGroup;
     }
 }

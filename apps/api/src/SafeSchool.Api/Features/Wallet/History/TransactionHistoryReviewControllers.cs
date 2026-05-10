@@ -1,6 +1,7 @@
 using SafeSchool.Api.Features.Wallet.Anomalies;
 using SafeSchool.Api.Features.Wallet.Corrections;
 using SafeSchool.Api.Features.Wallet.Reviews;
+using SafeSchool.Api.Infrastructure.Tenancy;
 
 namespace SafeSchool.Api.Features.Wallet.History;
 
@@ -10,7 +11,8 @@ public static class TransactionHistoryReviewControllers
     {
         schoolGroup.MapGet("/transactions", async (string schoolAccountId, TransactionHistoryQueryService service, CancellationToken ct) => Results.Ok(await service.SchoolHistoryAsync(schoolAccountId, ct)));
         schoolGroup.MapGet("/student-wallets/{walletId:guid}/transactions", async (string schoolAccountId, Guid walletId, TransactionHistoryQueryService service, CancellationToken ct) => Results.Ok(await service.WalletHistoryAsync(schoolAccountId, walletId, ct)));
-        guardianGroup.MapGet("/{studentProfileId}/wallet/transactions", async (string studentProfileId, TransactionHistoryQueryService service, CancellationToken ct) => Results.Ok(await service.GuardianHistoryAsync("demo-school", studentProfileId, ct)));
+        guardianGroup.MapGet("/{studentProfileId}/wallet/transactions", async (string studentProfileId, ITenantContext tenantContext, TransactionHistoryQueryService service, CancellationToken ct) =>
+            Results.Ok(await service.GuardianHistoryAsync(GuardianTenantResolver.Resolve(tenantContext), studentProfileId, ct)));
         schoolGroup.MapGet("/transactions/{transactionId}", (string transactionId) => Results.Ok(new { transactionId, staffOnlyDetailSuppressed = false }));
         schoolGroup.MapPost("/reviews", async (string schoolAccountId, ManualReviewRequest request, ManualWalletReviewService service, CancellationToken ct) => Results.Ok(await service.CreateAsync(schoolAccountId, request, ct)));
         schoolGroup.MapGet("/reviews", async (string schoolAccountId, ManualWalletReviewService service, CancellationToken ct) => Results.Ok(await service.ListAsync(schoolAccountId, ct)));

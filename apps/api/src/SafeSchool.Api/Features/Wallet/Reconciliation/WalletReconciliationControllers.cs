@@ -1,5 +1,7 @@
 namespace SafeSchool.Api.Features.Wallet.Reconciliation;
 
+using SafeSchool.Api.Infrastructure.Tenancy;
+
 public static class WalletReconciliationControllers
 {
     public static RouteGroupBuilder MapWalletReconciliationEndpoints(this RouteGroupBuilder schoolGroup, RouteGroupBuilder guardianGroup)
@@ -23,7 +25,8 @@ public static class WalletReconciliationControllers
         schoolGroup.MapGet("/reconciliation-runs/{reconciliationRunId:guid}/trace", (Guid reconciliationRunId, WalletReconciliationTraceService service) => Results.Ok(service.Trace(reconciliationRunId)));
         schoolGroup.MapGet("/review-summaries", async (string schoolAccountId, WalletReviewSummaryService service, CancellationToken ct) => Results.Ok(await service.ListAsync(schoolAccountId, ct)));
         schoolGroup.MapGet("/review-summaries/{summaryScope}/{scopeReference}", (string summaryScope, string scopeReference) => Results.Ok(new ReviewSummaryResponse(Guid.NewGuid(), summaryScope, scopeReference, 1, 12, 0, 1, SafeSchool.Api.Features.Wallet.Common.ReviewSummaryStatus.Current, false)));
-        guardianGroup.MapGet("/{studentProfileId}/wallet/review-summary", async (string studentProfileId, WalletReviewSummaryService service, CancellationToken ct) => Results.Ok(await service.GuardianSummaryAsync("demo-school", studentProfileId, ct)));
+        guardianGroup.MapGet("/{studentProfileId}/wallet/review-summary", async (string studentProfileId, ITenantContext tenantContext, WalletReviewSummaryService service, CancellationToken ct) =>
+            Results.Ok(await service.GuardianSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), studentProfileId, ct)));
         return schoolGroup;
     }
 }
