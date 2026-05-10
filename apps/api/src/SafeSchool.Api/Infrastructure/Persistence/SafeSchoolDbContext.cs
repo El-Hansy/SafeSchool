@@ -9,6 +9,7 @@ using SafeSchool.Api.Features.AttendanceAccess.Gates;
 using SafeSchool.Api.Features.AttendanceAccess.Notifications;
 using SafeSchool.Api.Features.AttendanceAccess.Reviews;
 using SafeSchool.Api.Features.AttendanceAccess.Scans;
+using SafeSchool.Api.Features.Complaints;
 using SafeSchool.Api.Features.IdentityAccess;
 using SafeSchool.Api.Features.IdentityAccess.AccessControl;
 using SafeSchool.Api.Features.IdentityAccess.Audit;
@@ -156,6 +157,9 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<InstallOrUpgradeEvent> MobileInstallOrUpgradeEvents => Set<InstallOrUpgradeEvent>();
     public DbSet<OfflineActionQueue> MobileOfflineActionQueues => Set<OfflineActionQueue>();
     public DbSet<MobileAuditEvent> MobileAuditEvents => Set<MobileAuditEvent>();
+    public DbSet<OperationalComplaintRecord> OperationalComplaints => Set<OperationalComplaintRecord>();
+    public DbSet<OperationalComplaintEvent> OperationalComplaintEvents => Set<OperationalComplaintEvent>();
+    public DbSet<OperationalComplaintIdempotencyRecord> OperationalComplaintIdempotencyRecords => Set<OperationalComplaintIdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -165,5 +169,6 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
         modelBuilder.ApplyWalletModel();
         modelBuilder.ApplyLearningModel();
         modelBuilder.ApplyMobileModel();
+        modelBuilder.ApplyComplaintsOperationalModel();
     }
 }

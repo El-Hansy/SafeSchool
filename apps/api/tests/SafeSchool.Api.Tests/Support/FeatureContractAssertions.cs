@@ -1,9 +1,11 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using SafeSchool.Api.Features.Administration;
 using SafeSchool.Api.Features.Communications;
 using SafeSchool.Api.Features.Complaints;
 using SafeSchool.Api.Features.Documents;
+using SafeSchool.Api.Infrastructure.Persistence;
 
 namespace SafeSchool.Api.Tests.Support;
 
@@ -48,15 +50,16 @@ public static class FeatureContractAssertions
         ComplaintCapabilities.All.Should().Contain(ComplaintCapabilities.Submission);
         new ComplaintBoundaryGuard().Allows("wallet").Should().BeFalse();
 
-        var idempotency = new ComplaintIdempotencyService();
-        var service = new ComplaintWorkflowService(idempotency);
+        using var dbContext = CreateDbContext();
+        var service = new ComplaintWorkflowService(dbContext);
         var request = new ComplaintSubmissionRequest("student-1", "safety", "Concern", "Review", "req-1");
-        service.Submit("school-live", request).AuditTrail.Should().Contain("audit-written");
-        service.Submit("school-live", request).Status.Should().Be("Received");
-        service.Submit("school-live", request with { Description = "Changed" }).Status.Should().Be("ManualReviewRequired");
-        service.Assign("cmp-1", new ComplaintActionRequest("assign", "owner")).AuditTrail.Should().Contain("owner");
-        service.Escalate("cmp-1", new ComplaintActionRequest("escalate", "sla")).Status.Should().Be("Escalated");
-        service.Resolve("cmp-1", new ComplaintActionRequest("resolve", "fixed")).VisibleSummary.Should().Contain("Resolution");
+        var submitted = Await(service.SubmitAsync("school-live", request));
+        submitted.AuditTrail.Should().Contain("audit-written");
+        Await(service.SubmitAsync("school-live", request)).Status.Should().Be("Received");
+        Await(service.SubmitAsync("school-live", request with { Description = "Changed" })).Status.Should().Be("ManualReviewRequired");
+        Await(service.AssignAsync("school-live", submitted.ComplaintId, new ComplaintActionRequest("assign", "owner"))).AuditTrail.Should().Contain("owner");
+        Await(service.EscalateAsync("school-live", submitted.ComplaintId, new ComplaintActionRequest("escalate", "sla"))).Status.Should().Be("Escalated");
+        Await(service.ResolveAsync("school-live", submitted.ComplaintId, new ComplaintActionRequest("resolve", "fixed"))).VisibleSummary.Should().Contain("Resolution");
     }
 
     public static void DocumentContractsHold()
@@ -81,4 +84,14 @@ public static class FeatureContractAssertions
         search.Search(new SearchQueryCommand("Amina", "guardian")).SuppressedReasons.Should().Contain("restricted-counts-hidden");
         JsonSerializer.Serialize(search.Open("entry-1")).Should().Contain("permission-revalidated");
     }
+
+    private static SafeSchoolDbContext CreateDbContext()
+    {
+        var options = new DbContextOptionsBuilder<SafeSchoolDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        return new SafeSchoolDbContext(options);
+    }
+
+    private static T Await<T>(Task<T> task) => task.GetAwaiter().GetResult();
 }
