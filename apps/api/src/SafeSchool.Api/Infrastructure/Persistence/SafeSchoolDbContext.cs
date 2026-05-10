@@ -19,6 +19,7 @@ using SafeSchool.Api.Features.Learning;
 using SafeSchool.Api.Features.Learning.Audit;
 using SafeSchool.Api.Features.Learning.Common.Idempotency;
 using LearningDomain = SafeSchool.Api.Features.Learning.Domain;
+using SafeSchool.Api.Features.Mobile;
 using SafeSchool.Api.Features.Transport;
 using SafeSchool.Api.Features.Transport.Anomalies;
 using SafeSchool.Api.Features.Transport.Assignments;
@@ -143,6 +144,18 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<LearningAuditEvent> LearningAuditEvents => Set<LearningAuditEvent>();
     public DbSet<LearningStatusEvent> LearningStatusEvents => Set<LearningStatusEvent>();
     public DbSet<LearningIdempotencyRecord> LearningIdempotencyRecords => Set<LearningIdempotencyRecord>();
+    public DbSet<MobileUserProfile> MobileUserProfiles => Set<MobileUserProfile>();
+    public DbSet<RoleWorkspace> MobileRoleWorkspaces => Set<RoleWorkspace>();
+    public DbSet<RoleWorkspaceAction> MobileRoleWorkspaceActions => Set<RoleWorkspaceAction>();
+    public DbSet<MobilePermissionGrant> MobilePermissionGrants => Set<MobilePermissionGrant>();
+    public DbSet<TenantMobileFeatureAvailability> TenantMobileFeatureAvailabilities => Set<TenantMobileFeatureAvailability>();
+    public DbSet<MobileLanguagePreference> MobileLanguagePreferences => Set<MobileLanguagePreference>();
+    public DbSet<DeviceSession> MobileDeviceSessions => Set<DeviceSession>();
+    public DbSet<ApkRelease> MobileApkReleases => Set<ApkRelease>();
+    public DbSet<ReleaseAudience> MobileReleaseAudiences => Set<ReleaseAudience>();
+    public DbSet<InstallOrUpgradeEvent> MobileInstallOrUpgradeEvents => Set<InstallOrUpgradeEvent>();
+    public DbSet<OfflineActionQueue> MobileOfflineActionQueues => Set<OfflineActionQueue>();
+    public DbSet<MobileAuditEvent> MobileAuditEvents => Set<MobileAuditEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -151,5 +164,6 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
         modelBuilder.ApplyTransportModel();
         modelBuilder.ApplyWalletModel();
         modelBuilder.ApplyLearningModel();
+        modelBuilder.ApplyMobileModel();
     }
 }

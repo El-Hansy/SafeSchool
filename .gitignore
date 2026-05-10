@@ -30,3 +30,16 @@ build/
 .learning-fixtures/
 *.learning-seed.json
 *.learning-local.json
+.complaint-fixtures/
+*.complaints-local.json
+.communication-fixtures/
+*.communications-local.json
+.document-fixtures/
+*.document-cache.json
+*.admin-export.json
+.mobile-fixtures/
+*.mobile-local.json
+*.apk
+*.aab
+*.keystore
+key.properties
