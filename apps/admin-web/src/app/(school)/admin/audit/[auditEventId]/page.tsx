@@ -1,11 +1,6 @@
-import { OperationalRoutePage } from "@/features/home";
+import { AdminSecondaryPage } from "../../../../../features/administration";
 
-export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Administration / Audit"
-      title="Audit Event Detail"
-      detail="Review one audit event with actor, target, correlation, export status, and evidence context for compliance walkthroughs."
-    />
-  );
+export default async function Page({ params }: { params: Promise<{ auditEventId: string }> }) {
+  const { auditEventId } = await params;
+  return <AdminSecondaryPage view="audit-event" auditEventId={auditEventId} />;
 }

@@ -1,9 +1,16 @@
 export const adminRoutes = {
   dashboard: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/dashboard`,
   configuration: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/configuration`,
+  configurationHistory: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/configuration/history`,
   audit: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/audit`,
+  auditEvent: (schoolAccountId: string, auditEventId: string) => `/api/v1/schools/${schoolAccountId}/admin/audit/${auditEventId}`,
+  auditExports: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/audit/exports`,
   auditExport: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/audit/export`,
   monitoring: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/monitoring`,
+  alertRules: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/monitoring/alert-rules`,
+  monitoringAlerts: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/monitoring/alerts`,
+  monitoringExceptions: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/monitoring/exceptions`,
+  monitoringIncidents: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/monitoring/incidents`,
   alertIncident: (schoolAccountId: string, alertId: string) => `/api/v1/schools/${schoolAccountId}/admin/alerts/${alertId}/incidents`,
 };
 export const adminDemoData = { schoolAccountId: "school-demo", metrics: [{ label: "Enabled modules", value: "11" }, { label: "Pending reviews", value: "24" }, { label: "Alerts", value: "5" }], rows: ["Audit export prepared", "Feature dependency validated", "Metric threshold opened incident"] };
@@ -34,6 +41,30 @@ export type MonitoringResponse = {
   operationalExceptions: number;
 };
 
+type ConfigurationHistoryResponse = {
+  changes: AdminOperationsData["configurationHistory"];
+};
+
+type AuditExportsResponse = {
+  exports: AdminOperationsData["auditExports"];
+};
+
+type AlertRulesResponse = {
+  rules: AdminOperationsData["alertRules"];
+};
+
+type MonitoringAlertsResponse = {
+  alerts: Array<{ alertId: string; metric: string; severity: string; status: string }>;
+};
+
+type OperationalExceptionsResponse = {
+  exceptions: AdminOperationsData["operationalExceptions"];
+};
+
+type MonitoringIncidentsResponse = {
+  incidents: Array<{ incidentReference: string; status: string; owner: string }>;
+};
+
 export type AdminOperationsData = {
   schoolAccountId: string;
   dataSource: AdminDataSource;
@@ -41,8 +72,13 @@ export type AdminOperationsData = {
   audit: AuditTrailResponse;
   monitoring: MonitoringResponse;
   capabilities: Array<{ key: string; enabled: boolean; dependency: string; owner: string }>;
+  configurationHistory: Array<{ capabilityKey: string; state: string; actor: string; evidence: string }>;
+  auditEvents: Array<{ auditEventId: string; actor: string; action: string; target: string; correlation: string; evidence: string[] }>;
+  auditExports: Array<{ exportReference: string; scope: string; status: string; reason: string }>;
+  alertRules: Array<{ ruleReference: string; metric: string; threshold: string; owner: string }>;
   alertsList: Array<{ id: string; metric: string; severity: string; owner: string }>;
   incidentsList: Array<{ id: string; status: string; evidence: string }>;
+  operationalExceptions: Array<{ exceptionReference: string; module: string; reason: string; owner: string }>;
   events: string[];
 };
 
@@ -66,6 +102,23 @@ export const adminFallbackData: AdminOperationsData = {
     { key: "transport.live.tracking", enabled: true, dependency: "transport-bus-tracking", owner: "Operations" },
     { key: "documents.search", enabled: true, dependency: "documents-search-admin-observability", owner: "Compliance" },
   ],
+  configurationHistory: [
+    { capabilityKey: "guardian.mobile.access", state: "Enabled", actor: "tenant-admin", evidence: "dependency-validated" },
+    { capabilityKey: "wallet.topups", state: "Enabled", actor: "finance-admin", evidence: "version-preserved" },
+    { capabilityKey: "transport.live.tracking", state: "Enabled", actor: "operations-admin", evidence: "audit-written" },
+  ],
+  auditEvents: [
+    { auditEventId: "audit-demo-001", actor: "platform-admin", action: "configuration.applied", target: "guardian.mobile.access", correlation: "cfg-demo-001", evidence: ["tenant-scoped", "permission-checked", "append-only"] },
+    { auditEventId: "audit-demo-002", actor: "audit-reviewer", action: "export.prepared", target: "tenant", correlation: "exp-demo-001", evidence: ["scope-approved", "payload-minimized"] },
+  ],
+  auditExports: [
+    { exportReference: "audit-export-sales-demo", scope: "tenant", status: "Prepared", reason: "Sales demo evidence pack" },
+    { exportReference: "audit-export-guardian-mobile", scope: "mobile", status: "Reviewed", reason: "Guardian access pilot" },
+  ],
+  alertRules: [
+    { ruleReference: "rule-search-freshness", metric: "Search freshness", threshold: "95% within 5 minutes", owner: "Platform admin" },
+    { ruleReference: "rule-api-errors", metric: "Mobile API failures", threshold: "5 failures in 10 minutes", owner: "Support" },
+  ],
   alertsList: [
     { id: "alert-metrics-001", metric: "Search index freshness", severity: "medium", owner: "Platform admin" },
     { id: "alert-audit-002", metric: "Audit export queue", severity: "high", owner: "Compliance" },
@@ -74,6 +127,10 @@ export const adminFallbackData: AdminOperationsData = {
   incidentsList: [
     { id: "incident-alert-metrics-001", status: "Open", evidence: "metric-threshold, owner-assigned, audit-written" },
     { id: "incident-wallet-recon-002", status: "Investigating", evidence: "reconciliation-gap, reviewer-assigned" },
+  ],
+  operationalExceptions: [
+    { exceptionReference: "exception-search-001", module: "documents", reason: "Index stale", owner: "Compliance" },
+    { exceptionReference: "exception-mobile-002", module: "mobile", reason: "Install event delayed", owner: "Support" },
   ],
   events: ["Audit export prepared", "Feature dependency validated", "Metric threshold opened incident"],
 };
@@ -104,13 +161,19 @@ async function fetchAdminJson<T>(path: string, schoolAccountId: string): Promise
 }
 
 export async function loadAdminOperations(schoolAccountId = adminFallbackData.schoolAccountId): Promise<AdminOperationsData> {
-  const [dashboard, audit, monitoring] = await Promise.all([
+  const [dashboard, audit, monitoring, configurationHistory, auditExports, alertRules, monitoringAlerts, operationalExceptions, monitoringIncidents] = await Promise.all([
     fetchAdminJson<AdminDashboardResponse>(adminRoutes.dashboard(schoolAccountId), schoolAccountId),
     fetchAdminJson<AuditTrailResponse>(adminRoutes.audit(schoolAccountId), schoolAccountId),
     fetchAdminJson<MonitoringResponse>(adminRoutes.monitoring(schoolAccountId), schoolAccountId),
+    fetchAdminJson<ConfigurationHistoryResponse>(adminRoutes.configurationHistory(schoolAccountId), schoolAccountId),
+    fetchAdminJson<AuditExportsResponse>(adminRoutes.auditExports(schoolAccountId), schoolAccountId),
+    fetchAdminJson<AlertRulesResponse>(adminRoutes.alertRules(schoolAccountId), schoolAccountId),
+    fetchAdminJson<MonitoringAlertsResponse>(adminRoutes.monitoringAlerts(schoolAccountId), schoolAccountId),
+    fetchAdminJson<OperationalExceptionsResponse>(adminRoutes.monitoringExceptions(schoolAccountId), schoolAccountId),
+    fetchAdminJson<MonitoringIncidentsResponse>(adminRoutes.monitoringIncidents(schoolAccountId), schoolAccountId),
   ]);
 
-  const hasApiData = [dashboard, audit, monitoring].some((item) => item !== null);
+  const hasApiData = [dashboard, audit, monitoring, configurationHistory, auditExports, alertRules, monitoringAlerts, operationalExceptions, monitoringIncidents].some((item) => item !== null);
   if (!hasApiData) return { ...adminFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {
@@ -120,5 +183,11 @@ export async function loadAdminOperations(schoolAccountId = adminFallbackData.sc
     dashboard: dashboard ?? { ...adminFallbackData.dashboard, schoolAccountId },
     audit: audit ?? adminFallbackData.audit,
     monitoring: monitoring ?? adminFallbackData.monitoring,
+    configurationHistory: configurationHistory?.changes ?? adminFallbackData.configurationHistory,
+    auditExports: auditExports?.exports ?? adminFallbackData.auditExports,
+    alertRules: alertRules?.rules ?? adminFallbackData.alertRules,
+    alertsList: monitoringAlerts?.alerts.map((alert) => ({ id: alert.alertId, metric: alert.metric, severity: alert.severity, owner: alert.status })) ?? adminFallbackData.alertsList,
+    operationalExceptions: operationalExceptions?.exceptions ?? adminFallbackData.operationalExceptions,
+    incidentsList: monitoringIncidents?.incidents.map((incident) => ({ id: incident.incidentReference, status: incident.status, evidence: incident.owner })) ?? adminFallbackData.incidentsList,
   };
 }

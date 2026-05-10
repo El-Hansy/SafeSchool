@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { AdminSecondaryPage } from "../../../../../features/administration";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Administration / Monitoring"
-      title="Alerts"
-      detail="Inspect active alerts, severity, breached metric evidence, acknowledgement status, and linked incidents."
-    />
-  );
+  return <AdminSecondaryPage view="monitoring-alerts" />;
 }

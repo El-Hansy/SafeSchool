@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { AdminSecondaryPage } from "../../../../../features/administration";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Administration / Monitoring"
-      title="Alert Rules"
-      detail="Review metric thresholds, owner routing, escalation windows, and suppression rules for operational monitoring."
-    />
-  );
+  return <AdminSecondaryPage view="alert-rules" />;
 }

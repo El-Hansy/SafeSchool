@@ -1,11 +1,5 @@
-import { OperationalRoutePage } from "@/features/home";
+import { AdminSecondaryPage } from "../../../../../features/administration";
 
 export default function Page() {
-  return (
-    <OperationalRoutePage
-      area="Administration / Monitoring"
-      title="Incident Review"
-      detail="Track incident ownership, status, timeline evidence, affected modules, and post-resolution notes."
-    />
-  );
+  return <AdminSecondaryPage view="monitoring-incidents" />;
 }
