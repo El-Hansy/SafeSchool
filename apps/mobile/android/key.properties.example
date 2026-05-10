@@ -1,0 +1,4 @@
+storeFile=/absolute/path/to/safeschool-upload-keystore.jks
+storePassword=replace-with-keystore-password
+keyAlias=safeschool-upload
+keyPassword=replace-with-key-password
