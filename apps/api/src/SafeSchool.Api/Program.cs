@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SafeSchool.Api.Features.AttendanceAccess;
 using SafeSchool.Api.Features.Administration;
@@ -69,8 +70,21 @@ using SafeSchool.Api.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.Authority = builder.Configuration["Jwt:Authority"];
+    options.Audience = builder.Configuration["Jwt:Audience"];
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+});
+builder.Services.AddAuthorization(options =>
+{
+    if (!builder.Configuration.GetValue<bool>("Demo:AllowAnonymousApi"))
+    {
+        options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+    }
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
@@ -247,7 +261,7 @@ app.MapDocumentsEndpoints();
 app.MapCommunicationsEndpoints();
 app.MapComplaintsEndpoints();
 app.MapMobileEndpoints();
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 app.Run();
 
 public partial class Program;
