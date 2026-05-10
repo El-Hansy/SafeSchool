@@ -1,5 +1,5 @@
-import { CommunicationsDemo } from "../../../../features/communications";
+import { CommunicationsOperationsPage } from "../../../../features/communications";
 
 export default function Page() {
-  return <CommunicationsDemo view="messages" audience="school" />;
+  return <CommunicationsOperationsPage view="messages" audience="school" />;
 }
