@@ -1,5 +1,20 @@
 # Mobile Demo Runbook
 
+## Preflight
+
+Run the full repository readiness gate before a live demo:
+
+```bash
+./scripts/verify_demo_readiness.sh
+```
+
+For a connected Android phone, install and launch the APK as part of the same
+gate:
+
+```bash
+SAFE_SCHOOL_VERIFY_ANDROID_INSTALL=1 ./scripts/verify_demo_readiness.sh
+```
+
 ## Admin Web
 
 1. Open the mobile command center at `/mobile`.

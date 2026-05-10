@@ -1,5 +1,9 @@
 # APK Release Readiness
 
+- `scripts/verify_demo_readiness.sh` is the top-level demo readiness gate. It
+  runs backend tests, admin-web tests and build, Flutter tests, APK build,
+  stale-placeholder scans, APK checksum reporting, and optional Android install
+  validation.
 - Version name and code are set.
 - Release audience is active.
 - Release notes exist in Arabic and English.
