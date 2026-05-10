@@ -1,4 +1,5 @@
 export * from "./api/client";
+export * from "./components/TransportOperationsPage";
 export * from "./routes/routesApi";
 export * from "./assignments/assignmentsApi";
 export * from "./scans/scansApi";

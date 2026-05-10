@@ -1,5 +1,5 @@
-import { GuardianTransportDemo } from "../../../../../features/transport/demo/TransportDemo";
+import { GuardianTransportExperience } from "../../../../../features/guardian-transport/components/GuardianTransportExperience";
 
 export default function GuardianTransportNotificationsPage() {
-  return <GuardianTransportDemo section="notifications" />;
+  return <GuardianTransportExperience section="notifications" />;
 }

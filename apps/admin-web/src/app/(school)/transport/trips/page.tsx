@@ -1,5 +1,5 @@
-import { TransportDemo } from "../../../../features/transport/demo/TransportDemo";
+import { TransportOperationsPage } from "../../../../features/transport/components/TransportOperationsPage";
 
 export default function TransportTripsPage() {
-  return <TransportDemo section="trips" />;
+  return <TransportOperationsPage section="trips" />;
 }
