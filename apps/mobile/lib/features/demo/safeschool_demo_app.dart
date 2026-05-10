@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../app/mobile_theme.dart';
+import '../../core/api/mobile_api_client.dart';
 import '../role_workspaces/role_workspace_registry.dart';
 
 class SafeSchoolDemoApp extends StatefulWidget {
   const SafeSchoolDemoApp({
     super.key,
+    this.apiClient = const MobileApiClient(),
     this.initialLanguageCode = 'en',
     this.initialRoleCode = 'guardian',
   });
 
+  final MobileApiClient apiClient;
   final String initialLanguageCode;
   final String initialRoleCode;
 
@@ -35,6 +38,7 @@ class _SafeSchoolDemoAppState extends State<SafeSchoolDemoApp> {
       debugShowCheckedModeBanner: false,
       theme: buildSafeSchoolTheme(textDirection),
       home: SafeSchoolDemoHome(
+        apiClient: widget.apiClient,
         languageCode: _languageCode,
         initialRoleCode: widget.initialRoleCode,
         onLanguageChanged: (next) => setState(() => _languageCode = next),
@@ -46,11 +50,13 @@ class _SafeSchoolDemoAppState extends State<SafeSchoolDemoApp> {
 class SafeSchoolDemoHome extends StatefulWidget {
   const SafeSchoolDemoHome({
     super.key,
+    required this.apiClient,
     required this.languageCode,
     required this.initialRoleCode,
     required this.onLanguageChanged,
   });
 
+  final MobileApiClient apiClient;
   final String languageCode;
   final String initialRoleCode;
   final ValueChanged<String> onLanguageChanged;
@@ -178,6 +184,10 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
                     Icons.directions_bus, _onBus ? 'On bus' : 'Not onboard'),
                 _statusChip(Icons.account_balance_wallet,
                     'SAR ${_walletBalance.toStringAsFixed(2)}'),
+                _statusChip(
+                  Icons.cloud_done,
+                  widget.apiClient.isConfigured ? 'API ready' : 'Demo data',
+                ),
               ],
             ),
           ],

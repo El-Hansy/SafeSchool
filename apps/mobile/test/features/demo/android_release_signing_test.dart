@@ -19,6 +19,7 @@ void main() {
   test('android release build supports configured upload signing', () {
     final buildGradle = File('android/app/build.gradle.kts').readAsStringSync();
     final example = File('android/key.properties.example').readAsStringSync();
+    final buildScript = File('tool/build_controlled_apk.sh').readAsStringSync();
 
     expect(buildGradle, contains('rootProject.file("key.properties")'));
     expect(buildGradle, contains('hasReleaseKeystore'));
@@ -28,6 +29,9 @@ void main() {
     expect(example, contains('storePassword='));
     expect(example, contains('keyAlias='));
     expect(example, contains('keyPassword='));
+    expect(buildScript, contains('SAFE_SCHOOL_API_BASE_URL'));
+    expect(buildScript, contains('SAFE_SCHOOL_TENANT_ID'));
+    expect(buildScript, contains('--dart-define=SAFE_SCHOOL_API_BASE_URL='));
   });
 
   test('keystore secrets stay ignored', () {

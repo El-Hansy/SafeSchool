@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:safeschool_mobile/core/api/mobile_api_client.dart';
 import 'package:safeschool_mobile/features/demo/safeschool_demo_app.dart';
 
 void main() {
@@ -20,6 +21,7 @@ void main() {
     expect(find.text('Guardian live view'), findsOneWidget);
     expect(find.text('Amina Hassan'), findsOneWidget);
     expect(find.text('NFC-AMINA-001'), findsOneWidget);
+    expect(find.text('Demo data'), findsOneWidget);
     expect(find.text('Live bus tracking'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('action-Top up SAR 50')));
@@ -79,5 +81,15 @@ void main() {
 
     expect(find.text('تطبيق المدرسة الآمن'), findsOneWidget);
     expect(find.text('عرض ولي الأمر المباشر'), findsOneWidget);
+  });
+
+  testWidgets('configured API mode is visible in the demo shell',
+      (tester) async {
+    useLargePhoneSurface(tester);
+    await tester.pumpWidget(const SafeSchoolDemoApp(
+      apiClient: MobileApiClient(baseUrl: 'https://school.example.com'),
+    ));
+
+    expect(find.text('API ready'), findsOneWidget);
   });
 }

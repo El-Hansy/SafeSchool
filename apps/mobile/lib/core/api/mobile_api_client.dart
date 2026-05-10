@@ -1,7 +1,57 @@
 class MobileApiClient {
-  const MobileApiClient();
+  const MobileApiClient({
+    this.baseUrl = '',
+    this.schoolAccountId = 'school-demo',
+    this.authToken,
+  });
+
+  factory MobileApiClient.fromEnvironment() {
+    const baseUrl = String.fromEnvironment('SAFE_SCHOOL_API_BASE_URL');
+    const schoolAccountId = String.fromEnvironment(
+      'SAFE_SCHOOL_TENANT_ID',
+      defaultValue: 'school-demo',
+    );
+    const authToken = String.fromEnvironment('SAFE_SCHOOL_AUTH_TOKEN');
+
+    return MobileApiClient(
+      baseUrl: baseUrl,
+      schoolAccountId: schoolAccountId,
+      authToken: authToken.isEmpty ? null : authToken,
+    );
+  }
+
+  final String baseUrl;
+  final String schoolAccountId;
+  final String? authToken;
+
+  bool get isConfigured => baseUrl.trim().isNotEmpty;
+  bool get usesDemoData => !isConfigured;
 
   List<MobileRoleWorkspace> fetchWorkspaces() => MobileRoleWorkspace.demo;
+
+  Uri apiUri(String path) {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+
+    if (!isConfigured) {
+      return Uri.parse(normalizedPath);
+    }
+
+    final normalizedBaseUrl = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    return Uri.parse('$normalizedBaseUrl$normalizedPath');
+  }
+
+  Uri schoolUri(String path) => apiUri('/api/v1/schools/$schoolAccountId$path');
+  Uri guardianUri(String path) => apiUri('/api/v1/guardians/me$path');
+  Uri studentUri(String path) => apiUri('/api/v1/students/me$path');
+
+  Map<String, String> headers({String? idempotencyKey}) => {
+        'X-School-Account-Id': schoolAccountId,
+        if (authToken?.isNotEmpty == true) 'Authorization': 'Bearer $authToken',
+        if (idempotencyKey?.isNotEmpty == true)
+          'Idempotency-Key': idempotencyKey!,
+      };
 
   MobileRelease currentRelease({int versionCode = 1200}) {
     return MobileRelease(
@@ -30,18 +80,78 @@ class MobileRoleWorkspace {
   final bool offlineAllowed;
 
   static const demo = <MobileRoleWorkspace>[
-    MobileRoleWorkspace(roleCode: 'guardian', label: 'Guardian', arabicLabel: 'ولي الأمر', actions: ['View students', 'Submit request', 'Submit complaint'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'student', label: 'Student', arabicLabel: 'الطالب', actions: ['Learning', 'Messages', 'Documents'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'transport_driver', label: 'Transport driver', arabicLabel: 'سائق الحافلة', actions: ['Trip', 'Boarding', 'Drop'], offlineAllowed: true),
-    MobileRoleWorkspace(roleCode: 'gate_access', label: 'Gate/access staff', arabicLabel: 'بوابة المدرسة', actions: ['NFC scan', 'QR scan'], offlineAllowed: true),
-    MobileRoleWorkspace(roleCode: 'canteen_cashier', label: 'Canteen cashier', arabicLabel: 'المقصف', actions: ['Wallet scan', 'Charge'], offlineAllowed: true),
-    MobileRoleWorkspace(roleCode: 'teacher', label: 'Teacher', arabicLabel: 'المعلم', actions: ['Class', 'Behavior'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'medical_staff', label: 'Medical staff', arabicLabel: 'العيادة', actions: ['Medical profile', 'Emergency'], offlineAllowed: true),
-    MobileRoleWorkspace(roleCode: 'complaint_handler', label: 'Complaint handler', arabicLabel: 'الشكاوى', actions: ['Triage', 'Escalate'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'communication_sender', label: 'Communication sender', arabicLabel: 'الرسائل', actions: ['Broadcast', 'Direct message'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'document_administrator', label: 'Document administrator', arabicLabel: 'الوثائق', actions: ['Documents', 'Certificates'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'school_administrator', label: 'School administrator', arabicLabel: 'إدارة المدرسة', actions: ['Roles', 'Release'], offlineAllowed: false),
-    MobileRoleWorkspace(roleCode: 'platform_support', label: 'Platform support', arabicLabel: 'الدعم', actions: ['Diagnostics', 'Audit'], offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'guardian',
+        label: 'Guardian',
+        arabicLabel: 'ولي الأمر',
+        actions: ['View students', 'Submit request', 'Submit complaint'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'student',
+        label: 'Student',
+        arabicLabel: 'الطالب',
+        actions: ['Learning', 'Messages', 'Documents'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'transport_driver',
+        label: 'Transport driver',
+        arabicLabel: 'سائق الحافلة',
+        actions: ['Trip', 'Boarding', 'Drop'],
+        offlineAllowed: true),
+    MobileRoleWorkspace(
+        roleCode: 'gate_access',
+        label: 'Gate/access staff',
+        arabicLabel: 'بوابة المدرسة',
+        actions: ['NFC scan', 'QR scan'],
+        offlineAllowed: true),
+    MobileRoleWorkspace(
+        roleCode: 'canteen_cashier',
+        label: 'Canteen cashier',
+        arabicLabel: 'المقصف',
+        actions: ['Wallet scan', 'Charge'],
+        offlineAllowed: true),
+    MobileRoleWorkspace(
+        roleCode: 'teacher',
+        label: 'Teacher',
+        arabicLabel: 'المعلم',
+        actions: ['Class', 'Behavior'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'medical_staff',
+        label: 'Medical staff',
+        arabicLabel: 'العيادة',
+        actions: ['Medical profile', 'Emergency'],
+        offlineAllowed: true),
+    MobileRoleWorkspace(
+        roleCode: 'complaint_handler',
+        label: 'Complaint handler',
+        arabicLabel: 'الشكاوى',
+        actions: ['Triage', 'Escalate'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'communication_sender',
+        label: 'Communication sender',
+        arabicLabel: 'الرسائل',
+        actions: ['Broadcast', 'Direct message'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'document_administrator',
+        label: 'Document administrator',
+        arabicLabel: 'الوثائق',
+        actions: ['Documents', 'Certificates'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'school_administrator',
+        label: 'School administrator',
+        arabicLabel: 'إدارة المدرسة',
+        actions: ['Roles', 'Release'],
+        offlineAllowed: false),
+    MobileRoleWorkspace(
+        roleCode: 'platform_support',
+        label: 'Platform support',
+        arabicLabel: 'الدعم',
+        actions: ['Diagnostics', 'Audit'],
+        offlineAllowed: false),
   ];
 }
 

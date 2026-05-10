@@ -21,6 +21,22 @@ apps/mobile/build/app/outputs/flutter-apk/app-release.apk
 If `android/key.properties` is not present, the build uses debug signing for a
 local demo install.
 
+The APK can stay in guided demo mode, or it can be built with backend runtime
+configuration:
+
+```bash
+flutter build apk --release \
+  --build-name=12.0.0 \
+  --build-number=1200 \
+  --dart-define=SAFE_SCHOOL_API_BASE_URL=https://api.example.school \
+  --dart-define=SAFE_SCHOOL_TENANT_ID=school-demo
+```
+
+If `SAFE_SCHOOL_API_BASE_URL` is not set, the app clearly marks the shell as
+`Demo data`. When the base URL is set, the shell marks the runtime as
+`API ready` and the shared mobile API client builds `/api/v1/` school,
+guardian, and student routes with tenant and bearer-token headers.
+
 ## Install On Android
 
 1. Connect the phone by USB.
