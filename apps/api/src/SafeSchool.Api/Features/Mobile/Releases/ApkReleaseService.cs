@@ -14,7 +14,7 @@ public sealed class ApkReleaseService(ApkReleaseRepository repository, MobileFea
         return ToDto(release, !updateRequired, updateRequired);
     }
 
-    public ApkReleaseDto Create(CreateApkReleaseRequest request)
+    public ApkReleaseDto Create(CreateApkReleaseRequest request, string tenantId, string actorUserId)
     {
         var release = repository.Add(new ApkRelease
         {
@@ -28,7 +28,7 @@ public sealed class ApkReleaseService(ApkReleaseRepository repository, MobileFea
             SupportContact = request.SupportContact,
             MinimumSupportedVersionCode = request.MinimumSupportedVersionCode
         });
-        audit.Record("school-demo", "release-operator", "admin-web", "mobile.release.created", MobileRoleCodes.PlatformSupport, "mobile.release.manage", "created", "ok", "apk_release", release.Id.ToString("N"));
+        audit.Record(tenantId, actorUserId, "admin-web", "mobile.release.created", MobileRoleCodes.PlatformSupport, "mobile.release.manage", "created", "ok", "apk_release", release.Id.ToString("N"));
         return ToDto(release, false, false);
     }
 
