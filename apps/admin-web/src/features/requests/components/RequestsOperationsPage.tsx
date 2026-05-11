@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { loadRequestOperations, type RequestAudience, type RequestOperationsData, type RequestResponse } from "../api/requestsApi";
+import { loadRequestOperations, type RequestAudience, type RequestOperationsData, type RequestOperationsFilters, type RequestResponse } from "../api/requestsApi";
 import { RequestApprovalAction, RequestSubmitAction } from "./RequestActionForms";
 
 export type RequestsView = "overview" | "new" | "approvals" | "history" | "configuration";
@@ -12,8 +12,8 @@ const tabs: Array<[RequestsView, string, string]> = [
   ["configuration", "Configuration", "/requests/configuration"],
 ];
 
-export async function RequestsOperationsPage({ audience = "school", view = "overview" }: { audience?: RequestAudience; view?: RequestsView }) {
-  const data = await loadRequestOperations();
+export async function RequestsOperationsPage({ audience = "school", view = "overview", filters = {} }: { audience?: RequestAudience; view?: RequestsView; filters?: RequestOperationsFilters }) {
+  const data = await loadRequestOperations(undefined, filters);
   const title = audience === "school" ? "Requests Command Center" : audience === "guardian" ? "Guardian Requests" : "Student Requests";
   const requests = audience === "guardian" ? data.guardianRequests : audience === "student" ? data.studentRequests : data.schoolRequests;
 
@@ -31,7 +31,7 @@ export async function RequestsOperationsPage({ audience = "school", view = "over
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "minmax(320px, 1.2fr) minmax(300px, .8fr)", gap: 18 }}>
         <Panel title={panelTitle(audience, view)}>
-          <SectionContent audience={audience} view={view} data={data} requests={requests} />
+          <SectionContent audience={audience} view={view} data={data} requests={requests} filters={filters} />
         </Panel>
         <Panel title="Boundaries">
           <dl style={{ display: "grid", gap: 14, margin: 0 }}>
@@ -46,13 +46,30 @@ export async function RequestsOperationsPage({ audience = "school", view = "over
   );
 }
 
-function SectionContent({ audience, view, data, requests }: { audience: RequestAudience; view: RequestsView; data: RequestOperationsData; requests: RequestResponse[] }) {
+function SectionContent({ audience, view, data, requests, filters }: { audience: RequestAudience; view: RequestsView; data: RequestOperationsData; requests: RequestResponse[]; filters: RequestOperationsFilters }) {
   if (audience !== "school") return <Stack><RequestSubmitAction audience={audience} schoolAccountId={data.schoolAccountId} /><RequestTable requests={requests} /></Stack>;
   if (view === "new") return <Stack><RequestSubmitAction audience="school" schoolAccountId={data.schoolAccountId} /><RequestTable requests={requests} /></Stack>;
   if (view === "approvals") return <Stack><RequestApprovalAction schoolAccountId={data.schoolAccountId} requests={data.approvalQueue} /><RequestTable requests={data.approvalQueue} /></Stack>;
-  if (view === "history") return <Stack><RequestApprovalAction schoolAccountId={data.schoolAccountId} requests={data.history} /><RequestTable requests={data.history} /><RequestLifecycleEvidence data={data} /></Stack>;
+  if (view === "history") return <Stack><RequestHistoryFilters filters={filters} /><RequestApprovalAction schoolAccountId={data.schoolAccountId} requests={data.history} /><RequestTable requests={data.history} /><RequestLifecycleEvidence data={data} /></Stack>;
   if (view === "configuration") return <DataTable headers={["Key", "Value", "Evidence"]} rows={data.configuration.map((item) => [item.key, item.value, item.evidence]).concat(data.starRules.map((item) => [item.ruleId, item.trigger, item.evidence.join(", ")]))} />;
   return <RequestTable requests={requests} />;
+}
+
+function RequestHistoryFilters({ filters }: { filters: RequestOperationsFilters }) {
+  return (
+    <form method="get" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, alignItems: "end", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 14 }}>
+      <FilterInput name="studentProfileId" label="Student" value={filters.studentProfileId} />
+      <label style={filterLabelStyle}>Type<select name="requestType" defaultValue={filters.requestType ?? ""} style={filterControlStyle}><option value="">All</option><option value="outing">Outing</option><option value="early-leave">Early leave</option><option value="permission">Permission</option></select></label>
+      <label style={filterLabelStyle}>Status<select name="status" defaultValue={filters.status ?? ""} style={filterControlStyle}><option value="">All</option><option value="PendingApproval">Pending</option><option value="NeedsReview">Needs review</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option><option value="Withdrawn">Withdrawn</option></select></label>
+      <FilterInput name="sourceEventType" label="Event" value={filters.sourceEventType} />
+      <FilterInput name="exceptionState" label="Exception" value={filters.exceptionState} />
+      <button type="submit" style={{ border: "1px solid #2563eb", background: "#2563eb", color: "#fff", borderRadius: 6, padding: "10px 14px", fontWeight: 900 }}>Apply</button>
+    </form>
+  );
+}
+
+function FilterInput({ name, label, value }: { name: string; label: string; value?: string }) {
+  return <label style={filterLabelStyle}>{label}<input name={name} defaultValue={value ?? ""} style={filterControlStyle} /></label>;
 }
 
 function RequestLifecycleEvidence({ data }: { data: RequestOperationsData }) {
@@ -134,3 +151,5 @@ function panelTitle(audience: RequestAudience, view: RequestsView) {
 const cardStyle = { background: "#fff", border: "1px solid #d5dee8", borderRadius: 8, padding: 18, boxShadow: "0 1px 2px rgba(15,23,42,.08)" } satisfies React.CSSProperties;
 const thStyle = { textAlign: "left", color: "#475467", fontSize: 12, textTransform: "uppercase", padding: "10px 8px", borderBottom: "1px solid #e4e7ec" } satisfies React.CSSProperties;
 const tabStyle = (active: boolean) => ({ textDecoration: "none", color: active ? "#1d4ed8" : "#1f2937", border: `1px solid ${active ? "#3b82f6" : "#cbd5e1"}`, background: active ? "#eff6ff" : "#fff", borderRadius: 6, padding: "10px 16px", fontWeight: 800 });
+const filterLabelStyle = { display: "grid", gap: 6, color: "#475467", fontSize: 12, fontWeight: 900, textTransform: "uppercase" } satisfies React.CSSProperties;
+const filterControlStyle = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 6, padding: "9px 10px", color: "#0f172a", background: "#fff", fontSize: 14, fontWeight: 700 } satisfies React.CSSProperties;

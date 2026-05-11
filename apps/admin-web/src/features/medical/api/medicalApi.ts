@@ -103,6 +103,17 @@ export type MedicalOperationsData = {
   configuration: Array<{ key: string; value: string; evidence: string }>;
 };
 
+export type MedicalOperationsFilters = {
+  studentProfileId?: string;
+  recordType?: string;
+  status?: string;
+  severity?: string;
+  sourceEventType?: string;
+  notificationEligible?: boolean;
+  reviewRequired?: boolean;
+  reviewState?: string;
+};
+
 export const medicalCapabilities = [
   "medical.records",
   "medical.emergency_access",
@@ -186,16 +197,16 @@ async function fetchMedicalJson<T>(path: string, schoolAccountId: string, actorR
   return (await response.json()) as T;
 }
 
-export async function loadMedicalOperations(schoolAccountId = medicalFallbackData.schoolAccountId): Promise<MedicalOperationsData> {
+export async function loadMedicalOperations(schoolAccountId = medicalFallbackData.schoolAccountId, filters: MedicalOperationsFilters = {}): Promise<MedicalOperationsData> {
   const [board, records, emergency, incidents, notifications, history, statusEvents, reviewSummaries, guardianRecords, studentRecords] = await Promise.all([
     fetchMedicalJson<MedicalBoardResponse>(medicalRoutes.school(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.records(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.emergency(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.incidents(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.notifications(schoolAccountId), schoolAccountId),
-    fetchMedicalJson<MedicalResponse[]>(medicalRoutes.history(schoolAccountId), schoolAccountId),
-    fetchMedicalJson<MedicalStatusEvent[]>(medicalRoutes.statusEvents(schoolAccountId), schoolAccountId),
-    fetchMedicalJson<MedicalReviewSummary[]>(medicalRoutes.reviewSummaries(schoolAccountId), schoolAccountId),
+    fetchMedicalJson<MedicalResponse[]>(medicalRoutes.history(schoolAccountId, filters), schoolAccountId),
+    fetchMedicalJson<MedicalStatusEvent[]>(medicalRoutes.statusEvents(schoolAccountId, filters), schoolAccountId),
+    fetchMedicalJson<MedicalReviewSummary[]>(medicalRoutes.reviewSummaries(schoolAccountId, filters), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.guardian(), schoolAccountId, "guardian-demo"),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.student(), schoolAccountId, "student-demo"),
   ]);

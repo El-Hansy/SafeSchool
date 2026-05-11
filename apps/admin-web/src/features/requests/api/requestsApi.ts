@@ -103,6 +103,19 @@ export type RequestOperationsData = {
   starRules: Array<{ ruleId: string; trigger: string; status: string; review: string; evidence: string[] }>;
 };
 
+export type RequestOperationsFilters = {
+  studentProfileId?: string;
+  requestType?: string;
+  status?: string;
+  submitterRole?: string;
+  sourceEventType?: string;
+  notificationEligible?: boolean;
+  reviewRequired?: boolean;
+  currentAssignee?: string;
+  exceptionState?: string;
+  starOutcome?: string;
+};
+
 export const requestCapabilities = [
   "requests.outing",
   "requests.early_leave",
@@ -192,7 +205,7 @@ async function fetchRequestsJson<T>(path: string, schoolAccountId: string, actor
   return (await response.json()) as T;
 }
 
-export async function loadRequestOperations(schoolAccountId = requestsFallbackData.schoolAccountId): Promise<RequestOperationsData> {
+export async function loadRequestOperations(schoolAccountId = requestsFallbackData.schoolAccountId, filters: RequestOperationsFilters = {}): Promise<RequestOperationsData> {
   const [board, guardianRequests, studentRequests, outingRequests, earlyLeaveRequests, approvalQueue, history, statusEvents, reviewSummaries] = await Promise.all([
     fetchRequestsJson<RequestBoardResponse>(requestRoutes.school(schoolAccountId), schoolAccountId),
     fetchRequestsJson<RequestResponse[]>(requestRoutes.guardian(), schoolAccountId, "guardian-demo"),
@@ -200,9 +213,9 @@ export async function loadRequestOperations(schoolAccountId = requestsFallbackDa
     fetchRequestsJson<RequestResponse[]>(requestRoutes.outing(schoolAccountId), schoolAccountId),
     fetchRequestsJson<RequestResponse[]>(requestRoutes.earlyLeave(schoolAccountId), schoolAccountId),
     fetchRequestsJson<RequestResponse[]>(requestRoutes.approvals(schoolAccountId), schoolAccountId),
-    fetchRequestsJson<RequestResponse[]>(requestRoutes.history(schoolAccountId), schoolAccountId),
-    fetchRequestsJson<RequestStatusEvent[]>(requestRoutes.statusEvents(schoolAccountId), schoolAccountId),
-    fetchRequestsJson<RequestReviewSummary[]>(requestRoutes.reviewSummaries(schoolAccountId), schoolAccountId),
+    fetchRequestsJson<RequestResponse[]>(requestRoutes.history(schoolAccountId, filters), schoolAccountId),
+    fetchRequestsJson<RequestStatusEvent[]>(requestRoutes.statusEvents(schoolAccountId, filters), schoolAccountId),
+    fetchRequestsJson<RequestReviewSummary[]>(requestRoutes.reviewSummaries(schoolAccountId, filters), schoolAccountId),
   ]);
 
   const hasApiData = [board, guardianRequests, studentRequests, outingRequests, earlyLeaveRequests, approvalQueue, history, statusEvents, reviewSummaries].some((item) => item !== null);

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { loadMedicalOperations, type MedicalAudience, type MedicalOperationsData, type MedicalResponse } from "../api/medicalApi";
+import { loadMedicalOperations, type MedicalAudience, type MedicalOperationsData, type MedicalOperationsFilters, type MedicalResponse } from "../api/medicalApi";
 import { EmergencyAccessAction, MedicalIncidentAction, MedicalProfileAction, MedicalReviewAction } from "./MedicalActionForms";
 
 export type MedicalView = "overview" | "records" | "emergency" | "incidents" | "notifications" | "history" | "configuration";
@@ -14,8 +14,8 @@ const tabs: Array<[MedicalView, string, string]> = [
   ["configuration", "Configuration", "/medical/configuration"],
 ];
 
-export async function MedicalOperationsPage({ audience = "school", view = "overview" }: { audience?: MedicalAudience; view?: MedicalView }) {
-  const data = await loadMedicalOperations();
+export async function MedicalOperationsPage({ audience = "school", view = "overview", filters = {} }: { audience?: MedicalAudience; view?: MedicalView; filters?: MedicalOperationsFilters }) {
+  const data = await loadMedicalOperations(undefined, filters);
   const title = audience === "school" ? "Medical & Emergency Command Center" : audience === "guardian" ? "Guardian Medical" : "Student Medical";
   const records = audience === "guardian" ? data.guardianRecords : audience === "student" ? data.studentRecords : data.history;
 
@@ -33,7 +33,7 @@ export async function MedicalOperationsPage({ audience = "school", view = "overv
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "minmax(320px, 1.2fr) minmax(300px, .8fr)", gap: 18 }}>
         <Panel title={panelTitle(audience, view)}>
-          <SectionContent audience={audience} view={view} data={data} records={records} />
+          <SectionContent audience={audience} view={view} data={data} records={records} filters={filters} />
         </Panel>
         <Panel title="Privacy Boundaries">
           <dl style={{ display: "grid", gap: 14, margin: 0 }}>
@@ -48,16 +48,33 @@ export async function MedicalOperationsPage({ audience = "school", view = "overv
   );
 }
 
-function SectionContent({ audience, view, data, records }: { audience: MedicalAudience; view: MedicalView; data: MedicalOperationsData; records: MedicalResponse[] }) {
+function SectionContent({ audience, view, data, records, filters }: { audience: MedicalAudience; view: MedicalView; data: MedicalOperationsData; records: MedicalResponse[]; filters: MedicalOperationsFilters }) {
   if (audience === "guardian") return <Stack><MedicalProfileAction schoolAccountId={data.schoolAccountId} guardian /><MedicalTable records={records} /></Stack>;
   if (audience === "student") return <MedicalTable records={records} />;
   if (view === "records") return <Stack><MedicalProfileAction schoolAccountId={data.schoolAccountId} /><MedicalTable records={data.records} /></Stack>;
   if (view === "emergency") return <Stack><EmergencyAccessAction schoolAccountId={data.schoolAccountId} /><EmergencyAccessAction schoolAccountId={data.schoolAccountId} breakGlass /><MedicalTable records={data.emergency} /></Stack>;
   if (view === "incidents") return <Stack><MedicalIncidentAction schoolAccountId={data.schoolAccountId} /><MedicalTable records={data.incidents} /></Stack>;
   if (view === "notifications") return <MedicalTable records={data.notifications} />;
-  if (view === "history") return <Stack><MedicalReviewAction schoolAccountId={data.schoolAccountId} records={data.history} /><MedicalTable records={data.history} /><MedicalLifecycleEvidence data={data} /></Stack>;
+  if (view === "history") return <Stack><MedicalHistoryFilters filters={filters} /><MedicalReviewAction schoolAccountId={data.schoolAccountId} records={data.history} /><MedicalTable records={data.history} /><MedicalLifecycleEvidence data={data} /></Stack>;
   if (view === "configuration") return <DataTable headers={["Key", "Value", "Evidence"]} rows={data.configuration.map((item) => [item.key, item.value, item.evidence])} />;
   return <MedicalTable records={records} />;
+}
+
+function MedicalHistoryFilters({ filters }: { filters: MedicalOperationsFilters }) {
+  return (
+    <form method="get" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, alignItems: "end", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 14 }}>
+      <FilterInput name="studentProfileId" label="Student" value={filters.studentProfileId} />
+      <label style={filterLabelStyle}>Type<select name="recordType" defaultValue={filters.recordType ?? ""} style={filterControlStyle}><option value="">All</option><option value="profile">Profile</option><option value="emergency-access">Emergency</option><option value="incident">Incident</option><option value="notification">Notification</option></select></label>
+      <label style={filterLabelStyle}>Severity<select name="severity" defaultValue={filters.severity ?? ""} style={filterControlStyle}><option value="">All</option><option value="Routine">Routine</option><option value="Moderate">Moderate</option><option value="High">High</option><option value="Urgent">Urgent</option></select></label>
+      <label style={filterLabelStyle}>Status<select name="status" defaultValue={filters.status ?? ""} style={filterControlStyle}><option value="">All</option><option value="Verified">Verified</option><option value="Open">Open</option><option value="Queued">Queued</option><option value="Closed">Closed</option><option value="ManualReviewRequired">Review</option></select></label>
+      <FilterInput name="reviewState" label="Review" value={filters.reviewState} />
+      <button type="submit" style={{ border: "1px solid #2563eb", background: "#2563eb", color: "#fff", borderRadius: 6, padding: "10px 14px", fontWeight: 900 }}>Apply</button>
+    </form>
+  );
+}
+
+function FilterInput({ name, label, value }: { name: string; label: string; value?: string }) {
+  return <label style={filterLabelStyle}>{label}<input name={name} defaultValue={value ?? ""} style={filterControlStyle} /></label>;
 }
 
 function MedicalLifecycleEvidence({ data }: { data: MedicalOperationsData }) {
@@ -136,3 +153,5 @@ function panelTitle(audience: MedicalAudience, view: MedicalView) {
 const cardStyle = { background: "#fff", border: "1px solid #d5dee8", borderRadius: 8, padding: 18, boxShadow: "0 1px 2px rgba(15,23,42,.08)" } satisfies React.CSSProperties;
 const thStyle = { textAlign: "left", color: "#475467", fontSize: 12, textTransform: "uppercase", padding: "10px 8px", borderBottom: "1px solid #e4e7ec" } satisfies React.CSSProperties;
 const tabStyle = (active: boolean) => ({ textDecoration: "none", color: active ? "#1d4ed8" : "#1f2937", border: `1px solid ${active ? "#3b82f6" : "#cbd5e1"}`, background: active ? "#eff6ff" : "#fff", borderRadius: 6, padding: "10px 16px", fontWeight: 800 });
+const filterLabelStyle = { display: "grid", gap: 6, color: "#475467", fontSize: 12, fontWeight: 900, textTransform: "uppercase" } satisfies React.CSSProperties;
+const filterControlStyle = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 6, padding: "9px 10px", color: "#0f172a", background: "#fff", fontSize: 14, fontWeight: 700 } satisfies React.CSSProperties;
