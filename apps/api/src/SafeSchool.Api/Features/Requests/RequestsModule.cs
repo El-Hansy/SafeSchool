@@ -9,6 +9,7 @@ public static class RequestsModule
 {
     public const string SchoolRoutePrefix = "/api/v1/schools/{schoolAccountId}/requests";
     public const string GuardianRoutePrefix = "/api/v1/guardians/me/requests";
+    public const string GuardianStudentRoutePrefix = "/api/v1/guardians/me/students/{studentProfileId}/requests";
     public const string StudentRoutePrefix = "/api/v1/students/me/requests";
 
     public static IServiceCollection AddRequestsFeature(this IServiceCollection services)
@@ -22,33 +23,49 @@ public static class RequestsModule
     {
         var school = endpoints.MapGroup(SchoolRoutePrefix);
         var guardian = endpoints.MapGroup(GuardianRoutePrefix);
+        var guardianStudent = endpoints.MapGroup(GuardianStudentRoutePrefix);
         var student = endpoints.MapGroup(StudentRoutePrefix);
 
         school.MapGet("/", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History);
-        school.MapPost("/", async (string schoolAccountId, RequestSubmissionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.SubmitAsync(schoolAccountId, request with { SubmitterRole = string.IsNullOrWhiteSpace(request.SubmitterRole) ? "staff" : request.SubmitterRole }, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapPost("/", async (string schoolAccountId, RequestSubmissionRequest request, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.SubmitAsync(schoolAccountId, request with { SubmitterRole = string.IsNullOrWhiteSpace(request.SubmitterRole) ? "staff" : request.SubmitterRole }, ct))).RequireCapability(RequestCapabilities.Approval);
         school.MapGet("/outing", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "outing", ct))).RequireCapability(RequestCapabilities.Outing);
         school.MapGet("/early-leave", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "early-leave", ct))).RequireCapability(RequestCapabilities.EarlyLeave);
+        school.MapGet("/early-leave/{requestId}/release-eligibility", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ReleaseEligibilityAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.EarlyLeave);
         school.MapGet("/approvals", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApprovalsAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.Approval);
         school.MapGet("/history", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History);
         school.MapGet("/configuration", (RequestWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(RequestCapabilities.Configuration);
         school.MapGet("/configuration/star-rules/{ruleId}", (string ruleId, RequestWorkflowService service) => Results.Ok(service.StarRule(ruleId))).RequireCapability(RequestCapabilities.StarRules);
-        school.MapGet("/{requestId}", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.DetailAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History);
-        school.MapPost("/{requestId}/approve", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApproveAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
-        school.MapPost("/{requestId}/reject", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.RejectAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
-        school.MapPost("/{requestId}/cancel", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.CancelAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapGet("/{requestId}", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.DetailAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History);
+        school.MapPost("/{requestId}/approve", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ApproveAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapPost("/{requestId}/reject", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.RejectAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapPost("/{requestId}/cancel", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CancelAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapPost("/{requestId}/withdraw", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.WithdrawAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
         school.MapGet("/{requestId}/trace", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History);
 
         guardian.MapGet("/", async (ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
             Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct))).RequireCapability(RequestCapabilities.History);
         guardian.MapPost("/", async (RequestSubmissionRequest request, ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "guardian" }, ct))).RequireCapability(RequestCapabilities.Approval);
+            ToEndpointResult(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "guardian" }, ct))).RequireCapability(RequestCapabilities.Approval);
+        guardianStudent.MapGet("/", async (string studentProfileId, ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct, studentProfileId))).RequireCapability(RequestCapabilities.History);
+        guardianStudent.MapPost("/", async (string studentProfileId, RequestSubmissionRequest request, ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
+            ToEndpointResult(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { StudentProfileId = studentProfileId, SubmitterRole = "guardian" }, ct))).RequireCapability(RequestCapabilities.Approval);
 
         student.MapGet("/", async (ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
             Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "student", ct))).RequireCapability(RequestCapabilities.History);
         student.MapPost("/", async (RequestSubmissionRequest request, ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "student" }, ct))).RequireCapability(RequestCapabilities.Approval);
+            ToEndpointResult(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "student" }, ct))).RequireCapability(RequestCapabilities.Approval);
         return endpoints;
     }
+
+    private static IResult ToEndpointResult(RequestResponse response) => response.Status switch
+    {
+        "ValidationFailed" => Results.BadRequest(response),
+        "DuplicateBlocked" => Results.Conflict(response),
+        "FinalStateRejected" => Results.Conflict(response),
+        "NotFound" => Results.NotFound(response),
+        _ => Results.Ok(response)
+    };
 }
 
 public sealed record RequestSubmissionRequest(
@@ -68,6 +85,9 @@ public sealed record RequestResponse(string RequestId, string TrackingReference,
 public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 {
     private static readonly string[] OpenStatuses = ["Submitted", "PendingApproval", "NeedsReview", "Approved", "Rejected", "CancelRequested"];
+    private static readonly string[] ActiveStatuses = ["Submitted", "PendingApproval", "NeedsReview", "Approved", "CancelRequested"];
+    private static readonly string[] FinalStatuses = ["Approved", "Rejected", "Cancelled", "Withdrawn"];
+    private static readonly string[] AllowedRequestTypes = ["outing", "early-leave", "permission"];
 
     public async Task<object> BoardAsync(string tenantId, CancellationToken cancellationToken = default)
     {
@@ -93,11 +113,17 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
     public Task<IReadOnlyList<RequestResponse>> ByTypeAsync(string tenantId, string requestType, CancellationToken cancellationToken = default) =>
         ListByTypeAsync(tenantId, requestType, cancellationToken);
 
-    public async Task<IReadOnlyList<RequestResponse>> AudienceSummaryAsync(string tenantId, string submitterRole, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RequestResponse>> AudienceSummaryAsync(string tenantId, string submitterRole, CancellationToken cancellationToken = default, string? studentProfileId = null)
     {
-        var records = await dbContext.OperationalRequests.AsNoTracking()
+        var query = dbContext.OperationalRequests.AsNoTracking()
             .Include(x => x.Events)
-            .Where(x => x.TenantId == tenantId && x.SubmitterRole == submitterRole)
+            .Where(x => x.TenantId == tenantId && x.SubmitterRole == submitterRole);
+        if (!string.IsNullOrWhiteSpace(studentProfileId))
+        {
+            query = query.Where(x => x.StudentProfileId == studentProfileId);
+        }
+
+        var records = await query
             .OrderByDescending(x => x.UpdatedAt)
             .Take(20)
             .ToListAsync(cancellationToken);
@@ -115,6 +141,9 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 
     public async Task<RequestResponse> SubmitAsync(string tenantId, RequestSubmissionRequest request, CancellationToken cancellationToken = default)
     {
+        var validation = ValidateSubmission(request);
+        if (validation is not null) return validation;
+
         var fingerprint = Fingerprint(request);
         var command = $"{tenantId}:submit";
         var idempotency = await dbContext.OperationalRequestIdempotencyRecords
@@ -134,6 +163,30 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
             return ToResponse(existing, ["idempotency_conflict"]);
         }
 
+        var normalizedType = NormalizeType(request.RequestType);
+        var exactDuplicate = await dbContext.OperationalRequests
+            .Include(x => x.Events)
+            .Where(x => x.TenantId == tenantId
+                && x.StudentProfileId == request.StudentProfileId
+                && x.RequestType == normalizedType
+                && ActiveStatuses.Contains(x.Status)
+                && x.StartsAt == request.StartsAt
+                && x.EndsAt == request.EndsAt)
+            .OrderByDescending(x => x.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (exactDuplicate is not null)
+        {
+            dbContext.OperationalRequestEvents.Add(Event(tenantId, exactDuplicate.Id, "duplicate_blocked", request.SubmitterRole, "Exact active duplicate request blocked."));
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return ToResponse(exactDuplicate, ["duplicate_blocked"]) with
+            {
+                Status = "DuplicateBlocked",
+                VisibleSummary = "Exact active duplicate request was blocked and original request evidence was preserved."
+            };
+        }
+
+        var overlappingRequest = await FindOverlappingActiveRequestAsync(tenantId, request, normalizedType, cancellationToken);
         var now = DateTimeOffset.UtcNow;
         var sequence = await dbContext.OperationalRequests.CountAsync(x => x.TenantId == tenantId && x.CreatedAt.Year == now.Year, cancellationToken) + 1;
         var record = new OperationalRequestRecord
@@ -141,14 +194,16 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
             TenantId = tenantId,
             TrackingReference = $"REQ-{now:yyyy}-{sequence:0000}",
             StudentProfileId = request.StudentProfileId,
-            RequestType = NormalizeType(request.RequestType),
+            RequestType = normalizedType,
             Reason = request.Reason,
             RequestedOutcome = request.RequestedOutcome,
             ClientRequestId = request.ClientRequestId,
             SubmitterRole = request.SubmitterRole,
-            Status = "PendingApproval",
+            Status = overlappingRequest is null ? "PendingApproval" : "NeedsReview",
             Priority = PriorityFor(request.RequestType),
-            VisibleSummary = "Request accepted and routed to approval workflow.",
+            VisibleSummary = overlappingRequest is null
+                ? "Request accepted and routed to approval workflow."
+                : $"Request routed to manual review because it overlaps {overlappingRequest.TrackingReference}.",
             StartsAt = request.StartsAt,
             EndsAt = request.EndsAt,
             CreatedAt = now,
@@ -156,6 +211,11 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         };
         record.Events.Add(Event(tenantId, record.Id, "submitted", request.SubmitterRole, "Request submitted."));
         record.Events.Add(Event(tenantId, record.Id, "approval-routing", "system", "Approval route selected without mutating attendance, transport, wallet, learning, or medical outcomes."));
+        if (overlappingRequest is not null)
+        {
+            record.Events.Add(Event(tenantId, record.Id, "overlap_manual_review", "system", $"Overlaps active request {overlappingRequest.TrackingReference}."));
+        }
+
         dbContext.OperationalRequests.Add(record);
         dbContext.OperationalRequestIdempotencyRecords.Add(new OperationalRequestIdempotencyRecord
         {
@@ -178,6 +238,39 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 
     public Task<RequestResponse> CancelAsync(string tenantId, string requestId, RequestActionRequest request, CancellationToken cancellationToken = default) =>
         TransitionAsync(tenantId, requestId, "Cancelled", "Request cancelled without changing source-domain outcomes.", "cancelled", request, cancellationToken);
+
+    public Task<RequestResponse> WithdrawAsync(string tenantId, string requestId, RequestActionRequest request, CancellationToken cancellationToken = default) =>
+        TransitionAsync(tenantId, requestId, "Withdrawn", "Request withdrawn by requester while preserving approval history.", "withdrawn", request, cancellationToken);
+
+    public async Task<object> ReleaseEligibilityAsync(string tenantId, string requestId, CancellationToken cancellationToken = default)
+    {
+        var record = await FindAsync(tenantId, requestId, cancellationToken);
+        if (record is null)
+        {
+            return new
+            {
+                requestId,
+                status = "NotFound",
+                eligible = false,
+                evidence = new[] { "tenant-checked", "not-found" }
+            };
+        }
+
+        var isEarlyLeave = record.RequestType == "early-leave";
+        var eligible = isEarlyLeave && record.Status == "Approved";
+        return new
+        {
+            requestId = record.Id.ToString("N"),
+            record.TrackingReference,
+            record.StudentProfileId,
+            status = eligible ? "Eligible" : "NotEligible",
+            eligible,
+            reason = eligible
+                ? "Approved early leave is available as read-only release evidence."
+                : "Release eligibility requires an approved early leave request.",
+            evidence = new[] { "tenant-checked", "read-only-request-evidence", "no-attendance-event", "no-gate-event", "no-scan-event" }
+        };
+    }
 
     public async Task<object> TraceAsync(string tenantId, string requestId, CancellationToken cancellationToken = default)
     {
@@ -211,8 +304,23 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 
     private async Task<RequestResponse> TransitionAsync(string tenantId, string requestId, string status, string summary, string eventType, RequestActionRequest request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            return ValidationFailed("Decision reason is required.");
+        }
+
         var record = await FindAsync(tenantId, requestId, cancellationToken);
         if (record is null) return Missing(requestId);
+        if (FinalStatuses.Contains(record.Status))
+        {
+            dbContext.OperationalRequestEvents.Add(Event(tenantId, record.Id, "final_state_decision_rejected", request.ActorId, $"Attempted {eventType} after final status {record.Status}."));
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return ToResponse(record, ["final_state_decision_rejected"]) with
+            {
+                Status = "FinalStateRejected",
+                VisibleSummary = $"Request is already final as {record.Status}; duplicate final outcome was rejected."
+            };
+        }
 
         record.Status = status;
         record.VisibleSummary = summary;
@@ -232,6 +340,26 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
     private async Task<OperationalRequestRecord?> LoadAsync(Guid requestId, CancellationToken cancellationToken) =>
         await dbContext.OperationalRequests.Include(x => x.Events).SingleOrDefaultAsync(x => x.Id == requestId, cancellationToken);
 
+    private async Task<OperationalRequestRecord?> FindOverlappingActiveRequestAsync(string tenantId, RequestSubmissionRequest request, string normalizedType, CancellationToken cancellationToken)
+    {
+        if (request.StartsAt is null || request.EndsAt is null) return null;
+        var startsAt = request.StartsAt.Value;
+        var endsAt = request.EndsAt.Value;
+
+        return await dbContext.OperationalRequests.AsNoTracking()
+            .Where(x => x.TenantId == tenantId
+                && x.StudentProfileId == request.StudentProfileId
+                && x.RequestType == normalizedType
+                && ActiveStatuses.Contains(x.Status)
+                && x.StartsAt != null
+                && x.EndsAt != null
+                && x.StartsAt < endsAt
+                && startsAt < x.EndsAt
+                && (x.StartsAt != request.StartsAt || x.EndsAt != request.EndsAt))
+            .OrderByDescending(x => x.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     private static RequestResponse ToResponse(OperationalRequestRecord record, IReadOnlyList<string>? extraAudit = null)
     {
         var audit = record.Events.OrderBy(x => x.OccurredAt).Select(x => x.EventType).Concat(extraAudit ?? []).Distinct().ToList();
@@ -239,6 +367,20 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
     }
 
     private static RequestResponse Missing(string requestId) => new(requestId, "unknown", "unknown", "NotFound", "Unknown", "", "Request was not found in this tenant.", null, null, ["tenant-checked", "not-found"]);
+    private static RequestResponse ValidationFailed(string message) => new("validation", "validation", "unknown", "ValidationFailed", "Unknown", "", message, null, null, ["validation_failed"]);
+
+    private static RequestResponse? ValidateSubmission(RequestSubmissionRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.StudentProfileId)) return ValidationFailed("Student profile id is required.");
+        if (string.IsNullOrWhiteSpace(request.RequestType)) return ValidationFailed("Request type is required.");
+        if (!AllowedRequestTypes.Contains(NormalizeType(request.RequestType))) return ValidationFailed("Request type is not enabled for operational requests.");
+        if (string.IsNullOrWhiteSpace(request.Reason)) return ValidationFailed("Request reason is required.");
+        if (string.IsNullOrWhiteSpace(request.RequestedOutcome)) return ValidationFailed("Requested outcome is required.");
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId)) return ValidationFailed("Client request id is required for idempotency.");
+        if (request.StartsAt is not null && request.EndsAt is not null && request.StartsAt >= request.EndsAt) return ValidationFailed("Request start time must be before end time.");
+        if (NormalizeType(request.RequestType) == "early-leave" && request.StartsAt is null) return ValidationFailed("Early leave requests require a release date and time.");
+        return null;
+    }
 
     private static OperationalRequestEvent Event(string tenantId, Guid requestId, string eventType, string actor, string reason) => new()
     {

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -35,6 +36,47 @@ public sealed class MedicalFeatureGateBoundaryTests
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await response.Content.ReadAsStringAsync()).Should().Contain("tenant_mismatch");
+    }
+
+    [Fact]
+    public async Task Medical_emergency_endpoint_requires_reason_before_opening_access()
+    {
+        await using var factory = FactoryWithFeatureDefaults("Enabled");
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-School-Account-Id", "school-demo");
+
+        var response = await client.PostAsJsonAsync("/api/v1/schools/school-demo/medical/emergency/access", new
+        {
+            studentProfileId = "student-1",
+            reason = "",
+            actorId = "nurse-1",
+            clientRequestId = "emg-validation"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("ValidationFailed");
+        body.Should().Contain("Emergency reason is required");
+    }
+
+    [Fact]
+    public async Task Medical_break_glass_endpoint_rejects_non_emergency_roles()
+    {
+        await using var factory = FactoryWithFeatureDefaults("Enabled");
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-School-Account-Id", "school-demo");
+
+        var response = await client.PostAsJsonAsync("/api/v1/schools/school-demo/medical/emergency/break-glass", new
+        {
+            studentProfileId = "student-1",
+            reason = "Emergency",
+            actorId = "teacher-1",
+            clientRequestId = "emg-denied",
+            actorRole = "teacher",
+            confirmed = true
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     private static WebApplicationFactory<Program> FactoryWithFeatureDefaults(string availability) =>

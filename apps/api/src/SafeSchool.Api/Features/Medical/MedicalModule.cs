@@ -9,6 +9,7 @@ public static class MedicalModule
 {
     public const string SchoolRoutePrefix = "/api/v1/schools/{schoolAccountId}/medical";
     public const string GuardianRoutePrefix = "/api/v1/guardians/me/medical";
+    public const string GuardianStudentRoutePrefix = "/api/v1/guardians/me/students/{studentProfileId}/medical";
     public const string StudentRoutePrefix = "/api/v1/students/me/medical";
 
     public static IServiceCollection AddMedicalFeature(this IServiceCollection services)
@@ -22,37 +23,53 @@ public static class MedicalModule
     {
         var school = endpoints.MapGroup(SchoolRoutePrefix);
         var guardian = endpoints.MapGroup(GuardianRoutePrefix);
+        var guardianStudent = endpoints.MapGroup(GuardianStudentRoutePrefix);
         var student = endpoints.MapGroup(StudentRoutePrefix);
 
         school.MapGet("/", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.Records);
         school.MapGet("/records", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "profile", ct))).RequireCapability(MedicalCapabilities.Records);
-        school.MapPost("/records", async (string schoolAccountId, MedicalRecordRequest request, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.UpsertProfileAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Records);
+        school.MapPost("/records", async (string schoolAccountId, MedicalRecordRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.UpsertProfileAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Records);
         school.MapGet("/records/{studentProfileId}", async (string schoolAccountId, string studentProfileId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.StudentRecordsAsync(schoolAccountId, studentProfileId, ct))).RequireCapability(MedicalCapabilities.Records);
         school.MapGet("/emergency", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "emergency-access", ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapPost("/emergency/access", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.OpenEmergencyAccessAsync(schoolAccountId, request, false, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapPost("/emergency/break-glass", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.OpenEmergencyAccessAsync(schoolAccountId, request, true, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
+        school.MapPost("/emergency/access", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.OpenEmergencyAccessAsync(schoolAccountId, request, false, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
+        school.MapPost("/emergency/break-glass", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.OpenEmergencyAccessAsync(schoolAccountId, request, true, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
+        school.MapPost("/emergency/{recordId}/reconfirm", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ReconfirmEmergencyAccessAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
+        school.MapPost("/emergency/{recordId}/close", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CloseEmergencyAccessAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
         school.MapGet("/incidents", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "incident", ct))).RequireCapability(MedicalCapabilities.IncidentLogging);
-        school.MapPost("/incidents", async (string schoolAccountId, MedicalIncidentRequest request, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.LogIncidentAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.IncidentLogging);
+        school.MapPost("/incidents", async (string schoolAccountId, MedicalIncidentRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.LogIncidentAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.IncidentLogging);
         school.MapGet("/notifications", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "notification", ct))).RequireCapability(MedicalCapabilities.Notifications);
-        school.MapPost("/notifications", async (string schoolAccountId, MedicalNotificationRequest request, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.CreateNotificationAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Notifications);
+        school.MapPost("/notifications", async (string schoolAccountId, MedicalNotificationRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CreateNotificationAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Notifications);
         school.MapGet("/history", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.History);
         school.MapGet("/configuration", (MedicalWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(MedicalCapabilities.Configuration);
-        school.MapPost("/reviews/{recordId}/resolve", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ResolveReviewAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.History);
+        school.MapPost("/reviews/{recordId}/resolve", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ResolveReviewAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.History);
         school.MapGet("/trace/{recordId}", async (string schoolAccountId, string recordId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, recordId, ct))).RequireCapability(MedicalCapabilities.History);
 
         guardian.MapGet("/", async (ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
             Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct))).RequireCapability(MedicalCapabilities.Records);
         guardian.MapPost("/updates", async (MedicalRecordRequest request, ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request, ct))).RequireCapability(MedicalCapabilities.Records);
+            ToEndpointResult(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request, ct))).RequireCapability(MedicalCapabilities.Records);
+        guardianStudent.MapGet("/", async (string studentProfileId, ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct, studentProfileId))).RequireCapability(MedicalCapabilities.Records);
+        guardianStudent.MapPost("/updates", async (string studentProfileId, MedicalRecordRequest request, ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
+            ToEndpointResult(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request with { StudentProfileId = studentProfileId }, ct))).RequireCapability(MedicalCapabilities.Records);
 
         student.MapGet("/", async (ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
             Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "student", ct))).RequireCapability(MedicalCapabilities.Records);
         return endpoints;
     }
+
+    private static IResult ToEndpointResult(MedicalResponse response) => response.Status switch
+    {
+        "ValidationFailed" => Results.BadRequest(response),
+        "AccessDenied" => Results.Forbid(),
+        "DuplicateBlocked" => Results.Conflict(response),
+        "NotFound" => Results.NotFound(response),
+        _ => Results.Ok(response)
+    };
 }
 
 public sealed record MedicalRecordRequest(string StudentProfileId, string Summary, string RestrictedDetail, string ClientRequestId, string Severity = "Routine");
-public sealed record EmergencyAccessRequest(string StudentProfileId, string Reason, string ActorId, string ClientRequestId);
+public sealed record EmergencyAccessRequest(string StudentProfileId, string Reason, string ActorId, string ClientRequestId, string ActorRole = "school-nurse", bool Confirmed = true);
 public sealed record MedicalIncidentRequest(string StudentProfileId, string Severity, string Observation, string CareAction, string ClientRequestId);
 public sealed record MedicalNotificationRequest(string StudentProfileId, string SourceReference, string Urgency, string Audience, string ClientRequestId);
 public sealed record MedicalActionRequest(string Action, string Reason, string ActorId = "medical-reviewer", string ClientRequestId = "medical-action");
@@ -60,6 +77,9 @@ public sealed record MedicalResponse(string MedicalRecordId, string RecordRefere
 
 public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
 {
+    private static readonly string[] ActiveStatuses = ["Verified", "PendingMedicalReview", "Open", "Queued", "ManualReviewRequired"];
+    private static readonly string[] EmergencyRoles = ["school-nurse", "emergency-authorized-staff", "clinic-staff"];
+
     public async Task<object> BoardAsync(string tenantId, CancellationToken cancellationToken = default)
     {
         var records = dbContext.OperationalMedicalRecords.AsNoTracking().Where(x => x.TenantId == tenantId);
@@ -90,12 +110,18 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
         return records.Select(x => ToResponse(x)).ToList();
     }
 
-    public async Task<IReadOnlyList<MedicalResponse>> AudienceSummaryAsync(string tenantId, string audience, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<MedicalResponse>> AudienceSummaryAsync(string tenantId, string audience, CancellationToken cancellationToken = default, string? studentProfileId = null)
     {
         var allowedTypes = audience == "guardian" ? new[] { "profile", "notification" } : ["profile"];
-        var records = await dbContext.OperationalMedicalRecords.AsNoTracking()
+        var query = dbContext.OperationalMedicalRecords.AsNoTracking()
             .Include(x => x.Events)
-            .Where(x => x.TenantId == tenantId && allowedTypes.Contains(x.RecordType))
+            .Where(x => x.TenantId == tenantId && allowedTypes.Contains(x.RecordType));
+        if (!string.IsNullOrWhiteSpace(studentProfileId))
+        {
+            query = query.Where(x => x.StudentProfileId == studentProfileId);
+        }
+
+        var records = await query
             .OrderByDescending(x => x.UpdatedAt)
             .Take(20)
             .ToListAsync(cancellationToken);
@@ -107,25 +133,82 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
 
     public object Configuration() => new { emergencyAccessMinutes = 30, offlineCacheHours = 24, breakGlassRoles = new[] { "school-nurse", "emergency-authorized-staff" }, evidence = new[] { "tenant-scoped", "privacy-reviewed", "audit-required" } };
 
-    public Task<MedicalResponse> UpsertProfileAsync(string tenantId, MedicalRecordRequest request, CancellationToken cancellationToken = default) =>
-        CreateAsync(tenantId, "profile", request.ClientRequestId, request.StudentProfileId, "Verified", request.Severity, request.Summary, request.RestrictedDetail, ["medical-profile-updated", "guardian-visibility-reviewed"], null, cancellationToken);
+    public async Task<MedicalResponse> UpsertProfileAsync(string tenantId, MedicalRecordRequest request, CancellationToken cancellationToken = default)
+    {
+        var validation = ValidateMedicalRecord(request);
+        if (validation is not null) return validation;
 
-    public Task<MedicalResponse> GuardianUpdateAsync(string tenantId, MedicalRecordRequest request, CancellationToken cancellationToken = default) =>
-        CreateAsync(tenantId, "profile", request.ClientRequestId, request.StudentProfileId, "PendingMedicalReview", request.Severity, "Guardian medical update submitted for school medical review.", request.RestrictedDetail, ["guardian-update-submitted", "review-required"], null, cancellationToken);
+        var existing = await dbContext.OperationalMedicalRecords
+            .Include(x => x.Events)
+            .Where(x => x.TenantId == tenantId
+                && x.StudentProfileId == request.StudentProfileId
+                && x.RecordType == "profile"
+                && ActiveStatuses.Contains(x.Status))
+            .OrderByDescending(x => x.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existing is null)
+        {
+            return await CreateAsync(tenantId, "profile", request.ClientRequestId, request.StudentProfileId, "Verified", request.Severity, request.Summary, request.RestrictedDetail, ["medical-profile-updated", "guardian-visibility-reviewed"], null, cancellationToken);
+        }
+
+        existing.Status = "Verified";
+        existing.Severity = request.Severity;
+        existing.VisibleSummary = request.Summary;
+        existing.RestrictedDetail = request.RestrictedDetail;
+        existing.ClientRequestId = request.ClientRequestId;
+        existing.UpdatedAt = DateTimeOffset.UtcNow;
+        dbContext.OperationalMedicalEvents.Add(Event(tenantId, existing.Id, "medical-profile-upserted", "medical-operator", "Existing active profile updated with preserved history."));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return ToResponse(existing, ["profile-upserted", "tenant-checked", "feature-checked"]);
+    }
+
+    public Task<MedicalResponse> GuardianUpdateAsync(string tenantId, MedicalRecordRequest request, CancellationToken cancellationToken = default)
+    {
+        var validation = ValidateMedicalRecord(request);
+        return validation is not null
+            ? Task.FromResult(validation)
+            : CreateAsync(tenantId, "profile", request.ClientRequestId, request.StudentProfileId, "PendingMedicalReview", request.Severity, "Guardian medical update submitted for school medical review.", request.RestrictedDetail, ["guardian-update-submitted", "review-required"], null, cancellationToken);
+    }
 
     public Task<MedicalResponse> OpenEmergencyAccessAsync(string tenantId, EmergencyAccessRequest request, bool breakGlass, CancellationToken cancellationToken = default)
     {
+        var validation = ValidateEmergencyAccess(request, breakGlass);
+        if (validation is not null) return Task.FromResult(validation);
+
         var events = breakGlass
             ? new[] { "break-glass-confirmed", "minimum-necessary-data-opened", "mandatory-review-created" }
             : ["emergency-access-opened", "minimum-necessary-data-opened"];
         return CreateAsync(tenantId, "emergency-access", request.ClientRequestId, request.StudentProfileId, "Open", "Urgent", $"Emergency access opened for {request.StudentProfileId}.", request.Reason, events, DateTimeOffset.UtcNow.AddMinutes(30), cancellationToken);
     }
 
-    public Task<MedicalResponse> LogIncidentAsync(string tenantId, MedicalIncidentRequest request, CancellationToken cancellationToken = default) =>
-        CreateAsync(tenantId, "incident", request.ClientRequestId, request.StudentProfileId, "Open", request.Severity, $"Medical incident logged: {request.CareAction}.", request.Observation, ["incident-logged", "care-action-recorded", "no-diagnosis-created"], null, cancellationToken);
+    public Task<MedicalResponse> LogIncidentAsync(string tenantId, MedicalIncidentRequest request, CancellationToken cancellationToken = default)
+    {
+        var validation = ValidateIncident(request);
+        if (validation is not null) return Task.FromResult(validation);
 
-    public Task<MedicalResponse> CreateNotificationAsync(string tenantId, MedicalNotificationRequest request, CancellationToken cancellationToken = default) =>
-        CreateAsync(tenantId, "notification", request.ClientRequestId, request.StudentProfileId, "Queued", request.Urgency, $"Medical notification queued for {request.Audience}.", request.SourceReference, ["audience-minimized", "contact-attempt-required"], null, cancellationToken);
+        var events = IsHighSeverity(request.Severity)
+            ? new[] { "incident-logged", "care-action-recorded", "no-diagnosis-created", "notification-eligibility-exported" }
+            : ["incident-logged", "care-action-recorded", "no-diagnosis-created"];
+        return CreateAsync(tenantId, "incident", request.ClientRequestId, request.StudentProfileId, "Open", request.Severity, $"Medical incident logged: {request.CareAction}.", request.Observation, events, null, cancellationToken);
+    }
+
+    public Task<MedicalResponse> CreateNotificationAsync(string tenantId, MedicalNotificationRequest request, CancellationToken cancellationToken = default)
+    {
+        var validation = ValidateNotification(request);
+        if (validation is not null) return Task.FromResult(validation);
+
+        var audience = string.IsNullOrWhiteSpace(request.Audience) && IsHighSeverity(request.Urgency)
+            ? "approved guardians, emergency contacts, assigned nurse, school emergency coordinator"
+            : request.Audience;
+        return CreateAsync(tenantId, "notification", request.ClientRequestId, request.StudentProfileId, "Queued", request.Urgency, $"Medical notification queued for {audience}.", request.SourceReference, ["audience-minimized", "contact-attempt-required"], null, cancellationToken);
+    }
+
+    public Task<MedicalResponse> ReconfirmEmergencyAccessAsync(string tenantId, string recordId, MedicalActionRequest request, CancellationToken cancellationToken = default) =>
+        TransitionAsync(tenantId, recordId, "Open", "Emergency access re-confirmed for another 30-minute window.", "emergency-access-reconfirmed", request, cancellationToken, DateTimeOffset.UtcNow.AddMinutes(30), expectedRecordType: "emergency-access");
+
+    public Task<MedicalResponse> CloseEmergencyAccessAsync(string tenantId, string recordId, MedicalActionRequest request, CancellationToken cancellationToken = default) =>
+        TransitionAsync(tenantId, recordId, "Closed", "Emergency access session closed with evidence preserved.", "emergency-access-closed", request, cancellationToken, expectedRecordType: "emergency-access");
 
     public Task<MedicalResponse> ResolveReviewAsync(string tenantId, string recordId, MedicalActionRequest request, CancellationToken cancellationToken = default) =>
         TransitionAsync(tenantId, recordId, "Reviewed", "Medical review resolved with original evidence preserved.", "review-resolved", request, cancellationToken);
@@ -155,6 +238,28 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
             dbContext.OperationalMedicalEvents.Add(Event(tenantId, existing.Id, "idempotency_conflict", "system", "Client request id reused with different medical details."));
             await dbContext.SaveChangesAsync(cancellationToken);
             return ToResponse(existing, ["idempotency_conflict"]);
+        }
+
+        var duplicate = await dbContext.OperationalMedicalRecords
+            .Include(x => x.Events)
+            .Where(x => x.TenantId == tenantId
+                && x.RecordType == recordType
+                && x.StudentProfileId == studentProfileId
+                && ActiveStatuses.Contains(x.Status)
+                && x.VisibleSummary == visibleSummary
+                && x.RestrictedDetail == restrictedDetail)
+            .OrderByDescending(x => x.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (duplicate is not null)
+        {
+            dbContext.OperationalMedicalEvents.Add(Event(tenantId, duplicate.Id, "duplicate_blocked", "system", "Exact active duplicate medical command blocked."));
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return ToResponse(duplicate, ["duplicate_blocked"]) with
+            {
+                Status = "DuplicateBlocked",
+                VisibleSummary = "Exact active duplicate medical command was blocked and original evidence was preserved."
+            };
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -200,12 +305,27 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
         return ToResponse(record, ["tenant-checked", "feature-checked"]);
     }
 
-    private async Task<MedicalResponse> TransitionAsync(string tenantId, string recordId, string status, string summary, string eventType, MedicalActionRequest request, CancellationToken cancellationToken)
+    private async Task<MedicalResponse> TransitionAsync(string tenantId, string recordId, string status, string summary, string eventType, MedicalActionRequest request, CancellationToken cancellationToken, DateTimeOffset? expiresAt = null, string? expectedRecordType = null)
     {
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            return ValidationFailed("Review or emergency action reason is required.");
+        }
+
         var record = await FindAsync(tenantId, recordId, cancellationToken);
         if (record is null) return Missing(recordId);
+        if (!string.IsNullOrWhiteSpace(expectedRecordType) && record.RecordType != expectedRecordType)
+        {
+            return ValidationFailed($"Action requires a {expectedRecordType} record.");
+        }
+
         record.Status = status;
         record.VisibleSummary = summary;
+        if (expiresAt is not null)
+        {
+            record.ExpiresAt = expiresAt;
+        }
+
         record.UpdatedAt = DateTimeOffset.UtcNow;
         dbContext.OperationalMedicalEvents.Add(Event(tenantId, record.Id, eventType, request.ActorId, request.Reason));
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -251,6 +371,53 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
     }
 
     private static MedicalResponse Missing(string recordId) => new(recordId, "unknown", "", "unknown", "NotFound", "Unknown", "Medical record was not found in this tenant.", null, ["tenant-checked", "not-found"]);
+    private static MedicalResponse ValidationFailed(string message) => new("validation", "validation", "", "unknown", "ValidationFailed", "Unknown", message, null, ["validation_failed"]);
+    private static MedicalResponse AccessDenied(string message) => new("denied", "denied", "", "emergency-access", "AccessDenied", "Urgent", message, null, ["access_denied"]);
+
+    private static MedicalResponse? ValidateMedicalRecord(MedicalRecordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.StudentProfileId)) return ValidationFailed("Student profile id is required.");
+        if (string.IsNullOrWhiteSpace(request.Summary)) return ValidationFailed("Medical summary is required.");
+        if (string.IsNullOrWhiteSpace(request.RestrictedDetail)) return ValidationFailed("Restricted medical detail is required.");
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId)) return ValidationFailed("Client request id is required for idempotency.");
+        return null;
+    }
+
+    private static MedicalResponse? ValidateEmergencyAccess(EmergencyAccessRequest request, bool breakGlass)
+    {
+        if (string.IsNullOrWhiteSpace(request.StudentProfileId)) return ValidationFailed("Student profile id is required.");
+        if (string.IsNullOrWhiteSpace(request.Reason)) return ValidationFailed("Emergency reason is required.");
+        if (string.IsNullOrWhiteSpace(request.ActorId)) return ValidationFailed("Emergency actor id is required.");
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId)) return ValidationFailed("Client request id is required for idempotency.");
+        if (breakGlass && !request.Confirmed) return ValidationFailed("Break-glass access requires explicit confirmation.");
+        if (breakGlass && !EmergencyRoles.Contains(request.ActorRole, StringComparer.OrdinalIgnoreCase)) return AccessDenied("Break-glass access is limited to configured emergency roles.");
+        return null;
+    }
+
+    private static MedicalResponse? ValidateIncident(MedicalIncidentRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.StudentProfileId)) return ValidationFailed("Student profile id is required.");
+        if (string.IsNullOrWhiteSpace(request.Severity)) return ValidationFailed("Incident severity is required.");
+        if (string.IsNullOrWhiteSpace(request.Observation)) return ValidationFailed("Incident observation is required.");
+        if (string.IsNullOrWhiteSpace(request.CareAction)) return ValidationFailed("Care action is required.");
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId)) return ValidationFailed("Client request id is required for idempotency.");
+        return null;
+    }
+
+    private static MedicalResponse? ValidateNotification(MedicalNotificationRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.StudentProfileId)) return ValidationFailed("Student profile id is required.");
+        if (string.IsNullOrWhiteSpace(request.SourceReference)) return ValidationFailed("Source incident or emergency reference is required.");
+        if (string.IsNullOrWhiteSpace(request.Urgency)) return ValidationFailed("Notification urgency is required.");
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId)) return ValidationFailed("Client request id is required for idempotency.");
+        if (string.IsNullOrWhiteSpace(request.Audience) && !IsHighSeverity(request.Urgency)) return ValidationFailed("Notification audience is required unless urgency is high.");
+        return null;
+    }
+
+    private static bool IsHighSeverity(string severity) =>
+        severity.Equals("High", StringComparison.OrdinalIgnoreCase)
+        || severity.Equals("Critical", StringComparison.OrdinalIgnoreCase)
+        || severity.Equals("Urgent", StringComparison.OrdinalIgnoreCase);
 
     private static OperationalMedicalEvent Event(string tenantId, Guid recordId, string eventType, string actor, string reason) => new()
     {

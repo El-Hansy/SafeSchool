@@ -31,6 +31,20 @@ public sealed class MedicalFoundationTests
         conflict.MedicalRecordId.Should().Be(update.MedicalRecordId);
         conflict.Status.Should().Be("ManualReviewRequired");
 
+        var verifiedProfile = await service.UpsertProfileAsync("school-demo", profile with { ClientRequestId = "med-verified-1", Summary = "Asthma care plan verified by nurse" });
+        verifiedProfile.MedicalRecordId.Should().Be(update.MedicalRecordId);
+        verifiedProfile.Status.Should().Be("Verified");
+        verifiedProfile.AuditTrail.Should().Contain("profile-upserted");
+
+        var invalidProfile = await service.UpsertProfileAsync("school-demo", profile with { StudentProfileId = "", ClientRequestId = "med-invalid-1" });
+        invalidProfile.Status.Should().Be("ValidationFailed");
+
+        var missingReason = await service.OpenEmergencyAccessAsync("school-demo", new EmergencyAccessRequest("student-1", "", "nurse-1", "emg-invalid"), false);
+        missingReason.Status.Should().Be("ValidationFailed");
+
+        var deniedBreakGlass = await service.OpenEmergencyAccessAsync("school-demo", new EmergencyAccessRequest("student-1", "Bus arrival emergency", "teacher-1", "emg-denied", "teacher"), true);
+        deniedBreakGlass.Status.Should().Be("AccessDenied");
+
         var emergency = await service.OpenEmergencyAccessAsync("school-demo", new EmergencyAccessRequest("student-1", "Bus arrival emergency", "nurse-1", "emg-1"), true);
         emergency.RecordType.Should().Be("emergency-access");
         emergency.Status.Should().Be("Open");
@@ -40,6 +54,21 @@ public sealed class MedicalFoundationTests
         var incident = await service.LogIncidentAsync("school-demo", new MedicalIncidentRequest("student-1", "Moderate", "Student felt dizzy", "Guardian called", "inc-1"));
         incident.RecordType.Should().Be("incident");
         incident.AuditTrail.Should().Contain(["incident-logged", "care-action-recorded", "no-diagnosis-created"]);
+
+        var highIncident = await service.LogIncidentAsync("school-demo", new MedicalIncidentRequest("student-1", "High", "Severe allergic reaction", "Emergency contact called", "inc-2"));
+        highIncident.AuditTrail.Should().Contain("notification-eligibility-exported");
+
+        var reconfirmed = await service.ReconfirmEmergencyAccessAsync("school-demo", emergency.RecordReference, new MedicalActionRequest("reconfirm", "Emergency still active", "nurse-1", "emg-reconfirm-1"));
+        reconfirmed.Status.Should().Be("Open");
+        reconfirmed.AuditTrail.Should().Contain("emergency-access-reconfirmed");
+
+        var closed = await service.CloseEmergencyAccessAsync("school-demo", emergency.RecordReference, new MedicalActionRequest("close", "Student stabilized", "nurse-1", "emg-close-1"));
+        closed.Status.Should().Be("Closed");
+        closed.AuditTrail.Should().Contain("emergency-access-closed");
+
+        var defaultAudience = await service.CreateNotificationAsync("school-demo", new MedicalNotificationRequest("student-1", highIncident.RecordReference, "High", "", "notif-1"));
+        defaultAudience.RecordType.Should().Be("notification");
+        defaultAudience.VisibleSummary.Should().Contain("approved guardians");
 
         var guardianVisible = await service.AudienceSummaryAsync("school-demo", "guardian");
         guardianVisible.Should().Contain(x => x.RecordType == "profile");

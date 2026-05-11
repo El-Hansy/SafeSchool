@@ -13,7 +13,8 @@ public sealed class RequestFoundationTests
     {
         await using var dbContext = CreateDbContext();
         var service = new RequestWorkflowService(dbContext);
-        var request = new RequestSubmissionRequest("student-1", "early_leave", "Medical appointment", "Release to guardian", "req-1");
+        var releaseAt = DateTimeOffset.UtcNow.AddHours(2);
+        var request = new RequestSubmissionRequest("student-1", "early_leave", "Medical appointment", "Release to guardian", "req-1", releaseAt, releaseAt.AddMinutes(30));
 
         RequestCapabilities.All.Should().Contain(RequestCapabilities.Approval);
         new RequestBoundaryGuard().Allows("attendance").Should().BeFalse();
@@ -28,6 +29,21 @@ public sealed class RequestFoundationTests
         duplicate.RequestId.Should().Be(submitted.RequestId);
         duplicate.AuditTrail.Should().Contain("idempotency_duplicate");
 
+        var exactDuplicate = await service.SubmitAsync("school-demo", request with { ClientRequestId = "req-2" });
+        exactDuplicate.Status.Should().Be("DuplicateBlocked");
+        exactDuplicate.RequestId.Should().Be(submitted.RequestId);
+        exactDuplicate.AuditTrail.Should().Contain("duplicate_blocked");
+
+        var overlapping = await service.SubmitAsync("school-demo", request with
+        {
+            ClientRequestId = "req-3",
+            Reason = "Different appointment",
+            StartsAt = releaseAt.AddMinutes(10),
+            EndsAt = releaseAt.AddMinutes(40)
+        });
+        overlapping.Status.Should().Be("NeedsReview");
+        overlapping.AuditTrail.Should().Contain("overlap_manual_review");
+
         var conflict = await service.SubmitAsync("school-demo", request with { Reason = "Changed reason" });
         conflict.RequestId.Should().Be(submitted.RequestId);
         conflict.Status.Should().Be("NeedsReview");
@@ -36,6 +52,17 @@ public sealed class RequestFoundationTests
         var approved = await service.ApproveAsync("school-demo", submitted.TrackingReference, new RequestActionRequest("approve", "Validated guardian pickup", "approver-1", "approve-1"));
         approved.Status.Should().Be("Approved");
         approved.AuditTrail.Should().Contain("approved");
+
+        var finalStateRejected = await service.RejectAsync("school-demo", submitted.TrackingReference, new RequestActionRequest("reject", "Second decision rejected", "approver-2", "reject-1"));
+        finalStateRejected.Status.Should().Be("FinalStateRejected");
+        finalStateRejected.AuditTrail.Should().Contain("final_state_decision_rejected");
+
+        var eligibility = await service.ReleaseEligibilityAsync("school-demo", submitted.TrackingReference);
+        eligibility.Should().BeEquivalentTo(new { status = "Eligible", eligible = true }, options => options.ExcludingMissingMembers());
+
+        var missingRequiredFields = await service.SubmitAsync("school-demo", request with { StudentProfileId = "", ClientRequestId = "req-4" });
+        missingRequiredFields.Status.Should().Be("ValidationFailed");
+        missingRequiredFields.AuditTrail.Should().Contain("validation_failed");
 
         var guardianVisible = await service.AudienceSummaryAsync("school-demo", "guardian");
         guardianVisible.Should().ContainSingle(x => x.RequestId == submitted.RequestId);
