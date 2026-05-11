@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SafeSchool.Api.Infrastructure.FeatureFlags;
 using SafeSchool.Api.Infrastructure.Persistence;
 using SafeSchool.Api.Infrastructure.Tenancy;
 
@@ -23,29 +24,29 @@ public static class RequestsModule
         var guardian = endpoints.MapGroup(GuardianRoutePrefix);
         var student = endpoints.MapGroup(StudentRoutePrefix);
 
-        school.MapGet("/", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct)));
-        school.MapPost("/", async (string schoolAccountId, RequestSubmissionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.SubmitAsync(schoolAccountId, request with { SubmitterRole = string.IsNullOrWhiteSpace(request.SubmitterRole) ? "staff" : request.SubmitterRole }, ct)));
-        school.MapGet("/outing", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "outing", ct)));
-        school.MapGet("/early-leave", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "early-leave", ct)));
-        school.MapGet("/approvals", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApprovalsAsync(schoolAccountId, ct)));
-        school.MapGet("/history", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct)));
-        school.MapGet("/configuration", (RequestWorkflowService service) => Results.Ok(service.Configuration()));
-        school.MapGet("/configuration/star-rules/{ruleId}", (string ruleId, RequestWorkflowService service) => Results.Ok(service.StarRule(ruleId)));
-        school.MapGet("/{requestId}", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.DetailAsync(schoolAccountId, requestId, ct)));
-        school.MapPost("/{requestId}/approve", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApproveAsync(schoolAccountId, requestId, request, ct)));
-        school.MapPost("/{requestId}/reject", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.RejectAsync(schoolAccountId, requestId, request, ct)));
-        school.MapPost("/{requestId}/cancel", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.CancelAsync(schoolAccountId, requestId, request, ct)));
-        school.MapGet("/{requestId}/trace", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, requestId, ct)));
+        school.MapGet("/", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History);
+        school.MapPost("/", async (string schoolAccountId, RequestSubmissionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.SubmitAsync(schoolAccountId, request with { SubmitterRole = string.IsNullOrWhiteSpace(request.SubmitterRole) ? "staff" : request.SubmitterRole }, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapGet("/outing", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "outing", ct))).RequireCapability(RequestCapabilities.Outing);
+        school.MapGet("/early-leave", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "early-leave", ct))).RequireCapability(RequestCapabilities.EarlyLeave);
+        school.MapGet("/approvals", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApprovalsAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapGet("/history", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History);
+        school.MapGet("/configuration", (RequestWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(RequestCapabilities.Configuration);
+        school.MapGet("/configuration/star-rules/{ruleId}", (string ruleId, RequestWorkflowService service) => Results.Ok(service.StarRule(ruleId))).RequireCapability(RequestCapabilities.StarRules);
+        school.MapGet("/{requestId}", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.DetailAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History);
+        school.MapPost("/{requestId}/approve", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApproveAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapPost("/{requestId}/reject", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.RejectAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapPost("/{requestId}/cancel", async (string schoolAccountId, string requestId, RequestActionRequest request, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.CancelAsync(schoolAccountId, requestId, request, ct))).RequireCapability(RequestCapabilities.Approval);
+        school.MapGet("/{requestId}/trace", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History);
 
         guardian.MapGet("/", async (ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct)));
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct))).RequireCapability(RequestCapabilities.History);
         guardian.MapPost("/", async (RequestSubmissionRequest request, ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "guardian" }, ct)));
+            Results.Ok(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "guardian" }, ct))).RequireCapability(RequestCapabilities.Approval);
 
         student.MapGet("/", async (ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "student", ct)));
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "student", ct))).RequireCapability(RequestCapabilities.History);
         student.MapPost("/", async (RequestSubmissionRequest request, ITenantContext tenantContext, RequestWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "student" }, ct)));
+            Results.Ok(await service.SubmitAsync(GuardianTenantResolver.Resolve(tenantContext), request with { SubmitterRole = "student" }, ct))).RequireCapability(RequestCapabilities.Approval);
         return endpoints;
     }
 }
@@ -274,4 +275,3 @@ public static class RequestCapabilities
     public const string Configuration = "requests.configuration";
     public static readonly string[] All = [Outing, EarlyLeave, Approval, StarRules, History, Configuration];
 }
-
