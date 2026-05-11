@@ -1,6 +1,6 @@
 # Phase 5 Learning & Engagement
 
-This implementation adds a demo-ready Learning feature area for courses, content delivery, assignments, quizzes, stars, rewards, behavior logging, history, exception review, configuration, status-event export, and audit evidence.
+This implementation adds an operational Learning feature area for courses, content delivery, assignments, quizzes, stars, rewards, behavior logging, history, exception review, configuration, status-event export, and audit evidence.
 
 ## Capability Keys
 
