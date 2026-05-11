@@ -79,6 +79,22 @@ public sealed class MedicalFeatureGateBoundaryTests
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task Medical_endpoints_reject_explicit_missing_permission()
+    {
+        await using var factory = FactoryWithFeatureDefaults("Enabled");
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-School-Account-Id", "school-demo");
+        client.DefaultRequestHeaders.Add("X-Actor-Permissions", "unrelated.permission");
+
+        var response = await client.GetAsync("/api/v1/schools/school-demo/medical");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("missing_permission");
+        body.Should().Contain("medical.records.read");
+    }
+
     private static WebApplicationFactory<Program> FactoryWithFeatureDefaults(string availability) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {

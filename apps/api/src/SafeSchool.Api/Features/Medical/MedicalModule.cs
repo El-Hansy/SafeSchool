@@ -26,35 +26,35 @@ public static class MedicalModule
         var guardianStudent = endpoints.MapGroup(GuardianStudentRoutePrefix);
         var student = endpoints.MapGroup(StudentRoutePrefix);
 
-        school.MapGet("/", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.Records);
-        school.MapGet("/records", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "profile", ct))).RequireCapability(MedicalCapabilities.Records);
-        school.MapPost("/records", async (string schoolAccountId, MedicalRecordRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.UpsertProfileAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Records);
-        school.MapGet("/records/{studentProfileId}", async (string schoolAccountId, string studentProfileId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.StudentRecordsAsync(schoolAccountId, studentProfileId, ct))).RequireCapability(MedicalCapabilities.Records);
-        school.MapGet("/emergency", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "emergency-access", ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapPost("/emergency/access", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.OpenEmergencyAccessAsync(schoolAccountId, request, false, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapPost("/emergency/break-glass", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.OpenEmergencyAccessAsync(schoolAccountId, request, true, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapPost("/emergency/{recordId}/reconfirm", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ReconfirmEmergencyAccessAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapPost("/emergency/{recordId}/close", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CloseEmergencyAccessAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess);
-        school.MapGet("/incidents", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "incident", ct))).RequireCapability(MedicalCapabilities.IncidentLogging);
-        school.MapPost("/incidents", async (string schoolAccountId, MedicalIncidentRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.LogIncidentAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.IncidentLogging);
-        school.MapGet("/notifications", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "notification", ct))).RequireCapability(MedicalCapabilities.Notifications);
-        school.MapPost("/notifications", async (string schoolAccountId, MedicalNotificationRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CreateNotificationAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Notifications);
-        school.MapGet("/history", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.History);
-        school.MapGet("/configuration", (MedicalWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(MedicalCapabilities.Configuration);
-        school.MapPost("/reviews/{recordId}/resolve", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ResolveReviewAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.History);
-        school.MapGet("/trace/{recordId}", async (string schoolAccountId, string recordId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, recordId, ct))).RequireCapability(MedicalCapabilities.History);
+        school.MapGet("/", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.RecordsRead);
+        school.MapGet("/records", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "profile", ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.RecordsRead);
+        school.MapPost("/records", async (string schoolAccountId, MedicalRecordRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.UpsertProfileAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.RecordsManage);
+        school.MapGet("/records/{studentProfileId}", async (string schoolAccountId, string studentProfileId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.StudentRecordsAsync(schoolAccountId, studentProfileId, ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.RecordsRead);
+        school.MapGet("/emergency", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "emergency-access", ct))).RequireCapability(MedicalCapabilities.EmergencyAccess, MedicalPermissions.EmergencyRead);
+        school.MapPost("/emergency/access", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.OpenEmergencyAccessAsync(schoolAccountId, request, false, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess, MedicalPermissions.EmergencyRead);
+        school.MapPost("/emergency/break-glass", async (string schoolAccountId, EmergencyAccessRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.OpenEmergencyAccessAsync(schoolAccountId, request, true, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess, MedicalPermissions.BreakGlass);
+        school.MapPost("/emergency/{recordId}/reconfirm", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ReconfirmEmergencyAccessAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess, MedicalPermissions.EmergencyRead);
+        school.MapPost("/emergency/{recordId}/close", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CloseEmergencyAccessAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.EmergencyAccess, MedicalPermissions.EmergencyRead);
+        school.MapGet("/incidents", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "incident", ct))).RequireCapability(MedicalCapabilities.IncidentLogging, MedicalPermissions.IncidentsRead);
+        school.MapPost("/incidents", async (string schoolAccountId, MedicalIncidentRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.LogIncidentAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.IncidentLogging, MedicalPermissions.IncidentsCreate);
+        school.MapGet("/notifications", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "notification", ct))).RequireCapability(MedicalCapabilities.Notifications, MedicalPermissions.NotificationsRead);
+        school.MapPost("/notifications", async (string schoolAccountId, MedicalNotificationRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CreateNotificationAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Notifications, MedicalPermissions.NotificationsCreate);
+        school.MapGet("/history", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.HistoryRead);
+        school.MapGet("/configuration", (MedicalWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(MedicalCapabilities.Configuration, MedicalPermissions.ConfigurationManage);
+        school.MapPost("/reviews/{recordId}/resolve", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ResolveReviewAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.ReviewManage);
+        school.MapGet("/trace/{recordId}", async (string schoolAccountId, string recordId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, recordId, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.AuditRead);
 
         guardian.MapGet("/", async (ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct))).RequireCapability(MedicalCapabilities.Records);
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.GuardianRead);
         guardian.MapPost("/updates", async (MedicalRecordRequest request, ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
-            ToEndpointResult(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request, ct))).RequireCapability(MedicalCapabilities.Records);
+            ToEndpointResult(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request, ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.GuardianUpdate);
         guardianStudent.MapGet("/", async (string studentProfileId, ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct, studentProfileId))).RequireCapability(MedicalCapabilities.Records);
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "guardian", ct, studentProfileId))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.GuardianRead);
         guardianStudent.MapPost("/updates", async (string studentProfileId, MedicalRecordRequest request, ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
-            ToEndpointResult(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request with { StudentProfileId = studentProfileId }, ct))).RequireCapability(MedicalCapabilities.Records);
+            ToEndpointResult(await service.GuardianUpdateAsync(GuardianTenantResolver.Resolve(tenantContext), request with { StudentProfileId = studentProfileId }, ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.GuardianUpdate);
 
         student.MapGet("/", async (ITenantContext tenantContext, MedicalWorkflowService service, CancellationToken ct) =>
-            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "student", ct))).RequireCapability(MedicalCapabilities.Records);
+            Results.Ok(await service.AudienceSummaryAsync(GuardianTenantResolver.Resolve(tenantContext), "student", ct))).RequireCapability(MedicalCapabilities.Records, MedicalPermissions.StudentRead);
         return endpoints;
     }
 
@@ -445,4 +445,23 @@ public static class MedicalCapabilities
     public const string History = "medical.history";
     public const string Configuration = "medical.configuration";
     public static readonly string[] All = [Records, EmergencyAccess, IncidentLogging, Notifications, History, Configuration];
+}
+
+public static class MedicalPermissions
+{
+    public const string RecordsRead = "medical.records.read";
+    public const string RecordsManage = "medical.records.manage";
+    public const string GuardianRead = "medical.guardian_history.read";
+    public const string GuardianUpdate = "medical.guardian_updates.submit";
+    public const string StudentRead = "medical.student_summary.read";
+    public const string EmergencyRead = "medical.emergency.read";
+    public const string BreakGlass = "medical.emergency.break_glass";
+    public const string IncidentsRead = "medical.incidents.read";
+    public const string IncidentsCreate = "medical.incidents.create";
+    public const string NotificationsRead = "medical.notifications.read";
+    public const string NotificationsCreate = "medical.notifications.create";
+    public const string HistoryRead = "medical.history.read";
+    public const string ConfigurationManage = "medical.configuration.manage";
+    public const string ReviewManage = "medical.reviews.manage";
+    public const string AuditRead = "medical.audit.read";
 }

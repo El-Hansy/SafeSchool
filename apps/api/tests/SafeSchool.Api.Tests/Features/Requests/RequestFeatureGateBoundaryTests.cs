@@ -60,6 +60,22 @@ public sealed class RequestFeatureGateBoundaryTests
         body.Should().Contain("Student profile id is required");
     }
 
+    [Fact]
+    public async Task Requests_endpoints_reject_explicit_missing_permission()
+    {
+        await using var factory = FactoryWithFeatureDefaults("Enabled");
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-School-Account-Id", "school-demo");
+        client.DefaultRequestHeaders.Add("X-Actor-Permissions", "unrelated.permission");
+
+        var response = await client.GetAsync("/api/v1/schools/school-demo/requests");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("missing_permission");
+        body.Should().Contain("requests.requests.read");
+    }
+
     private static WebApplicationFactory<Program> FactoryWithFeatureDefaults(string availability) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
