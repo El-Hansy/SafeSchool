@@ -46,6 +46,39 @@ public sealed class OperationalRequestIdempotencyRecord
     public DateTimeOffset CreatedAt { get; set; }
 }
 
+public sealed class OperationalRequestStatusEvent
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string TenantId { get; set; } = string.Empty;
+    public Guid RequestId { get; set; }
+    public string TrackingReference { get; set; } = string.Empty;
+    public string StudentProfileId { get; set; } = string.Empty;
+    public string RequestType { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string SourceEventType { get; set; } = string.Empty;
+    public bool NotificationEligible { get; set; }
+    public bool ReviewRequired { get; set; }
+    public DateTimeOffset OccurredAt { get; set; }
+    public DateTimeOffset AvailableForNotificationsAt { get; set; }
+}
+
+public sealed class OperationalRequestReviewSummary
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string TenantId { get; set; } = string.Empty;
+    public Guid RequestId { get; set; }
+    public string TrackingReference { get; set; } = string.Empty;
+    public string StudentProfileId { get; set; } = string.Empty;
+    public string RequestType { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string CurrentAssignee { get; set; } = string.Empty;
+    public string ExceptionState { get; set; } = string.Empty;
+    public string StarOutcome { get; set; } = string.Empty;
+    public string LastEventType { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
 public static class RequestOperationalModelBuilderExtensions
 {
     public static void ApplyRequestsOperationalModel(this ModelBuilder modelBuilder)
@@ -97,6 +130,39 @@ public static class RequestOperationalModelBuilderExtensions
             entity.Property(x => x.Fingerprint).HasMaxLength(4000).IsRequired();
             entity.HasIndex(x => new { x.TenantId, x.Command, x.ClientRequestId }).IsUnique();
         });
+
+        modelBuilder.Entity<OperationalRequestStatusEvent>(entity =>
+        {
+            entity.ToTable("operational_request_status_events");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TenantId).HasMaxLength(96).IsRequired();
+            entity.Property(x => x.TrackingReference).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.StudentProfileId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.RequestType).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(48).IsRequired();
+            entity.Property(x => x.SourceEventType).HasMaxLength(96).IsRequired();
+            entity.HasIndex(x => new { x.TenantId, x.RequestId, x.OccurredAt });
+            entity.HasIndex(x => new { x.TenantId, x.NotificationEligible, x.AvailableForNotificationsAt });
+            entity.HasIndex(x => new { x.TenantId, x.ReviewRequired, x.OccurredAt });
+        });
+
+        modelBuilder.Entity<OperationalRequestReviewSummary>(entity =>
+        {
+            entity.ToTable("operational_request_review_summaries");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TenantId).HasMaxLength(96).IsRequired();
+            entity.Property(x => x.TrackingReference).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.StudentProfileId).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.RequestType).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(48).IsRequired();
+            entity.Property(x => x.CurrentAssignee).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.ExceptionState).HasMaxLength(96).IsRequired();
+            entity.Property(x => x.StarOutcome).HasMaxLength(96).IsRequired();
+            entity.Property(x => x.LastEventType).HasMaxLength(96).IsRequired();
+            entity.HasIndex(x => new { x.TenantId, x.RequestId }).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.StudentProfileId, x.Status });
+            entity.HasIndex(x => new { x.TenantId, x.RequestType, x.Status });
+            entity.HasIndex(x => new { x.TenantId, x.ExceptionState, x.UpdatedAt });
+        });
     }
 }
-

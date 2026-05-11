@@ -70,6 +70,14 @@ public sealed class MedicalFoundationTests
         defaultAudience.RecordType.Should().Be("notification");
         defaultAudience.VisibleSummary.Should().Contain("approved guardians");
 
+        var statusEvents = await service.StatusEventsAsync("school-demo");
+        statusEvents.Should().Contain(x => x.RecordReference == highIncident.RecordReference && x.NotificationEligible);
+        statusEvents.Should().Contain(x => x.RecordReference == emergency.RecordReference && x.ReviewRequired && x.SourceEventType == "mandatory-review-created");
+
+        var summaries = await service.ReviewSummariesAsync("school-demo");
+        summaries.Should().Contain(x => x.RecordReference == emergency.RecordReference && x.Status == "Closed" && x.LastEventType == "emergency-access-closed");
+        summaries.Should().Contain(x => x.RecordReference == highIncident.RecordReference && x.Severity == "High");
+
         var guardianVisible = await service.AudienceSummaryAsync("school-demo", "guardian");
         guardianVisible.Should().Contain(x => x.RecordType == "profile");
         guardianVisible.Should().OnlyContain(x => x.AuditTrail.Contains("minimum-necessary-view"));

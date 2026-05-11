@@ -152,9 +152,13 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<OperationalRequestRecord> OperationalRequests => Set<OperationalRequestRecord>();
     public DbSet<OperationalRequestEvent> OperationalRequestEvents => Set<OperationalRequestEvent>();
     public DbSet<OperationalRequestIdempotencyRecord> OperationalRequestIdempotencyRecords => Set<OperationalRequestIdempotencyRecord>();
+    public DbSet<OperationalRequestStatusEvent> OperationalRequestStatusEvents => Set<OperationalRequestStatusEvent>();
+    public DbSet<OperationalRequestReviewSummary> OperationalRequestReviewSummaries => Set<OperationalRequestReviewSummary>();
     public DbSet<OperationalMedicalRecord> OperationalMedicalRecords => Set<OperationalMedicalRecord>();
     public DbSet<OperationalMedicalEvent> OperationalMedicalEvents => Set<OperationalMedicalEvent>();
     public DbSet<OperationalMedicalIdempotencyRecord> OperationalMedicalIdempotencyRecords => Set<OperationalMedicalIdempotencyRecord>();
+    public DbSet<OperationalMedicalStatusEvent> OperationalMedicalStatusEvents => Set<OperationalMedicalStatusEvent>();
+    public DbSet<OperationalMedicalReviewSummary> OperationalMedicalReviewSummaries => Set<OperationalMedicalReviewSummary>();
     public DbSet<MobileUserProfile> MobileUserProfiles => Set<MobileUserProfile>();
     public DbSet<RoleWorkspace> MobileRoleWorkspaces => Set<RoleWorkspace>();
     public DbSet<RoleWorkspaceAction> MobileRoleWorkspaceActions => Set<RoleWorkspaceAction>();

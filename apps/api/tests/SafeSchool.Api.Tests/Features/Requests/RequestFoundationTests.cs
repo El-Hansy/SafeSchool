@@ -60,6 +60,13 @@ public sealed class RequestFoundationTests
         var eligibility = await service.ReleaseEligibilityAsync("school-demo", submitted.TrackingReference);
         eligibility.Should().BeEquivalentTo(new { status = "Eligible", eligible = true }, options => options.ExcludingMissingMembers());
 
+        var statusEvents = await service.StatusEventsAsync("school-demo");
+        statusEvents.Should().Contain(x => x.RequestId.ToString("N") == submitted.RequestId && x.SourceEventType == "approved" && x.NotificationEligible);
+        statusEvents.Should().Contain(x => x.SourceEventType == "overlap_manual_review" && x.ReviewRequired);
+
+        var summaries = await service.ReviewSummariesAsync("school-demo");
+        summaries.Should().Contain(x => x.TrackingReference == submitted.TrackingReference && x.Status == "Approved" && x.LastEventType == "final_state_decision_rejected");
+
         var missingRequiredFields = await service.SubmitAsync("school-demo", request with { StudentProfileId = "", ClientRequestId = "req-4" });
         missingRequiredFields.Status.Should().Be("ValidationFailed");
         missingRequiredFields.AuditTrail.Should().Contain("validation_failed");

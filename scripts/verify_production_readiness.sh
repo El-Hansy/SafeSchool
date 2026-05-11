@@ -89,7 +89,8 @@ echo "$migrations"
 
 for required_migration in \
   InitialSafeSchoolSchema \
-  AddRequestsMedicalOperationalTables; do
+  AddRequestsMedicalOperationalTables \
+  AddRequestsMedicalLifecycleEvidence; do
   if ! echo "$migrations" | rg "$required_migration" -S >/dev/null; then
     fail "$required_migration EF schema migration was not found."
   fi

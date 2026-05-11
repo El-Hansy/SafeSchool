@@ -33,6 +33,8 @@ public static class RequestsModule
         school.MapGet("/early-leave/{requestId}/release-eligibility", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ReleaseEligibilityAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.EarlyLeave, RequestPermissions.ReleaseRead);
         school.MapGet("/approvals", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApprovalsAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.Approval, RequestPermissions.Decide);
         school.MapGet("/history", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.HistoryRead);
+        school.MapGet("/status-events", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.StatusEventsAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.HistoryRead);
+        school.MapGet("/review-summaries", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ReviewSummariesAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.AuditRead);
         school.MapGet("/configuration", (RequestWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(RequestCapabilities.Configuration, RequestPermissions.Configure);
         school.MapGet("/configuration/star-rules/{ruleId}", (string ruleId, RequestWorkflowService service) => Results.Ok(service.StarRule(ruleId))).RequireCapability(RequestCapabilities.StarRules, RequestPermissions.Configure);
         school.MapGet("/{requestId}", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.DetailAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.Read);
@@ -100,7 +102,9 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
             capabilities = RequestCapabilities.All,
             open = await records.CountAsync(x => OpenStatuses.Contains(x.Status), cancellationToken),
             pendingApproval = await records.CountAsync(x => x.Status == "PendingApproval" || x.Status == "NeedsReview", cancellationToken),
-            approvedToday = await records.CountAsync(x => x.Status == "Approved" && x.UpdatedAt.Date == DateTimeOffset.UtcNow.Date, cancellationToken)
+            approvedToday = await records.CountAsync(x => x.Status == "Approved" && x.UpdatedAt.Date == DateTimeOffset.UtcNow.Date, cancellationToken),
+            statusEvents = await dbContext.OperationalRequestStatusEvents.AsNoTracking().CountAsync(x => x.TenantId == tenantId, cancellationToken),
+            reviewSummaries = await dbContext.OperationalRequestReviewSummaries.AsNoTracking().CountAsync(x => x.TenantId == tenantId, cancellationToken)
         };
     }
 
@@ -112,6 +116,20 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 
     public Task<IReadOnlyList<RequestResponse>> ByTypeAsync(string tenantId, string requestType, CancellationToken cancellationToken = default) =>
         ListByTypeAsync(tenantId, requestType, cancellationToken);
+
+    public async Task<IReadOnlyList<OperationalRequestStatusEvent>> StatusEventsAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        await dbContext.OperationalRequestStatusEvents.AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderByDescending(x => x.OccurredAt)
+            .Take(100)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<OperationalRequestReviewSummary>> ReviewSummariesAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        await dbContext.OperationalRequestReviewSummaries.AsNoTracking()
+            .Where(x => x.TenantId == tenantId)
+            .OrderByDescending(x => x.UpdatedAt)
+            .Take(100)
+            .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<RequestResponse>> AudienceSummaryAsync(string tenantId, string submitterRole, CancellationToken cancellationToken = default, string? studentProfileId = null)
     {
@@ -159,6 +177,7 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
             existing.VisibleSummary = "Request requires manual review because the client request id was reused with different details.";
             existing.UpdatedAt = DateTimeOffset.UtcNow;
             dbContext.OperationalRequestEvents.Add(Event(tenantId, existing.Id, "idempotency_conflict", "system", "Client request id reused with different request details."));
+            await RecordLifecycleEvidenceAsync(tenantId, existing, "idempotency_conflict", false, true, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             return ToResponse(existing, ["idempotency_conflict"]);
         }
@@ -178,6 +197,7 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         if (exactDuplicate is not null)
         {
             dbContext.OperationalRequestEvents.Add(Event(tenantId, exactDuplicate.Id, "duplicate_blocked", request.SubmitterRole, "Exact active duplicate request blocked."));
+            await RecordLifecycleEvidenceAsync(tenantId, exactDuplicate, "duplicate_blocked", false, true, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             return ToResponse(exactDuplicate, ["duplicate_blocked"]) with
             {
@@ -226,6 +246,7 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
             RequestId = record.Id,
             CreatedAt = now
         });
+        await RecordLifecycleEvidenceAsync(tenantId, record, record.Status == "NeedsReview" ? "overlap_manual_review" : "submitted", true, record.Status == "NeedsReview", cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToResponse(record, ["tenant-checked", "feature-checked"]);
     }
@@ -314,6 +335,7 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         if (FinalStatuses.Contains(record.Status))
         {
             dbContext.OperationalRequestEvents.Add(Event(tenantId, record.Id, "final_state_decision_rejected", request.ActorId, $"Attempted {eventType} after final status {record.Status}."));
+            await RecordLifecycleEvidenceAsync(tenantId, record, "final_state_decision_rejected", false, true, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             return ToResponse(record, ["final_state_decision_rejected"]) with
             {
@@ -326,6 +348,7 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         record.VisibleSummary = summary;
         record.UpdatedAt = DateTimeOffset.UtcNow;
         dbContext.OperationalRequestEvents.Add(Event(tenantId, record.Id, eventType, request.ActorId, request.Reason));
+        await RecordLifecycleEvidenceAsync(tenantId, record, eventType, true, status == "NeedsReview", cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToResponse(record, [request.Reason]);
     }
@@ -339,6 +362,48 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 
     private async Task<OperationalRequestRecord?> LoadAsync(Guid requestId, CancellationToken cancellationToken) =>
         await dbContext.OperationalRequests.Include(x => x.Events).SingleOrDefaultAsync(x => x.Id == requestId, cancellationToken);
+
+    private async Task RecordLifecycleEvidenceAsync(string tenantId, OperationalRequestRecord record, string eventType, bool notificationEligible, bool reviewRequired, CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        dbContext.OperationalRequestStatusEvents.Add(new OperationalRequestStatusEvent
+        {
+            TenantId = tenantId,
+            RequestId = record.Id,
+            TrackingReference = record.TrackingReference,
+            StudentProfileId = record.StudentProfileId,
+            RequestType = record.RequestType,
+            Status = record.Status,
+            SourceEventType = eventType,
+            NotificationEligible = notificationEligible,
+            ReviewRequired = reviewRequired || record.Status == "NeedsReview",
+            OccurredAt = now,
+            AvailableForNotificationsAt = now.AddMinutes(2)
+        });
+
+        var summary = await dbContext.OperationalRequestReviewSummaries
+            .SingleOrDefaultAsync(x => x.TenantId == tenantId && x.RequestId == record.Id, cancellationToken);
+        if (summary is null)
+        {
+            summary = new OperationalRequestReviewSummary
+            {
+                TenantId = tenantId,
+                RequestId = record.Id,
+                CreatedAt = now
+            };
+            dbContext.OperationalRequestReviewSummaries.Add(summary);
+        }
+
+        summary.TrackingReference = record.TrackingReference;
+        summary.StudentProfileId = record.StudentProfileId;
+        summary.RequestType = record.RequestType;
+        summary.Status = record.Status;
+        summary.CurrentAssignee = record.Status is "PendingApproval" or "NeedsReview" ? "workflow-reviewer" : "none";
+        summary.ExceptionState = summary.CurrentAssignee == "workflow-reviewer" && eventType != "submitted" ? eventType : "none";
+        summary.StarOutcome = record.RequestType == "outing" ? "not-evaluated" : "not-required";
+        summary.LastEventType = eventType;
+        summary.UpdatedAt = now;
+    }
 
     private async Task<OperationalRequestRecord?> FindOverlappingActiveRequestAsync(string tenantId, RequestSubmissionRequest request, string normalizedType, CancellationToken cancellationToken)
     {
