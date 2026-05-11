@@ -52,16 +52,16 @@ export const safeSchoolModuleLinks: SafeSchoolModuleLink[] = [
   {
     phase: "007",
     title: "Requests & Permissions",
-    href: "/guardian/complaints",
+    href: "/requests",
     summary: "Guardian request submission, approval workflow, early leave, and review history.",
-    demoAction: "Use the APK Guardian view to submit a permission request.",
+    demoAction: "Show a guardian outing request and staff approval decision.",
   },
   {
     phase: "008",
     title: "Medical & Emergency",
-    href: "/mobile",
+    href: "/medical",
     summary: "Emergency profile access, clinic incident capture, guardian notification, and audit.",
-    demoAction: "Use the APK Medical role to create and clear a clinic incident.",
+    demoAction: "Open emergency access, log a clinic incident, and review audit evidence.",
   },
   {
     phase: "009",

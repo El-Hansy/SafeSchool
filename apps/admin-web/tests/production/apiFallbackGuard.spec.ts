@@ -6,6 +6,8 @@ import { loadDocumentsOperations } from "../../src/features/documents/api/docume
 import { loadGuardianTransportData } from "../../src/features/guardian-transport/api/client";
 import { loadGuardianWalletData } from "../../src/features/guardian-wallet/api/client";
 import { loadLearningOperations } from "../../src/features/learning/api/learningApi";
+import { loadMedicalOperations } from "../../src/features/medical/api/medicalApi";
+import { loadRequestOperations } from "../../src/features/requests/api/requestsApi";
 import { loadSchoolTransportOperations } from "../../src/features/transport/api/client";
 import { loadSchoolWalletOperations, walletApiBaseUrl } from "../../src/features/wallet/api/client";
 import { serverApiAuthorizationHeader } from "../../src/features/common/apiReadiness";
@@ -33,6 +35,8 @@ describe("production API fallback guard", () => {
       loadGuardianTransportData,
       loadGuardianWalletData,
       loadLearningOperations,
+      loadMedicalOperations,
+      loadRequestOperations,
       loadSchoolTransportOperations,
       loadSchoolWalletOperations,
     ];

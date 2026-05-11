@@ -80,13 +80,20 @@ log "Admin web production data guard"
 (cd "$ROOT_DIR/apps/admin-web" && npm test -- --run tests/production/apiFallbackGuard.spec.ts tests/production/dynamicRuntime.spec.ts)
 
 log "EF migration presence"
-if ! dotnet ef migrations list \
+migrations="$(dotnet ef migrations list \
   --project "$API_PROJECT" \
   --startup-project "$API_PROJECT" \
   --context SafeSchoolDbContext \
-  --no-connect | rg "InitialSafeSchoolSchema" -S; then
-  fail "Initial EF schema migration was not found."
-fi
+  --no-connect)"
+echo "$migrations"
+
+for required_migration in \
+  InitialSafeSchoolSchema \
+  AddRequestsMedicalOperationalTables; do
+  if ! echo "$migrations" | rg "$required_migration" -S >/dev/null; then
+    fail "$required_migration EF schema migration was not found."
+  fi
+done
 
 log "Mobile guarded APK release controls"
 (cd "$ROOT_DIR/apps/mobile" && flutter test test/features/demo/android_release_signing_test.dart)
