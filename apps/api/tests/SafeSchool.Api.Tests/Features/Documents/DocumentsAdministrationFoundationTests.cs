@@ -30,7 +30,7 @@ public sealed class DocumentsAdministrationFoundationTests
 
         (await search.SearchAsync("school-demo", new SearchQueryCommand("Consent", "school"))).SuppressedReasons.Should().Contain("restricted-counts-hidden");
         new AdministrationBoundaryGuard().Allows("wallet").Should().BeFalse();
-        new AdministrationWorkflowService().Dashboard("school-demo").Should().NotBeNull();
+        (await new AdministrationWorkflowService(dbContext).DashboardAsync("school-demo")).Should().NotBeNull();
     }
 
     private static SafeSchoolDbContext CreateDbContext()

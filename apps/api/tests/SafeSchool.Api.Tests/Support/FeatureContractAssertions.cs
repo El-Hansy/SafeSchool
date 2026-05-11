@@ -16,9 +16,10 @@ public static class FeatureContractAssertions
         AdministrationCapabilities.All.Should().Contain(AdministrationCapabilities.AuditTrail);
         new AdministrationBoundaryGuard().Allows("wallet").Should().BeFalse();
 
-        var service = new AdministrationWorkflowService();
-        JsonSerializer.Serialize(service.Dashboard("school-live"))
-            .Should().Contain("school-live").And.Contain("demo-ready");
+        using var dbContext = CreateDbContext();
+        var service = new AdministrationWorkflowService(dbContext);
+        JsonSerializer.Serialize(Await(service.DashboardAsync("school-live")))
+            .Should().Contain("school-live").And.Contain("operational");
         JsonSerializer.Serialize(service.Configure(new ConfigurationCommand("mobile.app", true, "pilot", "cfg-1")))
             .Should().Contain("dependency-validated");
         JsonSerializer.Serialize(service.ExportAudit(new ExportCommand("tenant", "audit request", "exp-1")))

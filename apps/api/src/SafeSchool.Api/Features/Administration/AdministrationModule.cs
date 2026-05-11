@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using SafeSchool.Api.Infrastructure.Persistence;
+
 namespace SafeSchool.Api.Features.Administration;
 
 public static class AdministrationModule
@@ -14,7 +17,7 @@ public static class AdministrationModule
     public static IEndpointRouteBuilder MapAdministrationEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var admin = endpoints.MapGroup(SchoolRoutePrefix);
-        admin.MapGet("/dashboard", (string schoolAccountId, AdministrationWorkflowService service) => Results.Ok(service.Dashboard(schoolAccountId)));
+        admin.MapGet("/dashboard", async (string schoolAccountId, AdministrationWorkflowService service, CancellationToken ct) => Results.Ok(await service.DashboardAsync(schoolAccountId, ct)));
         admin.MapPost("/configuration", (ConfigurationCommand request, AdministrationWorkflowService service) => Results.Ok(service.Configure(request)));
         admin.MapGet("/configuration/history", (AdministrationWorkflowService service) => Results.Ok(service.ConfigurationHistory()));
         admin.MapGet("/audit", (AdministrationWorkflowService service) => Results.Ok(service.AuditTrail()));
@@ -34,9 +37,44 @@ public static class AdministrationModule
 public sealed record ConfigurationCommand(string CapabilityKey, bool Enabled, string Reason, string ClientRequestId);
 public sealed record ExportCommand(string Scope, string Reason, string ClientRequestId);
 
-public sealed class AdministrationWorkflowService
+public sealed class AdministrationWorkflowService(SafeSchoolDbContext dbContext)
 {
-    public object Dashboard(string schoolAccountId) => new { schoolAccountId, status = "demo-ready", modulesEnabled = 11, pendingReviews = 24, alerts = 5, incidents = 2, searchFreshness = "95% within target" };
+    public async Task<object> DashboardAsync(string schoolAccountId, CancellationToken cancellationToken = default)
+    {
+        var pendingReviews =
+            await dbContext.ManualReviews.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.ManualTransportReviews.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.ManualWalletReviews.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.ManualLearningReviews.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.OperationalComplaints.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId && x.Status == "ManualReviewRequired", cancellationToken) +
+            await dbContext.OperationalCommunications.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId && x.Status == "ManualReviewRequired", cancellationToken) +
+            await dbContext.OperationalDocuments.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId && x.Status == "ManualReviewRequired", cancellationToken) +
+            await dbContext.OperationalCertificates.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId && x.Status == "ManualReviewRequired", cancellationToken);
+        var alerts =
+            await dbContext.AttendanceAnomalies.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.TransportAnomalies.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.WalletAnomalies.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.LearningExceptions.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken);
+        var incidents =
+            await dbContext.OperationalComplaints.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId && x.Status == "Escalated", cancellationToken) +
+            await dbContext.OperationalCommunications.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId && x.Status == "Conflict", cancellationToken);
+        var indexed =
+            await dbContext.OperationalDocuments.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken) +
+            await dbContext.OperationalCertificates.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken);
+        var searches = await dbContext.OperationalSearchLogs.AsNoTracking().CountAsync(x => x.TenantId == schoolAccountId, cancellationToken);
+
+        return new
+        {
+            schoolAccountId,
+            status = "operational",
+            modulesEnabled = AdministrationCapabilities.All.Length,
+            pendingReviews,
+            alerts,
+            incidents,
+            searchFreshness = $"{indexed} indexed records, {searches} audited searches"
+        };
+    }
+
     public object Configure(ConfigurationCommand request) => new { request.CapabilityKey, request.Enabled, status = "Applied", evidence = new[] { "dependency-validated", "version-preserved", request.Reason } };
     public object ConfigurationHistory() => new { total = 4, changes = new[] { new { capabilityKey = "guardian.mobile.access", state = "Enabled", actor = "tenant-admin", evidence = "dependency-validated" }, new { capabilityKey = "wallet.topups", state = "Enabled", actor = "finance-admin", evidence = "version-preserved" } } };
     public object AuditTrail() => new { total = 316, appendOnly = true, minimizedPayloads = true, filters = new[] { "actor", "action", "target", "correlation" } };
