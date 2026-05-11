@@ -28,6 +28,8 @@ export async function MedicalOperationsPage({ audience = "school", view = "overv
         <Metric label="Emergency sessions" value={String(data.board.openEmergencySessions)} detail="30 minute windows" />
         <Metric label="Incidents" value={String(data.board.incidents)} detail="Care evidence" />
         <Metric label="Notifications" value={String(data.board.notifications)} detail="Minimized audience" />
+        <Metric label="Status events" value={String(data.board.statusEvents)} detail="Notification eligibility" />
+        <Metric label="Review summaries" value={String(data.board.reviewSummaries)} detail="Mandatory reviews" />
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "minmax(320px, 1.2fr) minmax(300px, .8fr)", gap: 18 }}>
         <Panel title={panelTitle(audience, view)}>
@@ -53,9 +55,42 @@ function SectionContent({ audience, view, data, records }: { audience: MedicalAu
   if (view === "emergency") return <Stack><EmergencyAccessAction schoolAccountId={data.schoolAccountId} /><EmergencyAccessAction schoolAccountId={data.schoolAccountId} breakGlass /><MedicalTable records={data.emergency} /></Stack>;
   if (view === "incidents") return <Stack><MedicalIncidentAction schoolAccountId={data.schoolAccountId} /><MedicalTable records={data.incidents} /></Stack>;
   if (view === "notifications") return <MedicalTable records={data.notifications} />;
-  if (view === "history") return <Stack><MedicalReviewAction schoolAccountId={data.schoolAccountId} records={data.history} /><MedicalTable records={data.history} /></Stack>;
+  if (view === "history") return <Stack><MedicalReviewAction schoolAccountId={data.schoolAccountId} records={data.history} /><MedicalTable records={data.history} /><MedicalLifecycleEvidence data={data} /></Stack>;
   if (view === "configuration") return <DataTable headers={["Key", "Value", "Evidence"]} rows={data.configuration.map((item) => [item.key, item.value, item.evidence])} />;
   return <MedicalTable records={records} />;
+}
+
+function MedicalLifecycleEvidence({ data }: { data: MedicalOperationsData }) {
+  return (
+    <Stack>
+      <h3 style={{ margin: "4px 0 0", fontSize: 20 }}>Lifecycle evidence</h3>
+      <DataTable
+        headers={["Reference", "Type", "Status", "Severity", "Event", "Notify", "Review"]}
+        rows={data.statusEvents.map((event) => [
+          event.recordReference,
+          event.recordType,
+          event.status,
+          event.severity,
+          event.sourceEventType,
+          event.notificationEligible ? "eligible" : "held",
+          event.reviewRequired ? "required" : "not required",
+        ])}
+      />
+      <h3 style={{ margin: "4px 0 0", fontSize: 20 }}>Review summaries</h3>
+      <DataTable
+        headers={["Reference", "Student", "Type", "Status", "Severity", "Review", "Last event"]}
+        rows={data.reviewSummaries.map((summary) => [
+          summary.recordReference,
+          summary.studentProfileId,
+          summary.recordType,
+          summary.status,
+          summary.severity,
+          summary.reviewState,
+          summary.lastEventType,
+        ])}
+      />
+    </Stack>
+  );
 }
 
 function Header({ title, source }: { title: string; source: MedicalOperationsData["dataSource"] }) {
@@ -101,4 +136,3 @@ function panelTitle(audience: MedicalAudience, view: MedicalView) {
 const cardStyle = { background: "#fff", border: "1px solid #d5dee8", borderRadius: 8, padding: 18, boxShadow: "0 1px 2px rgba(15,23,42,.08)" } satisfies React.CSSProperties;
 const thStyle = { textAlign: "left", color: "#475467", fontSize: 12, textTransform: "uppercase", padding: "10px 8px", borderBottom: "1px solid #e4e7ec" } satisfies React.CSSProperties;
 const tabStyle = (active: boolean) => ({ textDecoration: "none", color: active ? "#1d4ed8" : "#1f2937", border: `1px solid ${active ? "#3b82f6" : "#cbd5e1"}`, background: active ? "#eff6ff" : "#fff", borderRadius: 6, padding: "10px 16px", fontWeight: 800 });
-

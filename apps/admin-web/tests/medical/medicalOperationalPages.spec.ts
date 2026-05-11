@@ -33,8 +33,12 @@ describe("medical operational pages", () => {
     expect(data.emergency.length).toBeGreaterThan(0);
     expect(data.incidents.length).toBeGreaterThan(0);
     expect(data.guardianRecords.length).toBeGreaterThan(0);
+    expect(data.statusEvents.length).toBeGreaterThan(0);
+    expect(data.reviewSummaries.length).toBeGreaterThan(0);
     expect(data.board.capabilities).toContain("medical.emergency_access");
     expect(medicalRoutes.guardianUpdates()).toBe("/api/v1/guardians/me/medical/updates");
+    expect(medicalRoutes.statusEvents("school-demo")).toBe("/api/v1/schools/school-demo/medical/status-events");
+    expect(medicalRoutes.reviewSummaries("school-demo")).toBe("/api/v1/schools/school-demo/medical/review-summaries");
     expect(medicalRoutes.breakGlass("school-demo")).toBe("/api/v1/schools/school-demo/medical/emergency/break-glass");
   });
 
@@ -45,8 +49,9 @@ describe("medical operational pages", () => {
     expect(source).toContain('MapPost("/emergency/break-glass"');
     expect(source).toContain('MapPost("/incidents"');
     expect(source).toContain('MapPost("/notifications"');
+    expect(source).toContain('MapGet("/status-events"');
+    expect(source).toContain('MapGet("/review-summaries"');
     expect(source).toContain("GuardianRoutePrefix");
     expect(source).toContain("StudentRoutePrefix");
   });
 });
-

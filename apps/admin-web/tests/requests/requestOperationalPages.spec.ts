@@ -31,9 +31,13 @@ describe("request operational pages", () => {
     expect(data.guardianRequests.length).toBeGreaterThan(0);
     expect(data.studentRequests.length).toBeGreaterThan(0);
     expect(data.approvalQueue.length).toBeGreaterThan(0);
+    expect(data.statusEvents.length).toBeGreaterThan(0);
+    expect(data.reviewSummaries.length).toBeGreaterThan(0);
     expect(data.board.capabilities).toContain("requests.approval");
     expect(requestRoutes.guardian()).toBe("/api/v1/guardians/me/requests");
     expect(requestRoutes.student()).toBe("/api/v1/students/me/requests");
+    expect(requestRoutes.statusEvents("school-demo")).toBe("/api/v1/schools/school-demo/requests/status-events");
+    expect(requestRoutes.reviewSummaries("school-demo")).toBe("/api/v1/schools/school-demo/requests/review-summaries");
     expect(requestRoutes.approve("school-demo", "req-1")).toBe("/api/v1/schools/school-demo/requests/req-1/approve");
   });
 
@@ -42,6 +46,8 @@ describe("request operational pages", () => {
 
     expect(source).toContain('school.MapPost("/",');
     expect(source).toContain('MapGet("/approvals"');
+    expect(source).toContain('MapGet("/status-events"');
+    expect(source).toContain('MapGet("/review-summaries"');
     expect(source).toContain('MapGet("/early-leave"');
     expect(source).toContain('MapPost("/{requestId}/approve"');
     expect(source).toContain("GuardianRoutePrefix");

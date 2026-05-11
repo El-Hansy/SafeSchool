@@ -10,6 +10,8 @@ export const medicalRoutes = {
   incidents: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/incidents`,
   notifications: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/notifications`,
   history: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/history`,
+  statusEvents: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/status-events`,
+  reviewSummaries: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/review-summaries`,
   configuration: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/configuration`,
   resolveReview: (schoolAccountId: string, recordId: string) => `${medicalRoutes.school(schoolAccountId)}/reviews/${recordId}/resolve`,
   trace: (schoolAccountId: string, recordId: string) => `${medicalRoutes.school(schoolAccountId)}/trace/${recordId}`,
@@ -30,6 +32,8 @@ export type MedicalBoardResponse = {
   openEmergencySessions: number;
   incidents: number;
   notifications: number;
+  statusEvents: number;
+  reviewSummaries: number;
 };
 
 export type MedicalResponse = {
@@ -44,6 +48,32 @@ export type MedicalResponse = {
   auditTrail: string[];
 };
 
+export type MedicalStatusEvent = {
+  medicalRecordId: string;
+  recordReference: string;
+  studentProfileId: string;
+  recordType: string;
+  status: string;
+  severity: string;
+  sourceEventType: string;
+  notificationEligible: boolean;
+  reviewRequired: boolean;
+  occurredAt: string;
+  availableForNotificationsAt: string;
+};
+
+export type MedicalReviewSummary = {
+  medicalRecordId: string;
+  recordReference: string;
+  studentProfileId: string;
+  recordType: string;
+  status: string;
+  severity: string;
+  reviewState: string;
+  lastEventType: string;
+  updatedAt: string;
+};
+
 export type MedicalOperationsData = {
   schoolAccountId: string;
   dataSource: MedicalDataSource;
@@ -53,6 +83,8 @@ export type MedicalOperationsData = {
   incidents: MedicalResponse[];
   notifications: MedicalResponse[];
   history: MedicalResponse[];
+  statusEvents: MedicalStatusEvent[];
+  reviewSummaries: MedicalReviewSummary[];
   guardianRecords: MedicalResponse[];
   studentRecords: MedicalResponse[];
   configuration: Array<{ key: string; value: string; evidence: string }>;
@@ -79,6 +111,8 @@ export const medicalFallbackData: MedicalOperationsData = {
     openEmergencySessions: 1,
     incidents: 4,
     notifications: 6,
+    statusEvents: 4,
+    reviewSummaries: 3,
   },
   records: [
     { medicalRecordId: "med-1", recordReference: "MED-2026-0001", studentProfileId: "student-amina", recordType: "profile", status: "Verified", severity: "Routine", visibleSummary: "Allergy plan visible to nurse and guardian.", expiresAt: null, auditTrail: ["medical-profile-updated", "guardian-visibility-reviewed"] },
@@ -93,6 +127,16 @@ export const medicalFallbackData: MedicalOperationsData = {
     { medicalRecordId: "medn-1", recordReference: "MEDN-2026-0004", studentProfileId: "student-amina", recordType: "notification", status: "Queued", severity: "High", visibleSummary: "Medical notification queued for approved guardian contact.", expiresAt: null, auditTrail: ["audience-minimized", "contact-attempt-required"] },
   ],
   history: [],
+  statusEvents: [
+    { medicalRecordId: "med-1", recordReference: "MED-2026-0001", studentProfileId: "student-amina", recordType: "profile", status: "Verified", severity: "Routine", sourceEventType: "medical-profile-upserted", notificationEligible: false, reviewRequired: false, occurredAt: "2026-05-11T08:00:00Z", availableForNotificationsAt: "2026-05-11T08:02:00Z" },
+    { medicalRecordId: "emg-1", recordReference: "EMG-2026-0002", studentProfileId: "student-omar", recordType: "emergency-access", status: "Open", severity: "Urgent", sourceEventType: "mandatory-review-created", notificationEligible: false, reviewRequired: true, occurredAt: "2026-05-11T08:10:00Z", availableForNotificationsAt: "2026-05-11T08:12:00Z" },
+    { medicalRecordId: "inc-1", recordReference: "INC-2026-0003", studentProfileId: "student-amina", recordType: "incident", status: "Open", severity: "High", sourceEventType: "incident-logged", notificationEligible: true, reviewRequired: false, occurredAt: "2026-05-11T08:20:00Z", availableForNotificationsAt: "2026-05-11T08:22:00Z" },
+  ],
+  reviewSummaries: [
+    { medicalRecordId: "med-1", recordReference: "MED-2026-0001", studentProfileId: "student-amina", recordType: "profile", status: "Verified", severity: "Routine", reviewState: "none", lastEventType: "medical-profile-upserted", updatedAt: "2026-05-11T08:00:00Z" },
+    { medicalRecordId: "emg-1", recordReference: "EMG-2026-0002", studentProfileId: "student-omar", recordType: "emergency-access", status: "Open", severity: "Urgent", reviewState: "mandatory-review-created", lastEventType: "mandatory-review-created", updatedAt: "2026-05-11T08:10:00Z" },
+    { medicalRecordId: "inc-1", recordReference: "INC-2026-0003", studentProfileId: "student-amina", recordType: "incident", status: "Open", severity: "High", reviewState: "none", lastEventType: "incident-logged", updatedAt: "2026-05-11T08:20:00Z" },
+  ],
   guardianRecords: [
     { medicalRecordId: "med-1", recordReference: "MED-2026-0001", studentProfileId: "student-amina", recordType: "profile", status: "Verified", severity: "Routine", visibleSummary: "Guardian-visible medical summary is current.", expiresAt: null, auditTrail: ["minimum-necessary-view"] },
   ],
@@ -130,19 +174,21 @@ async function fetchMedicalJson<T>(path: string, schoolAccountId: string, actorR
 }
 
 export async function loadMedicalOperations(schoolAccountId = medicalFallbackData.schoolAccountId): Promise<MedicalOperationsData> {
-  const [board, records, emergency, incidents, notifications, history, guardianRecords, studentRecords] = await Promise.all([
+  const [board, records, emergency, incidents, notifications, history, statusEvents, reviewSummaries, guardianRecords, studentRecords] = await Promise.all([
     fetchMedicalJson<MedicalBoardResponse>(medicalRoutes.school(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.records(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.emergency(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.incidents(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.notifications(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.history(schoolAccountId), schoolAccountId),
+    fetchMedicalJson<MedicalStatusEvent[]>(medicalRoutes.statusEvents(schoolAccountId), schoolAccountId),
+    fetchMedicalJson<MedicalReviewSummary[]>(medicalRoutes.reviewSummaries(schoolAccountId), schoolAccountId),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.guardian(), schoolAccountId, "guardian-demo"),
     fetchMedicalJson<MedicalResponse[]>(medicalRoutes.student(), schoolAccountId, "student-demo"),
   ]);
 
-  const hasApiData = [board, records, emergency, incidents, notifications, history, guardianRecords, studentRecords].some((item) => item !== null);
-  assertApiDataAvailable("Medical operations", [board, records, emergency, incidents, notifications, history, guardianRecords, studentRecords], medicalApiBaseUrl());
+  const hasApiData = [board, records, emergency, incidents, notifications, history, statusEvents, reviewSummaries, guardianRecords, studentRecords].some((item) => item !== null);
+  assertApiDataAvailable("Medical operations", [board, records, emergency, incidents, notifications, history, statusEvents, reviewSummaries, guardianRecords, studentRecords], medicalApiBaseUrl());
   if (!hasApiData) return { ...medicalFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {
@@ -155,8 +201,9 @@ export async function loadMedicalOperations(schoolAccountId = medicalFallbackDat
     incidents: incidents ?? [],
     notifications: notifications ?? [],
     history: history ?? [],
+    statusEvents: statusEvents ?? [],
+    reviewSummaries: reviewSummaries ?? [],
     guardianRecords: guardianRecords ?? [],
     studentRecords: studentRecords ?? [],
   };
 }
-

@@ -25,6 +25,8 @@ export async function RequestsOperationsPage({ audience = "school", view = "over
         <Metric label="Open requests" value={String(data.board.open)} detail={`${requests.length} visible in this scope`} />
         <Metric label="Pending approval" value={String(data.board.pendingApproval)} detail="Human approval required" />
         <Metric label="Approved today" value={String(data.board.approvedToday)} detail="Release evidence preserved" />
+        <Metric label="Status events" value={String(data.board.statusEvents)} detail="Available for notifications" />
+        <Metric label="Review summaries" value={String(data.board.reviewSummaries)} detail="Audit and exception queues" />
         <Metric label="Capabilities" value={String(data.board.capabilities.length)} detail="Feature-controlled actions" />
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "minmax(320px, 1.2fr) minmax(300px, .8fr)", gap: 18 }}>
@@ -48,9 +50,40 @@ function SectionContent({ audience, view, data, requests }: { audience: RequestA
   if (audience !== "school") return <Stack><RequestSubmitAction audience={audience} schoolAccountId={data.schoolAccountId} /><RequestTable requests={requests} /></Stack>;
   if (view === "new") return <Stack><RequestSubmitAction audience="school" schoolAccountId={data.schoolAccountId} /><RequestTable requests={requests} /></Stack>;
   if (view === "approvals") return <Stack><RequestApprovalAction schoolAccountId={data.schoolAccountId} requests={data.approvalQueue} /><RequestTable requests={data.approvalQueue} /></Stack>;
-  if (view === "history") return <Stack><RequestApprovalAction schoolAccountId={data.schoolAccountId} requests={data.history} /><RequestTable requests={data.history} /></Stack>;
+  if (view === "history") return <Stack><RequestApprovalAction schoolAccountId={data.schoolAccountId} requests={data.history} /><RequestTable requests={data.history} /><RequestLifecycleEvidence data={data} /></Stack>;
   if (view === "configuration") return <DataTable headers={["Key", "Value", "Evidence"]} rows={data.configuration.map((item) => [item.key, item.value, item.evidence]).concat(data.starRules.map((item) => [item.ruleId, item.trigger, item.evidence.join(", ")]))} />;
   return <RequestTable requests={requests} />;
+}
+
+function RequestLifecycleEvidence({ data }: { data: RequestOperationsData }) {
+  return (
+    <Stack>
+      <h3 style={{ margin: "4px 0 0", fontSize: 20 }}>Lifecycle evidence</h3>
+      <DataTable
+        headers={["Tracking", "Type", "Status", "Event", "Notify", "Review"]}
+        rows={data.statusEvents.map((event) => [
+          event.trackingReference,
+          event.requestType,
+          event.status,
+          event.sourceEventType,
+          event.notificationEligible ? "eligible" : "held",
+          event.reviewRequired ? "required" : "not required",
+        ])}
+      />
+      <h3 style={{ margin: "4px 0 0", fontSize: 20 }}>Review summaries</h3>
+      <DataTable
+        headers={["Tracking", "Student", "Status", "Assignee", "Exception", "Last event"]}
+        rows={data.reviewSummaries.map((summary) => [
+          summary.trackingReference,
+          summary.studentProfileId,
+          summary.status,
+          summary.currentAssignee,
+          summary.exceptionState,
+          summary.lastEventType,
+        ])}
+      />
+    </Stack>
+  );
 }
 
 function Header({ title, source }: { title: string; source: RequestOperationsData["dataSource"] }) {
@@ -101,4 +134,3 @@ function panelTitle(audience: RequestAudience, view: RequestsView) {
 const cardStyle = { background: "#fff", border: "1px solid #d5dee8", borderRadius: 8, padding: 18, boxShadow: "0 1px 2px rgba(15,23,42,.08)" } satisfies React.CSSProperties;
 const thStyle = { textAlign: "left", color: "#475467", fontSize: 12, textTransform: "uppercase", padding: "10px 8px", borderBottom: "1px solid #e4e7ec" } satisfies React.CSSProperties;
 const tabStyle = (active: boolean) => ({ textDecoration: "none", color: active ? "#1d4ed8" : "#1f2937", border: `1px solid ${active ? "#3b82f6" : "#cbd5e1"}`, background: active ? "#eff6ff" : "#fff", borderRadius: 6, padding: "10px 16px", fontWeight: 800 });
-
