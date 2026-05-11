@@ -322,9 +322,9 @@ offline sync, APK release, support evidence, and Arabic/English RTL validation.
 - [X] T219 Run admin web Mobile tests with npm test in apps/admin-web/
 - [X] T220 Run admin web production build with npm run build in apps/admin-web/
 - [X] T221 Run Flutter Mobile tests with flutter test in apps/mobile/
-- [ ] T222 Run Flutter integration tests for role journeys in apps/mobile/
+- [X] T222 Run Flutter integration tests for role journeys in apps/mobile/
 - [X] T223 Build controlled Android APK in apps/mobile/
-- [ ] T224 Verify APK install on Android emulator using tests/e2e/mobile/apk-smoke-test.md
+- [X] T224 Verify APK install on Android device/emulator using tests/e2e/mobile/apk-smoke-test.md
 - [X] T225 Verify quickstart backend validation using specs/012-role-based-mobile-apk/quickstart.md
 - [X] T226 Verify quickstart admin web validation using specs/012-role-based-mobile-apk/quickstart.md
 - [X] T227 Verify quickstart mobile app validation using specs/012-role-based-mobile-apk/quickstart.md

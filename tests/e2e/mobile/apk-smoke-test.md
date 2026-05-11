@@ -1,7 +1,7 @@
 # E2E: APK Smoke Test
 
 1. Build controlled APK.
-2. Install on Android emulator.
+2. Install on Android emulator or authorized Android device.
 3. Reach sign-in screen.
 4. Select guardian role.
 5. Switch to Arabic and confirm RTL.
