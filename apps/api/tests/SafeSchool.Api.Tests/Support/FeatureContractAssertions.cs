@@ -67,22 +67,27 @@ public static class FeatureContractAssertions
         DocumentCapabilities.All.Should().Contain(DocumentCapabilities.Search);
         new DocumentBoundaryGuard().Allows("wallet").Should().BeFalse();
 
-        var documents = new DocumentWorkflowService();
-        documents.Upload(new DocumentCommand("Consent", "medical", "student-1", "medical", "doc-1"))
+        using var dbContext = CreateDbContext();
+        var documents = new DocumentWorkflowService(dbContext);
+        var uploaded = Await(documents.UploadAsync("school-live", new DocumentCommand("Consent", "guardian-consent", "student-1", "medical", "doc-1")));
+        uploaded
             .Evidence.Should().Contain("metadata-validated");
-        documents.PlaceHold("doc-1", new DocumentActionCommand("hold", "legal"))
+        Await(documents.UploadAsync("school-live", new DocumentCommand("Consent", "guardian-consent", "student-1", "medical", "doc-1")))
+            .Evidence.Should().Contain("idempotency_duplicate");
+        Await(documents.PlaceHoldAsync("school-live", uploaded.Reference, new DocumentActionCommand("hold", "legal")))
             .Status.Should().Be("LegalHold");
-        documents.Export("doc-1", new DocumentActionCommand("export", "audit"))
+        Await(documents.ExportAsync("school-live", uploaded.Reference, new DocumentActionCommand("export", "audit")))
             .Evidence.Should().Contain("scope-validated");
 
-        var certificates = new CertificateWorkflowService();
-        certificates.Issue(new CertificateCommand("attendance", "student-1", "attendance", "cert-1"))
+        var certificates = new CertificateWorkflowService(dbContext);
+        var issued = Await(certificates.IssueAsync("school-live", new CertificateCommand("attendance", "student-1", "attendance", "cert-1")));
+        issued
             .Evidence.Should().Contain("audit-written");
-        certificates.Verify("cert-1").VerificationState.Should().Be("Verified");
+        Await(certificates.VerifyAsync("school-live", issued.Reference)).VerificationState.Should().Be("Verified");
 
-        var search = new SearchWorkflowService();
-        search.Search(new SearchQueryCommand("Amina", "guardian")).SuppressedReasons.Should().Contain("restricted-counts-hidden");
-        JsonSerializer.Serialize(search.Open("entry-1")).Should().Contain("permission-revalidated");
+        var search = new SearchWorkflowService(dbContext);
+        Await(search.SearchAsync("school-live", new SearchQueryCommand("Consent", "guardian"))).SuppressedReasons.Should().Contain("restricted-counts-hidden");
+        JsonSerializer.Serialize(Await(search.OpenAsync("school-live", uploaded.Reference))).Should().Contain("permission-revalidated");
     }
 
     private static SafeSchoolDbContext CreateDbContext()

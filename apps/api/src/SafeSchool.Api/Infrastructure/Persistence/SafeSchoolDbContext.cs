@@ -11,6 +11,7 @@ using SafeSchool.Api.Features.AttendanceAccess.Reviews;
 using SafeSchool.Api.Features.AttendanceAccess.Scans;
 using SafeSchool.Api.Features.Communications;
 using SafeSchool.Api.Features.Complaints;
+using SafeSchool.Api.Features.Documents;
 using SafeSchool.Api.Features.IdentityAccess;
 using SafeSchool.Api.Features.IdentityAccess.AccessControl;
 using SafeSchool.Api.Features.IdentityAccess.Audit;
@@ -164,6 +165,13 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<OperationalCommunicationRecord> OperationalCommunications => Set<OperationalCommunicationRecord>();
     public DbSet<OperationalCommunicationEvent> OperationalCommunicationEvents => Set<OperationalCommunicationEvent>();
     public DbSet<OperationalCommunicationIdempotencyRecord> OperationalCommunicationIdempotencyRecords => Set<OperationalCommunicationIdempotencyRecord>();
+    public DbSet<OperationalDocumentRecord> OperationalDocuments => Set<OperationalDocumentRecord>();
+    public DbSet<OperationalDocumentEvent> OperationalDocumentEvents => Set<OperationalDocumentEvent>();
+    public DbSet<OperationalDocumentIdempotencyRecord> OperationalDocumentIdempotencyRecords => Set<OperationalDocumentIdempotencyRecord>();
+    public DbSet<OperationalCertificateRecord> OperationalCertificates => Set<OperationalCertificateRecord>();
+    public DbSet<OperationalCertificateEvent> OperationalCertificateEvents => Set<OperationalCertificateEvent>();
+    public DbSet<OperationalCertificateIdempotencyRecord> OperationalCertificateIdempotencyRecords => Set<OperationalCertificateIdempotencyRecord>();
+    public DbSet<OperationalSearchLog> OperationalSearchLogs => Set<OperationalSearchLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -175,5 +183,6 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
         modelBuilder.ApplyMobileModel();
         modelBuilder.ApplyComplaintsOperationalModel();
         modelBuilder.ApplyCommunicationsOperationalModel();
+        modelBuilder.ApplyDocumentsOperationalModel();
     }
 }
