@@ -32,9 +32,12 @@ public static class RequestsModule
         school.MapGet("/early-leave", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "early-leave", ct))).RequireCapability(RequestCapabilities.EarlyLeave, RequestPermissions.Read);
         school.MapGet("/early-leave/{requestId}/release-eligibility", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ReleaseEligibilityAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.EarlyLeave, RequestPermissions.ReleaseRead);
         school.MapGet("/approvals", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ApprovalsAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.Approval, RequestPermissions.Decide);
-        school.MapGet("/history", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.HistoryRead);
-        school.MapGet("/status-events", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.StatusEventsAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.HistoryRead);
-        school.MapGet("/review-summaries", async (string schoolAccountId, RequestWorkflowService service, CancellationToken ct) => Results.Ok(await service.ReviewSummariesAsync(schoolAccountId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.AuditRead);
+        school.MapGet("/history", async (string schoolAccountId, string? studentProfileId, string? requestType, string? status, string? submitterRole, RequestWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.HistoryAsync(schoolAccountId, new RequestHistoryFilter(studentProfileId, requestType, status, submitterRole), ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.HistoryRead);
+        school.MapGet("/status-events", async (string schoolAccountId, string? studentProfileId, string? requestType, string? status, string? sourceEventType, bool? notificationEligible, bool? reviewRequired, RequestWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.StatusEventsAsync(schoolAccountId, new RequestStatusEventFilter(studentProfileId, requestType, status, sourceEventType, notificationEligible, reviewRequired), ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.HistoryRead);
+        school.MapGet("/review-summaries", async (string schoolAccountId, string? studentProfileId, string? requestType, string? status, string? currentAssignee, string? exceptionState, string? starOutcome, RequestWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.ReviewSummariesAsync(schoolAccountId, new RequestReviewSummaryFilter(studentProfileId, requestType, status, currentAssignee, exceptionState, starOutcome), ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.AuditRead);
         school.MapGet("/configuration", (RequestWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(RequestCapabilities.Configuration, RequestPermissions.Configure);
         school.MapGet("/configuration/star-rules/{ruleId}", (string ruleId, RequestWorkflowService service) => Results.Ok(service.StarRule(ruleId))).RequireCapability(RequestCapabilities.StarRules, RequestPermissions.Configure);
         school.MapGet("/{requestId}", async (string schoolAccountId, string requestId, RequestWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.DetailAsync(schoolAccountId, requestId, ct))).RequireCapability(RequestCapabilities.History, RequestPermissions.Read);
@@ -83,6 +86,9 @@ public sealed record RequestSubmissionRequest(
 public sealed record RequestActionRequest(string Action, string Reason, string ActorId = "request-approver", string ClientRequestId = "request-action");
 
 public sealed record RequestResponse(string RequestId, string TrackingReference, string RequestType, string Status, string Priority, string StudentProfileId, string VisibleSummary, DateTimeOffset? StartsAt, DateTimeOffset? EndsAt, IReadOnlyList<string> AuditTrail);
+public sealed record RequestHistoryFilter(string? StudentProfileId = null, string? RequestType = null, string? Status = null, string? SubmitterRole = null);
+public sealed record RequestStatusEventFilter(string? StudentProfileId = null, string? RequestType = null, string? Status = null, string? SourceEventType = null, bool? NotificationEligible = null, bool? ReviewRequired = null);
+public sealed record RequestReviewSummaryFilter(string? StudentProfileId = null, string? RequestType = null, string? Status = null, string? CurrentAssignee = null, string? ExceptionState = null, string? StarOutcome = null);
 
 public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
 {
@@ -109,27 +115,56 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
     }
 
     public Task<IReadOnlyList<RequestResponse>> ApprovalsAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        ListAsync(tenantId, ["Submitted", "PendingApproval", "NeedsReview"], cancellationToken);
+        ListAsync(tenantId, ["Submitted", "PendingApproval", "NeedsReview"], new RequestHistoryFilter(), cancellationToken);
 
     public Task<IReadOnlyList<RequestResponse>> HistoryAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        ListAsync(tenantId, OpenStatuses, cancellationToken);
+        HistoryAsync(tenantId, new RequestHistoryFilter(), cancellationToken);
+
+    public Task<IReadOnlyList<RequestResponse>> HistoryAsync(string tenantId, RequestHistoryFilter filter, CancellationToken cancellationToken = default) =>
+        ListAsync(tenantId, OpenStatuses, filter, cancellationToken);
 
     public Task<IReadOnlyList<RequestResponse>> ByTypeAsync(string tenantId, string requestType, CancellationToken cancellationToken = default) =>
         ListByTypeAsync(tenantId, requestType, cancellationToken);
 
-    public async Task<IReadOnlyList<OperationalRequestStatusEvent>> StatusEventsAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        await dbContext.OperationalRequestStatusEvents.AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+    public Task<IReadOnlyList<OperationalRequestStatusEvent>> StatusEventsAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        StatusEventsAsync(tenantId, new RequestStatusEventFilter(), cancellationToken);
+
+    public async Task<IReadOnlyList<OperationalRequestStatusEvent>> StatusEventsAsync(string tenantId, RequestStatusEventFilter filter, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.OperationalRequestStatusEvents.AsNoTracking()
+            .Where(x => x.TenantId == tenantId);
+        if (!string.IsNullOrWhiteSpace(filter.StudentProfileId)) query = query.Where(x => x.StudentProfileId == filter.StudentProfileId);
+        if (!string.IsNullOrWhiteSpace(filter.RequestType)) query = query.Where(x => x.RequestType == NormalizeType(filter.RequestType));
+        if (!string.IsNullOrWhiteSpace(filter.Status)) query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.SourceEventType)) query = query.Where(x => x.SourceEventType == filter.SourceEventType);
+        if (filter.NotificationEligible is not null) query = query.Where(x => x.NotificationEligible == filter.NotificationEligible);
+        if (filter.ReviewRequired is not null) query = query.Where(x => x.ReviewRequired == filter.ReviewRequired);
+
+        return await query
             .OrderByDescending(x => x.OccurredAt)
             .Take(100)
             .ToListAsync(cancellationToken);
+    }
 
-    public async Task<IReadOnlyList<OperationalRequestReviewSummary>> ReviewSummariesAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        await dbContext.OperationalRequestReviewSummaries.AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+    public Task<IReadOnlyList<OperationalRequestReviewSummary>> ReviewSummariesAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        ReviewSummariesAsync(tenantId, new RequestReviewSummaryFilter(), cancellationToken);
+
+    public async Task<IReadOnlyList<OperationalRequestReviewSummary>> ReviewSummariesAsync(string tenantId, RequestReviewSummaryFilter filter, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.OperationalRequestReviewSummaries.AsNoTracking()
+            .Where(x => x.TenantId == tenantId);
+        if (!string.IsNullOrWhiteSpace(filter.StudentProfileId)) query = query.Where(x => x.StudentProfileId == filter.StudentProfileId);
+        if (!string.IsNullOrWhiteSpace(filter.RequestType)) query = query.Where(x => x.RequestType == NormalizeType(filter.RequestType));
+        if (!string.IsNullOrWhiteSpace(filter.Status)) query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.CurrentAssignee)) query = query.Where(x => x.CurrentAssignee == filter.CurrentAssignee);
+        if (!string.IsNullOrWhiteSpace(filter.ExceptionState)) query = query.Where(x => x.ExceptionState == filter.ExceptionState);
+        if (!string.IsNullOrWhiteSpace(filter.StarOutcome)) query = query.Where(x => x.StarOutcome == filter.StarOutcome);
+
+        return await query
             .OrderByDescending(x => x.UpdatedAt)
             .Take(100)
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<RequestResponse>> AudienceSummaryAsync(string tenantId, string submitterRole, CancellationToken cancellationToken = default, string? studentProfileId = null)
     {
@@ -300,11 +335,17 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         return new { traceId = $"trace-{record.Id:N}", references = record.Events.OrderBy(x => x.OccurredAt).Select(x => x.EventType).ToArray(), status = record.Status };
     }
 
-    private async Task<IReadOnlyList<RequestResponse>> ListAsync(string tenantId, string[] statuses, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<RequestResponse>> ListAsync(string tenantId, string[] statuses, RequestHistoryFilter filter, CancellationToken cancellationToken)
     {
-        var records = await dbContext.OperationalRequests.AsNoTracking()
+        var query = dbContext.OperationalRequests.AsNoTracking()
             .Include(x => x.Events)
-            .Where(x => x.TenantId == tenantId && statuses.Contains(x.Status))
+            .Where(x => x.TenantId == tenantId && statuses.Contains(x.Status));
+        if (!string.IsNullOrWhiteSpace(filter.StudentProfileId)) query = query.Where(x => x.StudentProfileId == filter.StudentProfileId);
+        if (!string.IsNullOrWhiteSpace(filter.RequestType)) query = query.Where(x => x.RequestType == NormalizeType(filter.RequestType));
+        if (!string.IsNullOrWhiteSpace(filter.Status)) query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.SubmitterRole)) query = query.Where(x => x.SubmitterRole == filter.SubmitterRole);
+
+        var records = await query
             .OrderByDescending(x => x.UpdatedAt)
             .Take(50)
             .ToListAsync(cancellationToken);

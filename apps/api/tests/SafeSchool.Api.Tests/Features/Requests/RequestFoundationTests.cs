@@ -67,6 +67,15 @@ public sealed class RequestFoundationTests
         var summaries = await service.ReviewSummariesAsync("school-demo");
         summaries.Should().Contain(x => x.TrackingReference == submitted.TrackingReference && x.Status == "Approved" && x.LastEventType == "final_state_decision_rejected");
 
+        var filteredHistory = await service.HistoryAsync("school-demo", new RequestHistoryFilter(StudentProfileId: "student-1", RequestType: "early-leave", Status: "Approved"));
+        filteredHistory.Should().ContainSingle(x => x.TrackingReference == submitted.TrackingReference);
+
+        var filteredStatusEvents = await service.StatusEventsAsync("school-demo", new RequestStatusEventFilter(RequestType: "early-leave", SourceEventType: "approved", NotificationEligible: true));
+        filteredStatusEvents.Should().ContainSingle(x => x.TrackingReference == submitted.TrackingReference);
+
+        var filteredSummaries = await service.ReviewSummariesAsync("school-demo", new RequestReviewSummaryFilter(RequestType: "early-leave", ExceptionState: "overlap_manual_review"));
+        filteredSummaries.Should().ContainSingle(x => x.TrackingReference == overlapping.TrackingReference);
+
         var missingRequiredFields = await service.SubmitAsync("school-demo", request with { StudentProfileId = "", ClientRequestId = "req-4" });
         missingRequiredFields.Status.Should().Be("ValidationFailed");
         missingRequiredFields.AuditTrail.Should().Contain("validation_failed");

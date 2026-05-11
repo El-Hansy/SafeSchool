@@ -38,6 +38,8 @@ describe("request operational pages", () => {
     expect(requestRoutes.student()).toBe("/api/v1/students/me/requests");
     expect(requestRoutes.statusEvents("school-demo")).toBe("/api/v1/schools/school-demo/requests/status-events");
     expect(requestRoutes.reviewSummaries("school-demo")).toBe("/api/v1/schools/school-demo/requests/review-summaries");
+    expect(requestRoutes.history("school-demo", { requestType: "early-leave", status: "Approved" })).toBe("/api/v1/schools/school-demo/requests/history?requestType=early-leave&status=Approved");
+    expect(requestRoutes.statusEvents("school-demo", { notificationEligible: true })).toBe("/api/v1/schools/school-demo/requests/status-events?notificationEligible=true");
     expect(requestRoutes.approve("school-demo", "req-1")).toBe("/api/v1/schools/school-demo/requests/req-1/approve");
   });
 

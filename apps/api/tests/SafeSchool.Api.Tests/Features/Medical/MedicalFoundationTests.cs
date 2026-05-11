@@ -78,6 +78,15 @@ public sealed class MedicalFoundationTests
         summaries.Should().Contain(x => x.RecordReference == emergency.RecordReference && x.Status == "Closed" && x.LastEventType == "emergency-access-closed");
         summaries.Should().Contain(x => x.RecordReference == highIncident.RecordReference && x.Severity == "High");
 
+        var filteredHistory = await service.HistoryAsync("school-demo", new MedicalHistoryFilter(StudentProfileId: "student-1", RecordType: "incident", Severity: "High"));
+        filteredHistory.Should().ContainSingle(x => x.RecordReference == highIncident.RecordReference);
+
+        var filteredStatusEvents = await service.StatusEventsAsync("school-demo", new MedicalStatusEventFilter(RecordType: "incident", Severity: "High", NotificationEligible: true));
+        filteredStatusEvents.Should().ContainSingle(x => x.RecordReference == highIncident.RecordReference);
+
+        var filteredSummaries = await service.ReviewSummariesAsync("school-demo", new MedicalReviewSummaryFilter(RecordType: "emergency-access", ReviewState: "none"));
+        filteredSummaries.Should().ContainSingle(x => x.RecordReference == emergency.RecordReference && x.Status == "Closed");
+
         var guardianVisible = await service.AudienceSummaryAsync("school-demo", "guardian");
         guardianVisible.Should().Contain(x => x.RecordType == "profile");
         guardianVisible.Should().OnlyContain(x => x.AuditTrail.Contains("minimum-necessary-view"));

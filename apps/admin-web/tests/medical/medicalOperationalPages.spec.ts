@@ -39,6 +39,8 @@ describe("medical operational pages", () => {
     expect(medicalRoutes.guardianUpdates()).toBe("/api/v1/guardians/me/medical/updates");
     expect(medicalRoutes.statusEvents("school-demo")).toBe("/api/v1/schools/school-demo/medical/status-events");
     expect(medicalRoutes.reviewSummaries("school-demo")).toBe("/api/v1/schools/school-demo/medical/review-summaries");
+    expect(medicalRoutes.history("school-demo", { recordType: "incident", severity: "High" })).toBe("/api/v1/schools/school-demo/medical/history?recordType=incident&severity=High");
+    expect(medicalRoutes.reviewSummaries("school-demo", { reviewState: "mandatory-review-created" })).toBe("/api/v1/schools/school-demo/medical/review-summaries?reviewState=mandatory-review-created");
     expect(medicalRoutes.breakGlass("school-demo")).toBe("/api/v1/schools/school-demo/medical/emergency/break-glass");
   });
 

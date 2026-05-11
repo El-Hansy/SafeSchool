@@ -1,5 +1,18 @@
 import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
+type QueryValue = string | number | boolean | null | undefined;
+
+function withQuery(path: string, query?: Record<string, QueryValue>) {
+  if (!query) return path;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== null && value !== undefined && value !== "") params.set(key, String(value));
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${path}?${queryString}` : path;
+}
+
 export const medicalRoutes = {
   school: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/medical`,
   records: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/records`,
@@ -9,9 +22,9 @@ export const medicalRoutes = {
   breakGlass: (schoolAccountId: string) => `${medicalRoutes.emergency(schoolAccountId)}/break-glass`,
   incidents: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/incidents`,
   notifications: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/notifications`,
-  history: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/history`,
-  statusEvents: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/status-events`,
-  reviewSummaries: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/review-summaries`,
+  history: (schoolAccountId: string, query?: Record<string, QueryValue>) => withQuery(`${medicalRoutes.school(schoolAccountId)}/history`, query),
+  statusEvents: (schoolAccountId: string, query?: Record<string, QueryValue>) => withQuery(`${medicalRoutes.school(schoolAccountId)}/status-events`, query),
+  reviewSummaries: (schoolAccountId: string, query?: Record<string, QueryValue>) => withQuery(`${medicalRoutes.school(schoolAccountId)}/review-summaries`, query),
   configuration: (schoolAccountId: string) => `${medicalRoutes.school(schoolAccountId)}/configuration`,
   resolveReview: (schoolAccountId: string, recordId: string) => `${medicalRoutes.school(schoolAccountId)}/reviews/${recordId}/resolve`,
   trace: (schoolAccountId: string, recordId: string) => `${medicalRoutes.school(schoolAccountId)}/trace/${recordId}`,

@@ -1,13 +1,26 @@
 import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
+type QueryValue = string | number | boolean | null | undefined;
+
+function withQuery(path: string, query?: Record<string, QueryValue>) {
+  if (!query) return path;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== null && value !== undefined && value !== "") params.set(key, String(value));
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${path}?${queryString}` : path;
+}
+
 export const requestRoutes = {
   school: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/requests`,
   outing: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/outing`,
   earlyLeave: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/early-leave`,
   approvals: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/approvals`,
-  history: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/history`,
-  statusEvents: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/status-events`,
-  reviewSummaries: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/review-summaries`,
+  history: (schoolAccountId: string, query?: Record<string, QueryValue>) => withQuery(`${requestRoutes.school(schoolAccountId)}/history`, query),
+  statusEvents: (schoolAccountId: string, query?: Record<string, QueryValue>) => withQuery(`${requestRoutes.school(schoolAccountId)}/status-events`, query),
+  reviewSummaries: (schoolAccountId: string, query?: Record<string, QueryValue>) => withQuery(`${requestRoutes.school(schoolAccountId)}/review-summaries`, query),
   configuration: (schoolAccountId: string) => `${requestRoutes.school(schoolAccountId)}/configuration`,
   starRule: (schoolAccountId: string, ruleId: string) => `${requestRoutes.configuration(schoolAccountId)}/star-rules/${ruleId}`,
   detail: (schoolAccountId: string, requestId: string) => `${requestRoutes.school(schoolAccountId)}/${requestId}`,

@@ -39,9 +39,12 @@ public static class MedicalModule
         school.MapPost("/incidents", async (string schoolAccountId, MedicalIncidentRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.LogIncidentAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.IncidentLogging, MedicalPermissions.IncidentsCreate);
         school.MapGet("/notifications", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ByTypeAsync(schoolAccountId, "notification", ct))).RequireCapability(MedicalCapabilities.Notifications, MedicalPermissions.NotificationsRead);
         school.MapPost("/notifications", async (string schoolAccountId, MedicalNotificationRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.CreateNotificationAsync(schoolAccountId, request, ct))).RequireCapability(MedicalCapabilities.Notifications, MedicalPermissions.NotificationsCreate);
-        school.MapGet("/history", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.HistoryAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.HistoryRead);
-        school.MapGet("/status-events", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.StatusEventsAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.HistoryRead);
-        school.MapGet("/review-summaries", async (string schoolAccountId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.ReviewSummariesAsync(schoolAccountId, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.AuditRead);
+        school.MapGet("/history", async (string schoolAccountId, string? studentProfileId, string? recordType, string? status, string? severity, MedicalWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.HistoryAsync(schoolAccountId, new MedicalHistoryFilter(studentProfileId, recordType, status, severity), ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.HistoryRead);
+        school.MapGet("/status-events", async (string schoolAccountId, string? studentProfileId, string? recordType, string? status, string? severity, string? sourceEventType, bool? notificationEligible, bool? reviewRequired, MedicalWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.StatusEventsAsync(schoolAccountId, new MedicalStatusEventFilter(studentProfileId, recordType, status, severity, sourceEventType, notificationEligible, reviewRequired), ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.HistoryRead);
+        school.MapGet("/review-summaries", async (string schoolAccountId, string? studentProfileId, string? recordType, string? status, string? severity, string? reviewState, MedicalWorkflowService service, CancellationToken ct) =>
+            Results.Ok(await service.ReviewSummariesAsync(schoolAccountId, new MedicalReviewSummaryFilter(studentProfileId, recordType, status, severity, reviewState), ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.AuditRead);
         school.MapGet("/configuration", (MedicalWorkflowService service) => Results.Ok(service.Configuration())).RequireCapability(MedicalCapabilities.Configuration, MedicalPermissions.ConfigurationManage);
         school.MapPost("/reviews/{recordId}/resolve", async (string schoolAccountId, string recordId, MedicalActionRequest request, MedicalWorkflowService service, CancellationToken ct) => ToEndpointResult(await service.ResolveReviewAsync(schoolAccountId, recordId, request, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.ReviewManage);
         school.MapGet("/trace/{recordId}", async (string schoolAccountId, string recordId, MedicalWorkflowService service, CancellationToken ct) => Results.Ok(await service.TraceAsync(schoolAccountId, recordId, ct))).RequireCapability(MedicalCapabilities.History, MedicalPermissions.AuditRead);
@@ -76,6 +79,9 @@ public sealed record MedicalIncidentRequest(string StudentProfileId, string Seve
 public sealed record MedicalNotificationRequest(string StudentProfileId, string SourceReference, string Urgency, string Audience, string ClientRequestId);
 public sealed record MedicalActionRequest(string Action, string Reason, string ActorId = "medical-reviewer", string ClientRequestId = "medical-action");
 public sealed record MedicalResponse(string MedicalRecordId, string RecordReference, string StudentProfileId, string RecordType, string Status, string Severity, string VisibleSummary, DateTimeOffset? ExpiresAt, IReadOnlyList<string> AuditTrail);
+public sealed record MedicalHistoryFilter(string? StudentProfileId = null, string? RecordType = null, string? Status = null, string? Severity = null);
+public sealed record MedicalStatusEventFilter(string? StudentProfileId = null, string? RecordType = null, string? Status = null, string? Severity = null, string? SourceEventType = null, bool? NotificationEligible = null, bool? ReviewRequired = null);
+public sealed record MedicalReviewSummaryFilter(string? StudentProfileId = null, string? RecordType = null, string? Status = null, string? Severity = null, string? ReviewState = null);
 
 public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
 {
@@ -103,19 +109,45 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
     public Task<IReadOnlyList<MedicalResponse>> ByTypeAsync(string tenantId, string recordType, CancellationToken cancellationToken = default) =>
         ListByTypeAsync(tenantId, recordType, cancellationToken);
 
-    public async Task<IReadOnlyList<OperationalMedicalStatusEvent>> StatusEventsAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        await dbContext.OperationalMedicalStatusEvents.AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+    public Task<IReadOnlyList<OperationalMedicalStatusEvent>> StatusEventsAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        StatusEventsAsync(tenantId, new MedicalStatusEventFilter(), cancellationToken);
+
+    public async Task<IReadOnlyList<OperationalMedicalStatusEvent>> StatusEventsAsync(string tenantId, MedicalStatusEventFilter filter, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.OperationalMedicalStatusEvents.AsNoTracking()
+            .Where(x => x.TenantId == tenantId);
+        if (!string.IsNullOrWhiteSpace(filter.StudentProfileId)) query = query.Where(x => x.StudentProfileId == filter.StudentProfileId);
+        if (!string.IsNullOrWhiteSpace(filter.RecordType)) query = query.Where(x => x.RecordType == filter.RecordType);
+        if (!string.IsNullOrWhiteSpace(filter.Status)) query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.Severity)) query = query.Where(x => x.Severity == filter.Severity);
+        if (!string.IsNullOrWhiteSpace(filter.SourceEventType)) query = query.Where(x => x.SourceEventType == filter.SourceEventType);
+        if (filter.NotificationEligible is not null) query = query.Where(x => x.NotificationEligible == filter.NotificationEligible);
+        if (filter.ReviewRequired is not null) query = query.Where(x => x.ReviewRequired == filter.ReviewRequired);
+
+        return await query
             .OrderByDescending(x => x.OccurredAt)
             .Take(100)
             .ToListAsync(cancellationToken);
+    }
 
-    public async Task<IReadOnlyList<OperationalMedicalReviewSummary>> ReviewSummariesAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        await dbContext.OperationalMedicalReviewSummaries.AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+    public Task<IReadOnlyList<OperationalMedicalReviewSummary>> ReviewSummariesAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        ReviewSummariesAsync(tenantId, new MedicalReviewSummaryFilter(), cancellationToken);
+
+    public async Task<IReadOnlyList<OperationalMedicalReviewSummary>> ReviewSummariesAsync(string tenantId, MedicalReviewSummaryFilter filter, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.OperationalMedicalReviewSummaries.AsNoTracking()
+            .Where(x => x.TenantId == tenantId);
+        if (!string.IsNullOrWhiteSpace(filter.StudentProfileId)) query = query.Where(x => x.StudentProfileId == filter.StudentProfileId);
+        if (!string.IsNullOrWhiteSpace(filter.RecordType)) query = query.Where(x => x.RecordType == filter.RecordType);
+        if (!string.IsNullOrWhiteSpace(filter.Status)) query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.Severity)) query = query.Where(x => x.Severity == filter.Severity);
+        if (!string.IsNullOrWhiteSpace(filter.ReviewState)) query = query.Where(x => x.ReviewState == filter.ReviewState);
+
+        return await query
             .OrderByDescending(x => x.UpdatedAt)
             .Take(100)
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<MedicalResponse>> StudentRecordsAsync(string tenantId, string studentProfileId, CancellationToken cancellationToken = default)
     {
@@ -147,7 +179,10 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
     }
 
     public Task<IReadOnlyList<MedicalResponse>> HistoryAsync(string tenantId, CancellationToken cancellationToken = default) =>
-        ListAllAsync(tenantId, cancellationToken);
+        HistoryAsync(tenantId, new MedicalHistoryFilter(), cancellationToken);
+
+    public Task<IReadOnlyList<MedicalResponse>> HistoryAsync(string tenantId, MedicalHistoryFilter filter, CancellationToken cancellationToken = default) =>
+        ListAllAsync(tenantId, filter, cancellationToken);
 
     public object Configuration() => new { emergencyAccessMinutes = 30, offlineCacheHours = 24, breakGlassRoles = new[] { "school-nurse", "emergency-authorized-staff" }, evidence = new[] { "tenant-scoped", "privacy-reviewed", "audit-required" } };
 
@@ -366,11 +401,17 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
         return records.Select(x => ToResponse(x)).ToList();
     }
 
-    private async Task<IReadOnlyList<MedicalResponse>> ListAllAsync(string tenantId, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<MedicalResponse>> ListAllAsync(string tenantId, MedicalHistoryFilter filter, CancellationToken cancellationToken)
     {
-        var records = await dbContext.OperationalMedicalRecords.AsNoTracking()
+        var query = dbContext.OperationalMedicalRecords.AsNoTracking()
             .Include(x => x.Events)
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId);
+        if (!string.IsNullOrWhiteSpace(filter.StudentProfileId)) query = query.Where(x => x.StudentProfileId == filter.StudentProfileId);
+        if (!string.IsNullOrWhiteSpace(filter.RecordType)) query = query.Where(x => x.RecordType == filter.RecordType);
+        if (!string.IsNullOrWhiteSpace(filter.Status)) query = query.Where(x => x.Status == filter.Status);
+        if (!string.IsNullOrWhiteSpace(filter.Severity)) query = query.Where(x => x.Severity == filter.Severity);
+
+        var records = await query
             .OrderByDescending(x => x.UpdatedAt)
             .Take(50)
             .ToListAsync(cancellationToken);
