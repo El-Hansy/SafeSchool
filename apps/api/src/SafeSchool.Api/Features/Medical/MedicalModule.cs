@@ -368,12 +368,30 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
         {
             return ValidationFailed("Review or emergency action reason is required.");
         }
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId))
+        {
+            return ValidationFailed("Client request id is required for idempotency.");
+        }
 
         var record = await FindAsync(tenantId, recordId, cancellationToken);
         if (record is null) return Missing(recordId);
         if (!string.IsNullOrWhiteSpace(expectedRecordType) && record.RecordType != expectedRecordType)
         {
             return ValidationFailed($"Action requires a {expectedRecordType} record.");
+        }
+
+        var command = $"{tenantId}:medical-action:{record.Id:N}";
+        var fingerprint = $"{eventType}|{status}|{request.ActorId}|{request.Reason}|{expectedRecordType}".ToUpperInvariant();
+        var idempotency = await dbContext.OperationalMedicalIdempotencyRecords
+            .SingleOrDefaultAsync(x => x.TenantId == tenantId && x.Command == command && x.ClientRequestId == request.ClientRequestId, cancellationToken);
+        if (idempotency is not null)
+        {
+            if (idempotency.Fingerprint == fingerprint) return ToResponse(record, ["idempotency_duplicate"]);
+
+            dbContext.OperationalMedicalEvents.Add(Event(tenantId, record.Id, "idempotency_conflict", request.ActorId, "Action client request id reused with different medical action details."));
+            await RecordLifecycleEvidenceAsync(tenantId, record, "idempotency_conflict", false, true, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return ToResponse(record, ["idempotency_conflict"]);
         }
 
         record.Status = status;
@@ -386,6 +404,15 @@ public sealed class MedicalWorkflowService(SafeSchoolDbContext dbContext)
         record.UpdatedAt = DateTimeOffset.UtcNow;
         dbContext.OperationalMedicalEvents.Add(Event(tenantId, record.Id, eventType, request.ActorId, request.Reason));
         await RecordLifecycleEvidenceAsync(tenantId, record, eventType, IsNotificationEligible(record, [eventType]), IsReviewRequired(record, [eventType]), cancellationToken);
+        dbContext.OperationalMedicalIdempotencyRecords.Add(new OperationalMedicalIdempotencyRecord
+        {
+            TenantId = tenantId,
+            Command = command,
+            ClientRequestId = request.ClientRequestId,
+            Fingerprint = fingerprint,
+            MedicalRecordId = record.Id,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToResponse(record, [request.Reason]);
     }

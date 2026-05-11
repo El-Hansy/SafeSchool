@@ -53,6 +53,14 @@ public sealed class RequestFoundationTests
         approved.Status.Should().Be("Approved");
         approved.AuditTrail.Should().Contain("approved");
 
+        var duplicateDecision = await service.ApproveAsync("school-demo", submitted.TrackingReference, new RequestActionRequest("approve", "Validated guardian pickup", "approver-1", "approve-1"));
+        duplicateDecision.Status.Should().Be("Approved");
+        duplicateDecision.AuditTrail.Should().Contain("idempotency_duplicate");
+
+        var conflictingDecisionRetry = await service.ApproveAsync("school-demo", submitted.TrackingReference, new RequestActionRequest("approve", "Changed pickup evidence", "approver-1", "approve-1"));
+        conflictingDecisionRetry.Status.Should().Be("Approved");
+        conflictingDecisionRetry.AuditTrail.Should().Contain("idempotency_conflict");
+
         var finalStateRejected = await service.RejectAsync("school-demo", submitted.TrackingReference, new RequestActionRequest("reject", "Second decision rejected", "approver-2", "reject-1"));
         finalStateRejected.Status.Should().Be("FinalStateRejected");
         finalStateRejected.AuditTrail.Should().Contain("final_state_decision_rejected");

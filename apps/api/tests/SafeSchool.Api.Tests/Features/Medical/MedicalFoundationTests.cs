@@ -62,6 +62,14 @@ public sealed class MedicalFoundationTests
         reconfirmed.Status.Should().Be("Open");
         reconfirmed.AuditTrail.Should().Contain("emergency-access-reconfirmed");
 
+        var duplicateReconfirm = await service.ReconfirmEmergencyAccessAsync("school-demo", emergency.RecordReference, new MedicalActionRequest("reconfirm", "Emergency still active", "nurse-1", "emg-reconfirm-1"));
+        duplicateReconfirm.Status.Should().Be("Open");
+        duplicateReconfirm.AuditTrail.Should().Contain("idempotency_duplicate");
+
+        var conflictingReconfirmRetry = await service.ReconfirmEmergencyAccessAsync("school-demo", emergency.RecordReference, new MedicalActionRequest("reconfirm", "Different emergency reason", "nurse-1", "emg-reconfirm-1"));
+        conflictingReconfirmRetry.Status.Should().Be("Open");
+        conflictingReconfirmRetry.AuditTrail.Should().Contain("idempotency_conflict");
+
         var closed = await service.CloseEmergencyAccessAsync("school-demo", emergency.RecordReference, new MedicalActionRequest("close", "Student stabilized", "nurse-1", "emg-close-1"));
         closed.Status.Should().Be("Closed");
         closed.AuditTrail.Should().Contain("emergency-access-closed");

@@ -370,13 +370,41 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         {
             return ValidationFailed("Decision reason is required.");
         }
+        if (string.IsNullOrWhiteSpace(request.ClientRequestId))
+        {
+            return ValidationFailed("Client request id is required for idempotency.");
+        }
 
         var record = await FindAsync(tenantId, requestId, cancellationToken);
         if (record is null) return Missing(requestId);
+
+        var command = $"{tenantId}:request-action:{record.Id:N}";
+        var fingerprint = $"{eventType}|{status}|{request.ActorId}|{request.Reason}".ToUpperInvariant();
+        var idempotency = await dbContext.OperationalRequestIdempotencyRecords
+            .SingleOrDefaultAsync(x => x.TenantId == tenantId && x.Command == command && x.ClientRequestId == request.ClientRequestId, cancellationToken);
+        if (idempotency is not null)
+        {
+            if (idempotency.Fingerprint == fingerprint) return ToResponse(record, ["idempotency_duplicate"]);
+
+            dbContext.OperationalRequestEvents.Add(Event(tenantId, record.Id, "idempotency_conflict", request.ActorId, "Action client request id reused with different decision details."));
+            await RecordLifecycleEvidenceAsync(tenantId, record, "idempotency_conflict", false, true, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return ToResponse(record, ["idempotency_conflict"]);
+        }
+
         if (FinalStatuses.Contains(record.Status))
         {
             dbContext.OperationalRequestEvents.Add(Event(tenantId, record.Id, "final_state_decision_rejected", request.ActorId, $"Attempted {eventType} after final status {record.Status}."));
             await RecordLifecycleEvidenceAsync(tenantId, record, "final_state_decision_rejected", false, true, cancellationToken);
+            dbContext.OperationalRequestIdempotencyRecords.Add(new OperationalRequestIdempotencyRecord
+            {
+                TenantId = tenantId,
+                Command = command,
+                ClientRequestId = request.ClientRequestId,
+                Fingerprint = fingerprint,
+                RequestId = record.Id,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
             await dbContext.SaveChangesAsync(cancellationToken);
             return ToResponse(record, ["final_state_decision_rejected"]) with
             {
@@ -390,6 +418,15 @@ public sealed class RequestWorkflowService(SafeSchoolDbContext dbContext)
         record.UpdatedAt = DateTimeOffset.UtcNow;
         dbContext.OperationalRequestEvents.Add(Event(tenantId, record.Id, eventType, request.ActorId, request.Reason));
         await RecordLifecycleEvidenceAsync(tenantId, record, eventType, true, status == "NeedsReview", cancellationToken);
+        dbContext.OperationalRequestIdempotencyRecords.Add(new OperationalRequestIdempotencyRecord
+        {
+            TenantId = tenantId,
+            Command = command,
+            ClientRequestId = request.ClientRequestId,
+            Fingerprint = fingerprint,
+            RequestId = record.Id,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToResponse(record, [request.Reason]);
     }
