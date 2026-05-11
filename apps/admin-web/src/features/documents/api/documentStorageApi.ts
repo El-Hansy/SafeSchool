@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export const documentsRoutes = {
   documents: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/documents`,
   documentDetail: (schoolAccountId: string, documentId: string) => `${documentsRoutes.documents(schoolAccountId)}/${documentId}`,
@@ -196,6 +198,7 @@ export async function loadDocumentsOperations(schoolAccountId = documentsFallbac
   ]);
 
   const hasApiData = [board, guardianDocuments, studentDocuments, certificates, documentCategories, certificateTypes, indexHealth].some((item) => item !== null);
+  assertApiDataAvailable("Documents operations", [board, guardianDocuments, studentDocuments, certificates, documentCategories, certificateTypes, indexHealth], documentsApiBaseUrl());
   if (!hasApiData) return { ...documentsFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {

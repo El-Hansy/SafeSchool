@@ -14,9 +14,12 @@ configuration supplied by the deployment environment.
 - `Wallet__PaymentProvider__Adapter=ConfiguredProvider`
 - `Wallet__PaymentProvider__RequireWebhookSignature=true`
 - `Wallet__PaymentProvider__WebhookSigningSecret` from the payment provider
+- `NEXT_PUBLIC_REQUIRE_API_DATA=1` on the admin web deployment
+- `NEXT_PUBLIC_API_BASE_URL` pointing to the deployed API
 
 The API fails startup outside Development if these values are unsafe or
-missing.
+missing. The admin web fails closed when `NEXT_PUBLIC_REQUIRE_API_DATA=1`
+instead of showing fallback demo data while the API is unavailable.
 
 ## Required Mobile Release Controls
 

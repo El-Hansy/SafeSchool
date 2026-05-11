@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export const communicationsRoutes = {
   school: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/communications`,
   sourceEvents: (schoolAccountId: string) => `${communicationsRoutes.school(schoolAccountId)}/source-events`,
@@ -161,6 +163,7 @@ export async function loadCommunicationsOperations(schoolAccountId = communicati
   ]);
 
   const hasApiData = [board, guardianNotifications, studentNotifications, acknowledgements, delivery, summaries, history, conversations, moderation, exceptions].some((item) => item !== null);
+  assertApiDataAvailable("Communications operations", [board, guardianNotifications, studentNotifications, acknowledgements, delivery, summaries, history, conversations, moderation, exceptions], communicationsApiBaseUrl());
   if (!hasApiData) return { ...communicationsFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {

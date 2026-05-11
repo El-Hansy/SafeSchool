@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export type WalletApiError = { code: string; message: string; field?: string };
 export type WalletMoney = { amountMinor: number; currencyCode: string };
 export type WalletDataSource = "api" | "fallback";
@@ -210,6 +212,8 @@ export async function loadSchoolWalletOperations(schoolAccountId = walletDemoDat
     fetchWalletJson<TransactionHistoryResponse[]>(walletRoutes.transactions(schoolAccountId), schoolAccountId),
     fetchWalletJson<ReconciliationRunResponse[]>(walletRoutes.reconciliation(schoolAccountId), schoolAccountId),
   ]);
+
+  assertApiDataAvailable("Wallet operations", [wallets, topUps, purchases, limits, transactions, reconciliationRuns], walletApiBaseUrl());
 
   if (!wallets) return { ...walletDemoData, schoolAccountId, dataSource: "fallback" };
 

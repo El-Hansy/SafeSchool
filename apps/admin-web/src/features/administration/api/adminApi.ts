@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export const adminRoutes = {
   dashboard: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/dashboard`,
   configuration: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/configuration`,
@@ -174,6 +176,7 @@ export async function loadAdminOperations(schoolAccountId = adminFallbackData.sc
   ]);
 
   const hasApiData = [dashboard, audit, monitoring, configurationHistory, auditExports, alertRules, monitoringAlerts, operationalExceptions, monitoringIncidents].some((item) => item !== null);
+  assertApiDataAvailable("Administration operations", [dashboard, audit, monitoring, configurationHistory, auditExports, alertRules, monitoringAlerts, operationalExceptions, monitoringIncidents], adminApiBaseUrl());
   if (!hasApiData) return { ...adminFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {

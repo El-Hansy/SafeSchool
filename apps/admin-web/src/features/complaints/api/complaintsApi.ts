@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export const complaintsRoutes = {
   school: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/complaints`,
   detail: (schoolAccountId: string, complaintId: string) => `${complaintsRoutes.school(schoolAccountId)}/${complaintId}`,
@@ -158,6 +160,7 @@ export async function loadComplaintOperations(schoolAccountId = complaintsFallba
   ]);
 
   const hasApiData = [board, guardianComplaints, studentComplaints, triageComplaints, assignedComplaints, escalatedComplaints, exceptions, summaries].some((item) => item !== null);
+  assertApiDataAvailable("Complaints operations", [board, guardianComplaints, studentComplaints, triageComplaints, assignedComplaints, escalatedComplaints, exceptions, summaries], complaintsApiBaseUrl());
   if (!hasApiData) return { ...complaintsFallbackData, schoolAccountId, dataSource: "fallback" };
 
   return {

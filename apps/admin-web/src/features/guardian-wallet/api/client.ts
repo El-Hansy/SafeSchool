@@ -8,6 +8,7 @@ import {
   walletHeaders,
   walletApiBaseUrl,
 } from "../../wallet/api/client";
+import { assertApiDataAvailable } from "../../common/apiReadiness";
 
 export const guardianWalletRoutes = {
   wallet: (studentProfileId: string) => `/api/v1/guardians/me/students/${studentProfileId}/wallet`,
@@ -51,6 +52,8 @@ export async function loadGuardianWalletData(studentProfileId = "student-amina",
     fetchGuardianJson<TransactionHistoryResponse[]>(guardianWalletRoutes.transactions(studentProfileId), schoolAccountId),
     fetchGuardianJson<SpendingLimitResponse[]>(guardianWalletRoutes.limits(studentProfileId), schoolAccountId),
   ]);
+
+  assertApiDataAvailable("Guardian wallet", [wallet, topUps, transactions, limits], walletApiBaseUrl());
 
   if (!wallet) {
     return {

@@ -7,6 +7,7 @@ import {
   type TransportDataSource,
   type TransportNotificationRecordResponse,
 } from "../../transport/api/client";
+import { assertApiDataAvailable } from "../../common/apiReadiness";
 
 export type GuardianTransportPlanResponse = {
   studentProfileId: string;
@@ -117,6 +118,7 @@ export async function loadGuardianTransportData(
   ]);
 
   const hasApiData = [plan, progress, eta, notifications].some((item) => item !== null);
+  assertApiDataAvailable("Guardian transport", [plan, progress, eta, notifications], transportApiBaseUrl());
   if (!hasApiData) {
     return { ...guardianTransportDemoData, schoolAccountId, studentProfileId, tripId, dataSource: "fallback" };
   }

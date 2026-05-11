@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export type LearningError = { code: string; message: string; field?: string };
 export type LearningCapabilityStatus = { key: string; enabled: boolean; detail: string };
 export type LearningSummary = { label: string; value: string; detail: string };
@@ -172,6 +174,7 @@ export async function loadLearningOperations(
 
   const entries = await Promise.all(Object.entries(endpointLoaders).map(async ([key, loader]) => [key, await loader] as const));
   const loaded = Object.fromEntries(entries) as Record<keyof typeof endpointLoaders, LearningEndpointResponse | null>;
+  assertApiDataAvailable("Learning operations", Object.values(loaded), learningApiBaseUrl());
   const hasApiData = Object.values(loaded).some((item) => item !== null);
   if (!hasApiData) return { ...learningFallbackData, schoolAccountId, studentProfileId, dataSource: "fallback" };
 

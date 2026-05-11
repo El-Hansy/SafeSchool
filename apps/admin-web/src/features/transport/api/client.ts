@@ -1,3 +1,5 @@
+import { assertApiDataAvailable } from "../../common/apiReadiness";
+
 export type TransportApiError = { code: string; message: string; field?: string };
 export type Page<T> = { items: T[]; page: number; pageSize: number; totalCount: number };
 export type TransportDataSource = "api" | "fallback";
@@ -325,6 +327,7 @@ export async function loadSchoolTransportOperations(schoolAccountId = transportD
   ]);
 
   const hasApiData = [routes, stops, vehicles, assignments, reviewSummaries, ruleSetting].some((item) => item !== null);
+  assertApiDataAvailable("Transport operations", [routes, stops, vehicles, assignments, reviewSummaries, ruleSetting], transportApiBaseUrl());
   if (!hasApiData) return { ...transportDemoData, schoolAccountId, dataSource: "fallback" };
 
   return {

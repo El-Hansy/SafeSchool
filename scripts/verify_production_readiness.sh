@@ -33,6 +33,9 @@ fi
 log "Production guard tests"
 dotnet test "$API_TESTS" -v minimal --filter "FullyQualifiedName~RuntimeConfigurationValidatorTests|FullyQualifiedName~PaymentProviderAdapterTests|FullyQualifiedName~ApiAuthorizationBoundaryTests"
 
+log "Admin web production data guard"
+(cd "$ROOT_DIR/apps/admin-web" && npm test -- --run tests/production/apiFallbackGuard.spec.ts)
+
 log "EF migration presence"
 if ! dotnet ef migrations list \
   --project "$API_PROJECT" \
