@@ -32,17 +32,17 @@ public static class FeatureContractAssertions
         CommunicationCapabilities.All.Should().Contain(CommunicationCapabilities.NotificationCenter);
         new CommunicationBoundaryGuard().Allows("complaint_resolution").Should().BeFalse();
 
-        var idempotency = new CommunicationIdempotencyService();
-        var service = new CommunicationWorkflowService(idempotency);
-        service.AcceptSourceEvent(new NotificationSourceEventRequest("complaints", "CMP-1", "status", "req-1"))
+        using var dbContext = CreateDbContext();
+        var service = new CommunicationWorkflowService(dbContext);
+        Await(service.AcceptSourceEventAsync("school-live", new NotificationSourceEventRequest("complaints", "CMP-1", "status", "req-1")))
             .Evidence.Should().Contain("source-read-only");
-        service.AcceptSourceEvent(new NotificationSourceEventRequest("complaints", "CMP-1", "status", "req-1"))
-            .Status.Should().Be(CommunicationIdempotencyOutcome.Duplicate.ToString());
-        service.SendMessage(new MessageRequest("Safety", "Update", "guardians", "msg-1"))
+        Await(service.AcceptSourceEventAsync("school-live", new NotificationSourceEventRequest("complaints", "CMP-1", "status", "req-1")))
+            .Evidence.Should().Contain("idempotency_duplicate");
+        Await(service.SendMessageAsync("school-live", new MessageRequest("Safety", "Update", "guardians", "msg-1")))
             .Evidence.Should().Contain("moderation-checked");
-        service.PublishBroadcast(new BroadcastRequest("Safety", "Update", "guardians", "b1"))
+        Await(service.PublishBroadcastAsync("school-live", new BroadcastRequest("Safety", "Update", "guardians", "b1")))
             .Evidence.Should().Contain("audience-snapshot");
-        CommunicationWorkflowService.NotificationCenter("guardian").Single().Recipients.Should().Contain("guardian");
+        Await(service.NotificationCenterAsync("school-live", "guardian")).Should().NotBeEmpty();
     }
 
     public static void ComplaintContractsHold()

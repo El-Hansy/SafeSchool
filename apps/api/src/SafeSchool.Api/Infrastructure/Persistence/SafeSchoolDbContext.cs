@@ -9,6 +9,7 @@ using SafeSchool.Api.Features.AttendanceAccess.Gates;
 using SafeSchool.Api.Features.AttendanceAccess.Notifications;
 using SafeSchool.Api.Features.AttendanceAccess.Reviews;
 using SafeSchool.Api.Features.AttendanceAccess.Scans;
+using SafeSchool.Api.Features.Communications;
 using SafeSchool.Api.Features.Complaints;
 using SafeSchool.Api.Features.IdentityAccess;
 using SafeSchool.Api.Features.IdentityAccess.AccessControl;
@@ -160,6 +161,9 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
     public DbSet<OperationalComplaintRecord> OperationalComplaints => Set<OperationalComplaintRecord>();
     public DbSet<OperationalComplaintEvent> OperationalComplaintEvents => Set<OperationalComplaintEvent>();
     public DbSet<OperationalComplaintIdempotencyRecord> OperationalComplaintIdempotencyRecords => Set<OperationalComplaintIdempotencyRecord>();
+    public DbSet<OperationalCommunicationRecord> OperationalCommunications => Set<OperationalCommunicationRecord>();
+    public DbSet<OperationalCommunicationEvent> OperationalCommunicationEvents => Set<OperationalCommunicationEvent>();
+    public DbSet<OperationalCommunicationIdempotencyRecord> OperationalCommunicationIdempotencyRecords => Set<OperationalCommunicationIdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -170,5 +174,6 @@ public sealed class SafeSchoolDbContext(DbContextOptions<SafeSchoolDbContext> op
         modelBuilder.ApplyLearningModel();
         modelBuilder.ApplyMobileModel();
         modelBuilder.ApplyComplaintsOperationalModel();
+        modelBuilder.ApplyCommunicationsOperationalModel();
     }
 }
