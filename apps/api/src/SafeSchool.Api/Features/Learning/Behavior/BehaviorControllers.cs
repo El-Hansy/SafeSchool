@@ -1,14 +1,16 @@
+using SafeSchool.Api.Features.Learning;
+
 namespace SafeSchool.Api.Features.Learning.Behavior;
 
 public static class BehaviorEndpointExtensions
 {
     public static RouteGroupBuilder MapBehaviorEndpoints(this RouteGroupBuilder group)
     {
-        group.MapGet("/behavior-categories", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-categories", status = "demo-ready" }));
-        group.MapGet("/behavior-events", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-events", status = "demo-ready" }));
-        group.MapPost("/behavior-events", (string schoolAccountId, LogBehaviorEventCommand request) => Results.Ok(new { schoolAccountId, behaviorReference = $"behavior-{request.ClientRequestId}", request.StudentProfileId, request.CategoryCode, status = "Recorded", evidence = new[] { "visibility-filtered", "staff-only-detail-protected", "audit-written" } }));
-        group.MapGet("/behavior-review", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-review", status = "demo-ready" }));
-        group.MapGet("/behavior-trace", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "behavior-trace", status = "demo-ready" }));
+        group.MapGet("/behavior-categories", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.BehaviorCategoriesAsync(schoolAccountId, ct)));
+        group.MapGet("/behavior-events", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.BehaviorEventsAsync(schoolAccountId, ct)));
+        group.MapPost("/behavior-events", async (string schoolAccountId, LogBehaviorEventCommand request, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.LogBehaviorEventAsync(schoolAccountId, request, ct)));
+        group.MapGet("/behavior-review", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.BehaviorReviewAsync(schoolAccountId, ct)));
+        group.MapGet("/behavior-trace", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.BehaviorTraceAsync(schoolAccountId, ct)));
         return group;
     }
 }

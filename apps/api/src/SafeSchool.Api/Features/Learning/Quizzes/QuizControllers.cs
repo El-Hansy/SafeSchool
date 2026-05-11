@@ -1,14 +1,16 @@
+using SafeSchool.Api.Features.Learning;
+
 namespace SafeSchool.Api.Features.Learning.Quizzes;
 
 public static class QuizEndpointExtensions
 {
     public static RouteGroupBuilder MapQuizEndpoints(this RouteGroupBuilder group)
     {
-        group.MapGet("/quizzes", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "quizzes", status = "demo-ready" }));
-        group.MapGet("/quiz-attempts", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "quiz-attempts", status = "demo-ready" }));
-        group.MapPost("/quiz-attempts", (string schoolAccountId, StartQuizAttemptCommand request) => Results.Ok(new { schoolAccountId, attemptReference = $"quiz-attempt-{request.ClientRequestId}", request.QuizReference, request.StudentProfileId, status = "Scored", score = 92, evidence = new[] { "eligibility-checked", "feedback-held-until-close", "audit-written" } }));
-        group.MapGet("/quiz-review", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "quiz-review", status = "demo-ready" }));
-        group.MapGet("/quiz-trace", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "quiz-trace", status = "demo-ready" }));
+        group.MapGet("/quizzes", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.QuizzesAsync(schoolAccountId, ct)));
+        group.MapGet("/quiz-attempts", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.QuizAttemptsAsync(schoolAccountId, ct)));
+        group.MapPost("/quiz-attempts", async (string schoolAccountId, StartQuizAttemptCommand request, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.StartQuizAttemptAsync(schoolAccountId, request, ct)));
+        group.MapGet("/quiz-review", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.QuizReviewAsync(schoolAccountId, ct)));
+        group.MapGet("/quiz-trace", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.QuizTraceAsync(schoolAccountId, ct)));
         return group;
     }
 }

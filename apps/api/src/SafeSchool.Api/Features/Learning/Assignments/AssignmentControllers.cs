@@ -1,15 +1,17 @@
+using SafeSchool.Api.Features.Learning;
+
 namespace SafeSchool.Api.Features.Learning.Assignments;
 
 public static class AssignmentEndpointExtensions
 {
     public static RouteGroupBuilder MapAssignmentEndpoints(this RouteGroupBuilder group)
     {
-        group.MapGet("/assignments", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "assignments", status = "demo-ready" }));
-        group.MapPost("/assignments", (string schoolAccountId, CreateAssignmentCommand request) => Results.Ok(new { schoolAccountId, assignmentReference = $"assignment-{request.ClientRequestId}", request.Title, request.GroupReference, status = "Assigned", evidence = new[] { "eligibility-checked", "due-date-recorded", "audit-written" } }));
-        group.MapGet("/submissions", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "submissions", status = "demo-ready" }));
-        group.MapPost("/submissions", (string schoolAccountId, SubmitAssignmentCommand request) => Results.Ok(new { schoolAccountId, submissionReference = $"submission-{request.ClientRequestId}", request.AssignmentReference, request.StudentProfileId, status = "Submitted", evidence = new[] { "attempt-accepted", "history-written", "guardian-visible-summary" } }));
-        group.MapGet("/assignment-review", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "assignment-review", status = "demo-ready" }));
-        group.MapGet("/assignment-trace", (string schoolAccountId) => Results.Ok(new { schoolAccountId, area = "assignment-trace", status = "demo-ready" }));
+        group.MapGet("/assignments", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.AssignmentsAsync(schoolAccountId, ct)));
+        group.MapPost("/assignments", async (string schoolAccountId, CreateAssignmentCommand request, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.CreateAssignmentAsync(schoolAccountId, request, ct)));
+        group.MapGet("/submissions", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.SubmissionsAsync(schoolAccountId, ct)));
+        group.MapPost("/submissions", async (string schoolAccountId, SubmitAssignmentCommand request, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.SubmitAssignmentAsync(schoolAccountId, request, ct)));
+        group.MapGet("/assignment-review", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.AssignmentReviewAsync(schoolAccountId, ct)));
+        group.MapGet("/assignment-trace", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.AssignmentTraceAsync(schoolAccountId, ct)));
         return group;
     }
 }

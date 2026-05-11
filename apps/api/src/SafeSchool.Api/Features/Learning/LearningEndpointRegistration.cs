@@ -5,6 +5,7 @@ using SafeSchool.Api.Features.Learning.Content;
 using SafeSchool.Api.Features.Learning.Quizzes;
 using SafeSchool.Api.Features.Learning.Reviews;
 using SafeSchool.Api.Features.Learning.Stars;
+using SafeSchool.Api.Infrastructure.Tenancy;
 
 namespace SafeSchool.Api.Features.Learning;
 
@@ -17,6 +18,7 @@ public static class LearningEndpointRegistration
     public static IServiceCollection AddLearningFeature(this IServiceCollection services)
     {
         services.AddScoped<ILearningClock, SystemLearningClock>();
+        services.AddScoped<LearningOperationalService>();
         services.AddScoped<LearningFeatureGate>();
         services.AddScoped<LearningPermissionGuard>();
         services.AddScoped<SafeSchool.Api.Features.Learning.Common.Identity.ILearningStudentProfileProvider, SafeSchool.Api.Features.Learning.Common.Identity.DefaultLearningStudentProfileProvider>();
@@ -96,9 +98,11 @@ public static class LearningEndpointRegistration
         var studentGroup = endpoints.MapGroup(StudentRoutePrefix);
         var guardianGroup = endpoints.MapGroup(GuardianRoutePrefix);
 
-        schoolGroup.MapGet("/", (string schoolAccountId) => Results.Ok(new { schoolAccountId, phase = "learning-engagement", status = "demo-ready", capabilities = SafeSchool.Api.Infrastructure.FeatureFlags.LearningCapabilities.All }));
-        studentGroup.MapGet("/", () => Results.Ok(new { scope = "student", status = "learning-demo-ready" }));
-        guardianGroup.MapGet("/", (string studentProfileId) => Results.Ok(new { scope = "guardian", studentProfileId, status = "learning-demo-ready" }));
+        schoolGroup.MapGet("/", async (string schoolAccountId, LearningOperationalService service, CancellationToken ct) => Results.Ok(await service.BoardAsync(schoolAccountId, ct)));
+        studentGroup.MapGet("/", async (ITenantContext tenantContext, LearningOperationalService service, CancellationToken ct) =>
+            Results.Ok(await service.StudentOverviewAsync(GuardianTenantResolver.Resolve(tenantContext), tenantContext.ActorReference ?? "anonymous", ct)));
+        guardianGroup.MapGet("/", async (string studentProfileId, ITenantContext tenantContext, LearningOperationalService service, CancellationToken ct) =>
+            Results.Ok(await service.GuardianOverviewAsync(GuardianTenantResolver.Resolve(tenantContext), studentProfileId, ct)));
 
         schoolGroup.MapCourseContentEndpoints();
         schoolGroup.MapAssignmentEndpoints();
