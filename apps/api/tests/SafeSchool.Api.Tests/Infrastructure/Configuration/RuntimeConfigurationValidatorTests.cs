@@ -49,12 +49,34 @@ public sealed class RuntimeConfigurationValidatorTests
             ["Jwt:Authority"] = "https://login.safeschool.example",
             ["Jwt:Audience"] = "safeschool-api",
             ["ConnectionStrings:SafeSchool"] = "Host=safeschool-postgres.internal;Database=safeschool;Username=api;Password=secret",
-            ["Wallet:PaymentProvider:Adapter"] = "ConfiguredProvider"
+            ["Wallet:PaymentProvider:Adapter"] = "ConfiguredProvider",
+            ["Wallet:PaymentProvider:RequireWebhookSignature"] = "true",
+            ["Wallet:PaymentProvider:WebhookSigningSecret"] = "test-secret"
         });
 
         var action = () => RuntimeConfigurationValidator.Validate(configuration, "Production");
 
         action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Validate_RejectsUnsignedConfiguredPaymentProviderInProduction()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["Demo:AllowAnonymousApi"] = "false",
+            ["Jwt:Authority"] = "https://login.safeschool.example",
+            ["Jwt:Audience"] = "safeschool-api",
+            ["ConnectionStrings:SafeSchool"] = "Host=safeschool-postgres.internal;Database=safeschool;Username=api;Password=secret",
+            ["Wallet:PaymentProvider:Adapter"] = "ConfiguredProvider",
+            ["Wallet:PaymentProvider:RequireWebhookSignature"] = "true",
+            ["Wallet:PaymentProvider:WebhookSigningSecret"] = ""
+        });
+
+        var action = () => RuntimeConfigurationValidator.Validate(configuration, "Production");
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*WebhookSigningSecret*");
     }
 
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values) =>

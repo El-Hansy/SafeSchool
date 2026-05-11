@@ -59,6 +59,12 @@ public static class RuntimeConfigurationValidator
         {
             errors.Add("Wallet:PaymentProvider:Adapter cannot use DemoPay outside Development unless Demo:AllowDemoPaymentProvider is explicitly true.");
         }
+        else if (!IsDemoPaymentProvider(paymentProviderAdapter) &&
+                 configuration.GetValue<bool>("Wallet:PaymentProvider:RequireWebhookSignature") &&
+                 string.IsNullOrWhiteSpace(configuration["Wallet:PaymentProvider:WebhookSigningSecret"]))
+        {
+            errors.Add("Wallet:PaymentProvider:WebhookSigningSecret is required when webhook signatures are required outside Development.");
+        }
 
         if (errors.Count > 0)
         {

@@ -2,6 +2,8 @@ using Microsoft.Extensions.Configuration;
 using SafeSchool.Api.Features.Wallet.Common;
 using SafeSchool.Api.Features.Wallet.TopUps;
 using SafeSchool.Api.Infrastructure.Configuration;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SafeSchool.Api.Features.Wallet.Payments;
 
@@ -89,12 +91,18 @@ public sealed class ConfiguredPaymentProviderAdapter(IConfiguration configuratio
             throw new InvalidOperationException("Raw payment payloads are disabled; provide a normalized payload reference instead.");
         }
 
+        var normalizedCurrency = request.CurrencyCode.Trim().ToUpperInvariant();
+        if (configuration.GetValue<bool>("Wallet:PaymentProvider:RequireWebhookSignature"))
+        {
+            ValidateWebhookSignature(request, normalizedCurrency);
+        }
+
         return new NormalizedPaymentConfirmation(
             request.ProviderReference.Trim(),
             request.ProviderEventId.Trim(),
             request.ConfirmationStatus,
             request.AmountMinor,
-            request.CurrencyCode.Trim().ToUpperInvariant(),
+            normalizedCurrency,
             request.SafePaymentMethodSummary.Trim(),
             request.RawPayloadReference.Trim());
     }
@@ -106,5 +114,44 @@ public sealed class ConfiguredPaymentProviderAdapter(IConfiguration configuratio
     {
         var trimmed = value.TrimStart();
         return trimmed.StartsWith('{') || trimmed.StartsWith('[');
+    }
+
+    private void ValidateWebhookSignature(PaymentConfirmationRequest request, string normalizedCurrency)
+    {
+        var secret = configuration["Wallet:PaymentProvider:WebhookSigningSecret"];
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            throw new InvalidOperationException("Payment provider webhook signing secret is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ProviderPayloadHash))
+        {
+            throw new InvalidOperationException("Payment confirmation requires a provider payload hash.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ProviderSignature))
+        {
+            throw new InvalidOperationException("Payment confirmation requires a provider signature.");
+        }
+
+        var signedContent = string.Join('.', request.ProviderEventId.Trim(), request.ProviderReference.Trim(), request.AmountMinor, normalizedCurrency, request.ProviderPayloadHash.Trim());
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        var expected = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(signedContent))).ToLowerInvariant();
+        var provided = request.ProviderSignature.StartsWith("sha256=", StringComparison.OrdinalIgnoreCase)
+            ? request.ProviderSignature["sha256=".Length..]
+            : request.ProviderSignature;
+
+        if (!FixedTimeEquals(expected, provided.Trim().ToLowerInvariant()))
+        {
+            throw new InvalidOperationException("Payment provider signature is invalid.");
+        }
+    }
+
+    private static bool FixedTimeEquals(string expected, string provided)
+    {
+        var expectedBytes = Encoding.UTF8.GetBytes(expected);
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
+        return expectedBytes.Length == providedBytes.Length &&
+               CryptographicOperations.FixedTimeEquals(expectedBytes, providedBytes);
     }
 }

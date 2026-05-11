@@ -23,7 +23,9 @@ public sealed class ApiAuthorizationBoundaryTests
                         ["Jwt:Authority"] = "https://login.safeschool.example",
                         ["Jwt:Audience"] = "safeschool-api",
                         ["ConnectionStrings:SafeSchool"] = "Host=safeschool-postgres.internal;Database=safeschool;Username=api;Password=secret",
-                        ["Wallet:PaymentProvider:Adapter"] = "ConfiguredProvider"
+                        ["Wallet:PaymentProvider:Adapter"] = "ConfiguredProvider",
+                        ["Wallet:PaymentProvider:RequireWebhookSignature"] = "true",
+                        ["Wallet:PaymentProvider:WebhookSigningSecret"] = "test-secret"
                     }));
             });
         using var client = factory.CreateClient();
