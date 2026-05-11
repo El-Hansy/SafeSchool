@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import {
   type WalletResponse,
-  walletApiBaseUrl,
-  walletHeaders,
   walletRoutes,
 } from "../api/client";
+import { postSafeSchoolJson } from "../../common/apiProxyClient";
 
 type ActionState = {
   status: "idle" | "submitting" | "success" | "error";
@@ -174,18 +173,8 @@ async function submitJson(
   setState: (state: ActionState) => void,
   successMessage: string,
 ) {
-  const baseUrl = walletApiBaseUrl();
-  if (!baseUrl) {
-    setState({ status: "error", message: "Set NEXT_PUBLIC_API_BASE_URL to submit this action to the SafeSchool API." });
-    return;
-  }
-
   setState({ status: "submitting", message: "Submitting..." });
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: "POST",
-    headers: walletHeaders(schoolAccountId),
-    body: JSON.stringify(payload),
-  });
+  const response = await postSafeSchoolJson(path, schoolAccountId, "finance-admin", payload);
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);

@@ -2,10 +2,9 @@
 
 import { useState, type CSSProperties } from "react";
 import {
-  communicationsApiBaseUrl,
-  communicationsHeaders,
   communicationsRoutes,
 } from "../api/communicationsApi";
+import { postSafeSchoolJson } from "../../common/apiProxyClient";
 
 type ActionState = {
   status: "idle" | "submitting" | "success" | "error";
@@ -173,18 +172,8 @@ async function submitJson(
   setState: (state: ActionState) => void,
   successMessage: string,
 ) {
-  const baseUrl = communicationsApiBaseUrl();
-  if (!baseUrl) {
-    setState({ status: "error", message: "Set NEXT_PUBLIC_API_BASE_URL to submit this communication action to the SafeSchool API." });
-    return;
-  }
-
   setState({ status: "submitting", message: "Submitting..." });
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: "POST",
-    headers: communicationsHeaders(schoolAccountId),
-    body: JSON.stringify(payload),
-  });
+  const response = await postSafeSchoolJson(path, schoolAccountId, "communications-operator", payload);
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);

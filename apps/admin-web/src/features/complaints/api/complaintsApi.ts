@@ -1,4 +1,4 @@
-import { assertApiDataAvailable } from "../../common/apiReadiness";
+import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
 export const complaintsRoutes = {
   school: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/complaints`,
@@ -123,7 +123,7 @@ export const complaintsFallbackData: ComplaintOperationsData = {
 };
 
 export function complaintsApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return serverApiBaseUrl();
 }
 
 export function complaintsHeaders(schoolAccountId: string, actorReference = "complaints-operator") {
@@ -131,6 +131,7 @@ export function complaintsHeaders(schoolAccountId: string, actorReference = "com
     "content-type": "application/json",
     "x-school-account-id": schoolAccountId,
     "x-actor-reference": actorReference,
+    ...serverApiAuthorizationHeader(),
   };
 }
 

@@ -1,3 +1,5 @@
+import { serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
+
 export type IdentityAccessErrorCode =
   | "feature_disabled"
   | "missing_permission"
@@ -32,12 +34,13 @@ export function identityHeaders(options: IdentityAccessRequestOptions) {
     "content-type": "application/json",
     "x-school-account-id": options.schoolAccountId,
     ...(options.actorReference ? { "x-actor-reference": options.actorReference } : {}),
+    ...serverApiAuthorizationHeader(),
     ...Object.fromEntries(new Headers(options.headers).entries()),
   };
 }
 
 export async function requestIdentityAccess<T>(path: string, options: IdentityAccessRequestOptions): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  const baseUrl = serverApiBaseUrl();
   const response = await fetch(`${baseUrl}${identityAccessPath(options.schoolAccountId, path)}`, {
     ...options,
     headers: identityHeaders(options),

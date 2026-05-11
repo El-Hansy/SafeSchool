@@ -1,4 +1,4 @@
-import { assertApiDataAvailable } from "../../common/apiReadiness";
+import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
 export type LearningError = { code: string; message: string; field?: string };
 export type LearningCapabilityStatus = { key: string; enabled: boolean; detail: string };
@@ -127,7 +127,7 @@ export const learningFallbackData: LearningOperationsData = {
 };
 
 export function learningApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return serverApiBaseUrl();
 }
 
 export function learningHeaders(schoolAccountId: string, actorReference = "learning-admin") {
@@ -135,6 +135,7 @@ export function learningHeaders(schoolAccountId: string, actorReference = "learn
     "content-type": "application/json",
     "x-school-account-id": schoolAccountId,
     "x-actor-reference": actorReference,
+    ...serverApiAuthorizationHeader(),
   };
 }
 

@@ -1,4 +1,4 @@
-import { assertApiDataAvailable } from "../../common/apiReadiness";
+import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
 export type TransportApiError = { code: string; message: string; field?: string };
 export type Page<T> = { items: T[]; page: number; pageSize: number; totalCount: number };
@@ -292,7 +292,7 @@ export const transportDemoData: TransportOperationsData = {
 };
 
 export function transportApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return serverApiBaseUrl();
 }
 
 export function transportHeaders(schoolAccountId: string, actorReference = "transport-operator") {
@@ -300,6 +300,7 @@ export function transportHeaders(schoolAccountId: string, actorReference = "tran
     "content-type": "application/json",
     "x-school-account-id": schoolAccountId,
     "x-actor-reference": actorReference,
+    ...serverApiAuthorizationHeader(),
   };
 }
 

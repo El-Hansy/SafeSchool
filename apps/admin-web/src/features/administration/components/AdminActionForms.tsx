@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { adminApiBaseUrl, adminHeaders, adminRoutes } from "../api/adminApi";
+import { adminRoutes } from "../api/adminApi";
+import { postSafeSchoolJson } from "../../common/apiProxyClient";
 
 type ActionState = {
   status: "idle" | "submitting" | "success" | "error";
@@ -174,18 +175,8 @@ async function submitJson(
   setState: (state: ActionState) => void,
   successMessage: string,
 ) {
-  const baseUrl = adminApiBaseUrl();
-  if (!baseUrl) {
-    setState({ status: "error", message: "Set NEXT_PUBLIC_API_BASE_URL to submit this admin action to the SafeSchool API." });
-    return;
-  }
-
   setState({ status: "submitting", message: "Submitting..." });
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: "POST",
-    headers: adminHeaders(schoolAccountId, actorReference),
-    body: JSON.stringify(payload),
-  });
+  const response = await postSafeSchoolJson(path, schoolAccountId, actorReference, payload);
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);

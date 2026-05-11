@@ -2,12 +2,11 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import {
-  transportApiBaseUrl,
   transportEnumValues,
-  transportHeaders,
   transportRoutes,
   type TransportOperationsData,
 } from "../api/client";
+import { postSafeSchoolJson } from "../../common/apiProxyClient";
 
 type ActionState = {
   status: "idle" | "submitting" | "success" | "error";
@@ -448,18 +447,8 @@ async function submitJson(
   setState: (state: ActionState) => void,
   successMessage: string,
 ) {
-  const baseUrl = transportApiBaseUrl();
-  if (!baseUrl) {
-    setState({ status: "error", message: "Set NEXT_PUBLIC_API_BASE_URL to submit this action to the SafeSchool API." });
-    return;
-  }
-
   setState({ status: "submitting", message: "Submitting..." });
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: "POST",
-    headers: transportHeaders(schoolAccountId),
-    body: JSON.stringify(payload),
-  });
+  const response = await postSafeSchoolJson(path, schoolAccountId, "transport-operator", payload);
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);

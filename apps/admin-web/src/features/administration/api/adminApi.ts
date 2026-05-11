@@ -1,4 +1,4 @@
-import { assertApiDataAvailable } from "../../common/apiReadiness";
+import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
 export const adminRoutes = {
   dashboard: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/admin/dashboard`,
@@ -138,7 +138,7 @@ export const adminFallbackData: AdminOperationsData = {
 };
 
 export function adminApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return serverApiBaseUrl();
 }
 
 export function adminHeaders(schoolAccountId: string, actorReference = "school-admin") {
@@ -146,6 +146,7 @@ export function adminHeaders(schoolAccountId: string, actorReference = "school-a
     "content-type": "application/json",
     "x-school-account-id": schoolAccountId,
     "x-actor-reference": actorReference,
+    ...serverApiAuthorizationHeader(),
   };
 }
 

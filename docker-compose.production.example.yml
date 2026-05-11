@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-safeschool}
+      POSTGRES_USER: ${POSTGRES_USER:-safeschool}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - safeschool-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-safeschool} -d ${POSTGRES_DB:-safeschool}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__SafeSchool: Host=postgres;Database=${POSTGRES_DB:-safeschool};Username=${POSTGRES_USER:-safeschool};Password=${POSTGRES_PASSWORD}
+      Jwt__Authority: ${JWT_AUTHORITY:?JWT_AUTHORITY is required}
+      Jwt__Audience: ${JWT_AUDIENCE:-safeschool-api}
+      Demo__AllowAnonymousApi: "false"
+      Wallet__PaymentProvider__Adapter: ConfiguredProvider
+      Wallet__PaymentProvider__RequireWebhookSignature: "true"
+      Wallet__PaymentProvider__WebhookSigningSecret: ${WALLET_WEBHOOK_SIGNING_SECRET:?WALLET_WEBHOOK_SIGNING_SECRET is required}
+    ports:
+      - "${API_PORT:-8080}:8080"
+
+  admin-web:
+    build:
+      context: apps/admin-web
+      dockerfile: Dockerfile
+      args:
+        SAFE_SCHOOL_API_BASE_URL: ${SAFE_SCHOOL_API_BASE_URL:?SAFE_SCHOOL_API_BASE_URL is required}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:?NEXT_PUBLIC_API_BASE_URL is required}
+        NEXT_PUBLIC_REQUIRE_API_DATA: "1"
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      SAFE_SCHOOL_API_BASE_URL: ${SAFE_SCHOOL_API_BASE_URL}
+      SAFE_SCHOOL_API_BEARER_TOKEN: ${SAFE_SCHOOL_API_BEARER_TOKEN:?SAFE_SCHOOL_API_BEARER_TOKEN is required}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+      NEXT_PUBLIC_REQUIRE_API_DATA: "1"
+      PORT: 3000
+    ports:
+      - "${ADMIN_WEB_PORT:-3000}:3000"
+
+volumes:
+  safeschool-postgres:

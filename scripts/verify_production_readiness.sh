@@ -6,6 +6,9 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 API_PROJECT="$ROOT_DIR/apps/api/src/SafeSchool.Api/SafeSchool.Api.csproj"
 API_TESTS="$ROOT_DIR/apps/api/tests/SafeSchool.Api.Tests/SafeSchool.Api.Tests.csproj"
 API_APPSETTINGS="$ROOT_DIR/apps/api/src/SafeSchool.Api/appsettings.json"
+ADMIN_PACKAGE="$ROOT_DIR/apps/admin-web/package.json"
+COMPOSE_FILE="$ROOT_DIR/docker-compose.production.example.yml"
+PRODUCTION_ENV_EXAMPLE="$ROOT_DIR/deploy/production.env.example"
 
 log() {
   printf '\n==> %s\n' "$1"
@@ -30,11 +33,51 @@ if ! rg -n "\"RequireWebhookSignature\"\\s*:\\s*true" "$API_APPSETTINGS" -S >/de
   fail "production payment provider webhooks must require signatures."
 fi
 
+log "Container deployment artifacts"
+for required_file in \
+  "$ROOT_DIR/.dockerignore" \
+  "$ROOT_DIR/apps/api/Dockerfile" \
+  "$ROOT_DIR/apps/admin-web/.dockerignore" \
+  "$ROOT_DIR/apps/admin-web/Dockerfile" \
+  "$COMPOSE_FILE" \
+  "$PRODUCTION_ENV_EXAMPLE"; do
+  [[ -f "$required_file" ]] || fail "Missing deployment artifact: $required_file"
+done
+
+if ! rg -n '"start"\s*:\s*"next start"' "$ADMIN_PACKAGE" -S >/dev/null; then
+  fail "admin-web package.json must expose a production start script."
+fi
+
+for required_key in \
+  'ASPNETCORE_ENVIRONMENT: Production' \
+  'ConnectionStrings__SafeSchool' \
+  'Jwt__Authority' \
+  'Wallet__PaymentProvider__WebhookSigningSecret' \
+  'SAFE_SCHOOL_API_BASE_URL' \
+  'SAFE_SCHOOL_API_BEARER_TOKEN' \
+  'NEXT_PUBLIC_REQUIRE_API_DATA: "1"'; do
+  if ! rg -n "$required_key" "$COMPOSE_FILE" -S >/dev/null; then
+    fail "docker-compose.production.example.yml is missing $required_key"
+  fi
+done
+
+for required_key in \
+  POSTGRES_PASSWORD \
+  JWT_AUTHORITY \
+  WALLET_WEBHOOK_SIGNING_SECRET \
+  SAFE_SCHOOL_API_BASE_URL \
+  SAFE_SCHOOL_API_BEARER_TOKEN \
+  NEXT_PUBLIC_API_BASE_URL; do
+  if ! rg -n "^$required_key=" "$PRODUCTION_ENV_EXAMPLE" -S >/dev/null; then
+    fail "deploy/production.env.example is missing $required_key"
+  fi
+done
+
 log "Production guard tests"
 dotnet test "$API_TESTS" -v minimal --filter "FullyQualifiedName~RuntimeConfigurationValidatorTests|FullyQualifiedName~PaymentProviderAdapterTests|FullyQualifiedName~ApiAuthorizationBoundaryTests"
 
 log "Admin web production data guard"
-(cd "$ROOT_DIR/apps/admin-web" && npm test -- --run tests/production/apiFallbackGuard.spec.ts)
+(cd "$ROOT_DIR/apps/admin-web" && npm test -- --run tests/production/apiFallbackGuard.spec.ts tests/production/dynamicRuntime.spec.ts)
 
 log "EF migration presence"
 if ! dotnet ef migrations list \

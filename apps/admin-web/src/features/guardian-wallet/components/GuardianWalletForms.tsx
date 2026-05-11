@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { guardianWalletRoutes } from "../api/client";
-import { walletApiBaseUrl, walletHeaders } from "../../wallet/api/client";
+import { postSafeSchoolJson } from "../../common/apiProxyClient";
 
 type Props = {
   walletId: string;
@@ -18,25 +18,20 @@ export function GuardianTopUpAction({ walletId, studentProfileId }: Props) {
       style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, alignItems: "end" }}
       onSubmit={async (event) => {
         event.preventDefault();
-        const baseUrl = walletApiBaseUrl();
-        if (!baseUrl) {
-          setMessage("Set NEXT_PUBLIC_API_BASE_URL to submit top-ups to the SafeSchool API.");
-          return;
-        }
-
         const form = new FormData(event.currentTarget);
-        const response = await fetch(`${baseUrl}${guardianWalletRoutes.topUps(studentProfileId)}`, {
-          method: "POST",
-          headers: walletHeaders("school-demo", "guardian-demo"),
-          body: JSON.stringify({
+        const response = await postSafeSchoolJson(
+          guardianWalletRoutes.topUps(studentProfileId),
+          "school-demo",
+          "guardian-demo",
+          {
             walletId,
             clientRequestId: String(form.get("clientRequestId")),
             amountMinor: Number(form.get("amountMinor")),
             currencyCode: "SAR",
             paymentProvider,
             guardianActorId: "guardian-demo",
-          }),
-        });
+          },
+        );
 
         setMessage(response.ok ? "Top-up request submitted to wallet API." : "Wallet API rejected the top-up request.");
       }}

@@ -1,4 +1,4 @@
-import { assertApiDataAvailable } from "../../common/apiReadiness";
+import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
 export type WalletApiError = { code: string; message: string; field?: string };
 export type WalletMoney = { amountMinor: number; currencyCode: string };
@@ -179,7 +179,7 @@ export const walletDemoData: WalletOperationsData = {
 };
 
 export function walletApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return serverApiBaseUrl();
 }
 
 export function walletHeaders(schoolAccountId: string, actorReference = "finance-admin") {
@@ -187,6 +187,7 @@ export function walletHeaders(schoolAccountId: string, actorReference = "finance
     "content-type": "application/json",
     "x-school-account-id": schoolAccountId,
     "x-actor-reference": actorReference,
+    ...serverApiAuthorizationHeader(),
   };
 }
 

@@ -1,4 +1,4 @@
-import { assertApiDataAvailable } from "../../common/apiReadiness";
+import { assertApiDataAvailable, serverApiAuthorizationHeader, serverApiBaseUrl } from "../../common/apiReadiness";
 
 export const documentsRoutes = {
   documents: (schoolAccountId: string) => `/api/v1/schools/${schoolAccountId}/documents`,
@@ -162,7 +162,7 @@ export const documentsFallbackData: DocumentsOperationsData = {
 };
 
 export function documentsApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  return serverApiBaseUrl();
 }
 
 export function documentsHeaders(schoolAccountId: string, actorReference = "documents-operator") {
@@ -170,6 +170,7 @@ export function documentsHeaders(schoolAccountId: string, actorReference = "docu
     "content-type": "application/json",
     "x-school-account-id": schoolAccountId,
     "x-actor-reference": actorReference,
+    ...serverApiAuthorizationHeader(),
   };
 }
 

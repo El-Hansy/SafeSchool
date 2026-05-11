@@ -5,6 +5,8 @@ export const metadata = {
   description: "Role-based school NFC, attendance, transport, wallet, mobile, and operations demo",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
