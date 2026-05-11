@@ -11,6 +11,7 @@ type Props = {
 
 export function GuardianTopUpAction({ walletId, studentProfileId }: Props) {
   const [message, setMessage] = useState("");
+  const paymentProvider = process.env.NEXT_PUBLIC_WALLET_PAYMENT_PROVIDER ?? "ConfiguredProvider";
 
   return (
     <form
@@ -32,7 +33,7 @@ export function GuardianTopUpAction({ walletId, studentProfileId }: Props) {
             clientRequestId: String(form.get("clientRequestId")),
             amountMinor: Number(form.get("amountMinor")),
             currencyCode: "SAR",
-            paymentProvider: "DemoPay",
+            paymentProvider,
             guardianActorId: "guardian-demo",
           }),
         });

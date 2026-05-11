@@ -57,7 +57,18 @@ target device serial from `adb devices`.
 1. Create an upload keystore outside the repository.
 2. Copy `android/key.properties.example` to `android/key.properties`.
 3. Set the absolute keystore path, passwords, and key alias.
-4. Run `./tool/build_controlled_apk.sh`.
+4. Run the guarded build:
+
+```bash
+SAFE_SCHOOL_REQUIRE_RELEASE_SIGNING=1 \
+SAFE_SCHOOL_REQUIRE_API_BASE_URL=1 \
+SAFE_SCHOOL_API_BASE_URL=https://api.example.school \
+SAFE_SCHOOL_TENANT_ID=school-demo \
+./tool/build_controlled_apk.sh
+```
+
+Do not set `SAFE_SCHOOL_AUTH_TOKEN` for signed pilot or production APKs. It is
+only accepted for local QA builds.
 
 `android/key.properties`, `*.jks`, and `*.keystore` are ignored by git.
 

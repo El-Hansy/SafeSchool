@@ -63,6 +63,7 @@ using SafeSchool.Api.Features.Wallet.Rules;
 using SafeSchool.Api.Features.Wallet.Sync;
 using SafeSchool.Api.Features.Wallet.TopUps;
 using SafeSchool.Api.Features.Wallet.Wallets;
+using SafeSchool.Api.Infrastructure.Configuration;
 using SafeSchool.Api.Infrastructure.Errors;
 using SafeSchool.Api.Infrastructure.FeatureFlags;
 using SafeSchool.Api.Infrastructure.Persistence;
@@ -211,7 +212,23 @@ builder.Services.AddScoped<GuardianTopUpService>();
 builder.Services.AddScoped<CashierTopUpService>();
 builder.Services.AddScoped<TopUpQueryService>();
 builder.Services.AddScoped<TopUpTraceService>();
-builder.Services.AddScoped<IPaymentProviderAdapter, DemoPaymentProviderAdapter>();
+builder.Services.AddScoped<IPaymentProviderAdapter>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var environment = serviceProvider.GetRequiredService<IHostEnvironment>();
+    var adapter = configuration["Wallet:PaymentProvider:Adapter"];
+    if (RuntimeConfigurationValidator.IsDemoPaymentProvider(adapter))
+    {
+        if (!environment.IsDevelopment() && !configuration.GetValue<bool>("Demo:AllowDemoPaymentProvider"))
+        {
+            throw new InvalidOperationException("DemoPay payment adapter is disabled outside Development.");
+        }
+
+        return new DemoPaymentProviderAdapter();
+    }
+
+    return new ConfiguredPaymentProviderAdapter(configuration);
+});
 builder.Services.AddScoped<PaymentConfirmationService>();
 builder.Services.AddScoped<ChargebackRecoveryService>();
 builder.Services.AddScoped<CanteenCatalogService>();
@@ -247,6 +264,7 @@ builder.Services.AddDbContext<SafeSchoolDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("SafeSchool")));
 
 var app = builder.Build();
+RuntimeConfigurationValidator.Validate(app.Configuration, app.Environment);
 app.UseMiddleware<ApiErrorMiddleware>();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthentication();

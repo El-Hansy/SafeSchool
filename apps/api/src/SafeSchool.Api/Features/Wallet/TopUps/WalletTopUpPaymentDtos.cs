@@ -2,7 +2,7 @@ using SafeSchool.Api.Features.Wallet.Common;
 
 namespace SafeSchool.Api.Features.Wallet.TopUps;
 
-public sealed record GuardianTopUpRequest(Guid WalletId, string ClientRequestId, long AmountMinor, string CurrencyCode = "SAR", string PaymentProvider = "DemoPay", string GuardianActorId = "guardian-demo");
+public sealed record GuardianTopUpRequest(Guid WalletId, string ClientRequestId, long AmountMinor, string CurrencyCode = "SAR", string PaymentProvider = "ConfiguredProvider", string GuardianActorId = "guardian-demo");
 public sealed record CashierTopUpRequest(Guid WalletId, string ClientRequestId, long AmountMinor, string CurrencyCode = "SAR", string CashierReference = "cashier-receipt", string Reason = "cashier top-up", string ActorReference = "cashier-demo");
 public sealed record PaymentConfirmationRequest(Guid? WalletTopUpId, string ProviderReference, string ProviderEventId, PaymentConfirmationStatus ConfirmationStatus, long AmountMinor, string CurrencyCode = "SAR", string SafePaymentMethodSummary = "Provider reference", string RawPayloadReference = "normalized-payload");
 public sealed record ChargebackReviewRequest(long AmountMinor, string Reason, string ActorReference = "finance-reviewer");

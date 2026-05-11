@@ -31,6 +31,9 @@ void main() {
     expect(example, contains('keyPassword='));
     expect(buildScript, contains('SAFE_SCHOOL_API_BASE_URL'));
     expect(buildScript, contains('SAFE_SCHOOL_TENANT_ID'));
+    expect(buildScript, contains('SAFE_SCHOOL_REQUIRE_RELEASE_SIGNING'));
+    expect(buildScript, contains('SAFE_SCHOOL_REQUIRE_API_BASE_URL'));
+    expect(buildScript, contains('must not be baked into a signed pilot/production APK'));
     expect(buildScript, contains('--dart-define=SAFE_SCHOOL_API_BASE_URL='));
   });
 
