@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/mobile_theme.dart';
 import '../../core/api/mobile_api_client.dart';
+import '../medical/medical.dart';
+import '../requests/requests.dart';
 import '../role_workspaces/role_workspace_registry.dart';
 
 class SafeSchoolDemoApp extends StatefulWidget {
@@ -377,7 +379,9 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
           _action('Simulate gate NFC', Icons.nfc, _recordGuardianGateScan),
           _action('Move bus / refresh ETA', Icons.location_on, _moveBus),
           _action('Top up SAR 50', Icons.add_card, () => _topUpWallet(50)),
-          _action('Submit request', Icons.fact_check, _submitGuardianRequest),
+          _action('Submit request', Icons.fact_check, () {
+            _submitGuardianRequest();
+          }),
           _action('Submit complaint', Icons.report_problem,
               _submitGuardianComplaint),
           _action(
@@ -536,10 +540,11 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
             'Blood type O+, allergy: peanuts, guardian call: +966-5X-XXX-1122'),
         _infoTile(Icons.health_and_safety, 'Status', _medicalStatus),
         _buttonWrap([
+          _action('Open emergency profile', Icons.emergency, () {
+            _openEmergencyProfile();
+          }),
           _action('Create clinic incident', Icons.local_hospital, () {
-            setState(() => _medicalStatus = 'Clinic incident recorded');
-            _record(
-                'Medical incident recorded with guardian notification ready');
+            _createMedicalIncident();
           }),
           _action('Clear medical alert', Icons.check, () {
             setState(() => _medicalStatus = 'No active alert');
@@ -996,10 +1001,53 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
     });
   }
 
-  void _submitGuardianRequest() {
+  Future<void> _submitGuardianRequest() async {
     if (_requestController.text.trim().isEmpty) {
       return;
     }
+
+    final now = DateTime.now().toUtc();
+    final draft = MobileRequestDraft(
+      studentProfileId: 'student-amina',
+      requestType: 'early-leave',
+      reason: _requestController.text.trim(),
+      requestedOutcome: 'Release to guardian',
+      clientRequestId: 'mobile-request-${now.microsecondsSinceEpoch}',
+      startsAt: now.add(const Duration(hours: 1)),
+      endsAt: now.add(const Duration(hours: 2)),
+    );
+
+    if (widget.apiClient.isConfigured && !_offlineMode) {
+      try {
+        final result =
+            await MobileRequestsRepository(apiClient: widget.apiClient)
+                .submit(draft);
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _requests++;
+          _timeline.insert(0,
+              'API guardian request ${result.trackingReference} - ${result.status}');
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Request ${result.trackingReference}')),
+        );
+        return;
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _connectionStatus = 'API unavailable';
+          _bootstrapError = error.toString();
+          _timeline.insert(0, 'API request failed - queued local request');
+        });
+      }
+    }
+
     setState(() {
       _requests++;
       _timeline.insert(0,
@@ -1007,6 +1055,96 @@ class _SafeSchoolDemoHomeState extends State<SafeSchoolDemoHome> {
     });
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Request submitted')));
+  }
+
+  Future<void> _openEmergencyProfile() async {
+    final now = DateTime.now().toUtc();
+    final draft = MobileEmergencyAccessDraft(
+      studentProfileId: 'student-amina',
+      reason: 'Clinic emergency review',
+      actorId: 'nurse-demo',
+      clientRequestId: 'mobile-emergency-${now.microsecondsSinceEpoch}',
+    );
+
+    if (widget.apiClient.isConfigured && !_offlineMode) {
+      try {
+        final result =
+            await MobileMedicalRepository(apiClient: widget.apiClient)
+                .openEmergencyAccess(draft);
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _medicalStatus = 'Emergency profile open';
+          _timeline.insert(0,
+              'API emergency access ${result.recordReference} - expires ${result.expiresAt?.toLocal().toIso8601String() ?? 'pending'}');
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Emergency ${result.recordReference}')),
+        );
+        return;
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _connectionStatus = 'API unavailable';
+          _bootstrapError = error.toString();
+          _timeline.insert(0, 'API emergency access failed - local view used');
+        });
+      }
+    }
+
+    setState(() => _medicalStatus = 'Emergency profile opened');
+    _record('Emergency profile opened with minimum necessary data');
+  }
+
+  Future<void> _createMedicalIncident() async {
+    final now = DateTime.now().toUtc();
+    final draft = MobileMedicalIncidentDraft(
+      studentProfileId: 'student-amina',
+      severity: 'High',
+      observation: 'Student reported dizziness in clinic',
+      careAction: 'Guardian notification ready',
+      clientRequestId: 'mobile-incident-${now.microsecondsSinceEpoch}',
+    );
+
+    if (widget.apiClient.isConfigured && !_offlineMode) {
+      try {
+        final result =
+            await MobileMedicalRepository(apiClient: widget.apiClient)
+                .logIncident(draft);
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _medicalStatus = 'Clinic incident recorded';
+          _timeline.insert(0,
+              'API medical incident ${result.recordReference} - ${result.status}');
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Incident ${result.recordReference}')),
+        );
+        return;
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _connectionStatus = 'API unavailable';
+          _bootstrapError = error.toString();
+          _timeline.insert(
+              0, 'API medical incident failed - queued local incident');
+        });
+      }
+    }
+
+    setState(() => _medicalStatus = 'Clinic incident recorded');
+    _record('Medical incident recorded with guardian notification ready');
   }
 
   void _submitGuardianComplaint() {

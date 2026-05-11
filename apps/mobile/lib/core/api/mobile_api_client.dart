@@ -79,11 +79,17 @@ class MobileApiClient {
           });
   }
 
-  Map<String, String> headers({String? idempotencyKey}) => {
+  Map<String, String> headers({
+    String? idempotencyKey,
+    Iterable<String> actorPermissions = const [],
+  }) =>
+      {
         'X-School-Account-Id': schoolAccountId,
         if (authToken?.isNotEmpty == true) 'Authorization': 'Bearer $authToken',
         if (idempotencyKey?.isNotEmpty == true)
           'Idempotency-Key': idempotencyKey!,
+        if (actorPermissions.isNotEmpty)
+          'X-Actor-Permissions': actorPermissions.join(' '),
       };
 
   MobileRelease currentRelease({int versionCode = 1200}) {
@@ -108,7 +114,7 @@ class MobileApiClient {
       );
     }
 
-    final payload = await _getJson(mobileUri('/profile', {
+    final payload = await getJson(mobileUri('/profile', {
       'tenantId': schoolAccountId,
       'roleCode': roleCode,
       'languageCode': languageCode,
@@ -124,7 +130,7 @@ class MobileApiClient {
       return fetchWorkspaces();
     }
 
-    final payload = await _getJson(mobileUri('/workspaces', {
+    final payload = await getJson(mobileUri('/workspaces', {
       'tenantId': schoolAccountId,
       'roleCode': roleCode,
       'languageCode': languageCode,
@@ -156,7 +162,7 @@ class MobileApiClient {
       );
     }
 
-    final payload = await _postJson(mobileUri('/context'), {
+    final payload = await postJson(mobileUri('/context'), {
       'tenantId': schoolAccountId,
       'roleCode': roleCode,
       'languageCode': languageCode,
@@ -174,7 +180,7 @@ class MobileApiClient {
       return currentRelease(versionCode: versionCode);
     }
 
-    final payload = await _getJson(mobileUri('/releases/current', {
+    final payload = await getJson(mobileUri('/releases/current', {
       'tenantId': schoolAccountId,
       'roleCode': roleCode,
       'deviceId': deviceId,
@@ -202,7 +208,7 @@ class MobileApiClient {
       );
     }
 
-    final payload = await _postJson(mobileUri('/install-events'), {
+    final payload = await postJson(mobileUri('/install-events'), {
       'deviceId': deviceId,
       'tenantId': schoolAccountId,
       'userId': userId,
@@ -216,18 +222,30 @@ class MobileApiClient {
     return InstallEventResult.fromJson(_mapFrom(payload));
   }
 
-  Future<Object?> _getJson(Uri uri) async {
+  Future<Object?> getJson(
+    Uri uri, {
+    Iterable<String> actorPermissions = const [],
+  }) async {
     final handler = jsonGet ?? _defaultGetJson;
-    return handler(uri, headers());
+    return handler(uri, headers(actorPermissions: actorPermissions));
   }
 
-  Future<Object?> _postJson(
+  Future<Object?> postJson(
     Uri uri,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    Iterable<String> actorPermissions = const [],
+  }) async {
     final handler = jsonPost ?? _defaultPostJson;
+    final idempotencyKey =
+        body['clientActionId'] as String? ?? body['clientRequestId'] as String?;
     return handler(
-        uri, headers(idempotencyKey: body['clientActionId'] as String?), body);
+      uri,
+      headers(
+        idempotencyKey: idempotencyKey,
+        actorPermissions: actorPermissions,
+      ),
+      body,
+    );
   }
 
   static Future<Object?> _defaultGetJson(
